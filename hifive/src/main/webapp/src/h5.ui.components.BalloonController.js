@@ -15,25 +15,29 @@
  *
  */
 (function() {
-	var fwLogger = h5.log.createLogger('h5.ui.components.BaloonController');
+	var fwLogger = h5.log.createLogger('h5.ui.components.BalloonController');
 
-	var MSG_CANNOT_CALL_METHOD_DISPOSED = fwLogger.info('dispose済みのBaloonは操作できません');
+	var MSG_CANNOT_CALL_METHOD_DISPOSED = fwLogger.info('dispose済みのBalloonは操作できません');
 
 	/** 吹き出し(三角の部分)の大きさ * */
 	var ARROW_SIZE = 34;
 
 	/**
-	 * Baloonクラス
+	 * Balloonクラス
 	 *
 	 * @class
 	 */
-	function Baloon(arrowboxTmpl, content, option) {
+	function Balloon(arrowboxTmpl, content, option) {
 		// display:noneで追加する
 		this._$arrowbox = $(arrowboxTmpl).css('display', 'none');
 		this.setContent(content);
-		$(document.body).append(this._$arrowbox);
-		// Baloonインスタンスを要素に持たせる
-		this._$arrowbox.data('validation-baloon', this);
+		// containerが指定されていればcontainerを親要素とする
+		// containerが指定されてなければtargetを親要素とする
+		// targetも指定されてなければbodyを親要素とする
+		var container = option && option.container || option.target.parentElement || document.body;
+		$(container).append(this._$arrowbox);
+		// Balloonインスタンスを要素に持たせる
+		this._$arrowbox.data('validation-balloon', this);
 
 		option = option || {};
 		// クラスの追加
@@ -41,7 +45,7 @@
 			this._$arrowbox.addClass(option.cls);
 		}
 	}
-	$.extend(Baloon.prototype, {
+	$.extend(Balloon.prototype, {
 		show: function(option) {
 			if (this._isDisposed) {
 				fwLogger.info(MSG_CANNOT_CALL_METHOD_DISPOSED);
@@ -129,9 +133,9 @@
 	});
 
 	/**
-	 * BaloonController定義
+	 * BalloonController定義
 	 *
-	 * @name h5.ui.components.BaloonController
+	 * @name h5.ui.components.BalloonController
 	 * @namespace
 	 */
 	var arrowboxController = {
@@ -139,48 +143,46 @@
 		/**
 		 * コントローラ名
 		 *
-		 * @memberOf h5.ui.components.BaloonController
+		 * @memberOf h5.ui.components.BalloonController
 		 * @type String
 		 */
-		__name: 'h5.ui.components.BaloonController',
+		__name: 'h5.ui.components.BalloonController',
 
 
 		/**
 		 * ライフサイクルイベント __ready
 		 *
-		 * @memberOf h5.ui.components.BaloonController
+		 * @memberOf h5.ui.components.BalloonController
 		 * @param context
 		 */
 		__init: function(context) {
-			this.view.register('baloon', '<div class="validation-baloon"></div>');
+			this.view.register('balloon', '<div class="validation-balloon"></div>');
 		},
 
 		/**
-		 * Baloonインスタンスを作って返す
+		 * Balloonインスタンスを作って返す
 		 *
-		 * @memberOf h5.ui.components.BaloonController
+		 * @memberOf h5.ui.components.BalloonController
 		 * @param {String|DOM|jQuery} content 吹き出しの中身
 		 */
 		create: function(content, option) {
-			var container = option && option.container || document.body;
-			var $baloon = this.view.get('baloon');
-			$(container).append($baloon);
+			var $balloon = this.view.get('balloon');
 
-			return new Baloon($baloon, content, option);
+			return new Balloon($balloon, content, option);
 		},
 
 		/**
-		 * BaloonのDOM要素からBaloonインスタンスを取得して返す
+		 * BalloonのDOM要素からBalloonインスタンスを取得して返す
 		 *
-		 * @memberOf h5.ui.components.BaloonController
+		 * @memberOf h5.ui.components.BalloonController
 		 * @param {DOM|jQuery|String} elm 要素またはセレクタ
 		 */
-		getBaloonFromElement: function(elm) {
+		getBalloonFromElement: function(elm) {
 			var $elm = $(elm);
 			if ($elm.length > 1) {
-				fwLogger.error('getBaloonFromElementには一つの要素または、一つの要素にマッチするセレクタを渡してください。');
+				fwLogger.error('getBalloonFromElementには一つの要素または、一つの要素にマッチするセレクタを渡してください。');
 			}
-			return $elm.data('validation-baloon');
+			return $elm.data('validation-balloon');
 		}
 	};
 

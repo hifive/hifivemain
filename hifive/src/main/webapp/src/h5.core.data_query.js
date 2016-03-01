@@ -413,7 +413,7 @@
 	 * </pre>
 	 *
 	 * @private
-	 * @param {Object} criteria
+	 * @param {Object} criteria 検索条件オブジェクト
 	 * @returns {Object} コンパイル済みcriteriaオブジェクト
 	 */
 	function compileCriteria(criteria) {
@@ -491,7 +491,7 @@
 	 */
 	/**
 	 * @private
-	 * @param {DataItem[]} result
+	 * @param {DataItem[]} result クエリ結果配列
 	 */
 	function QueryResult(result) {
 		/**
@@ -510,7 +510,8 @@
 	/**
 	 * Queryクラス
 	 * <p>
-	 * {@link DataModel.createQuery}の戻り値がこのクラスのインスタンスです。
+	 * {@link DataModel.createQuery}の戻り値がこのクラスのインスタンスです。<br>
+	 * 参考：<a href="/conts/web/view/reference/data-model-query">リファレンス/データモデルのクエリ</a>
 	 * </p>
 	 *
 	 * @class
@@ -536,7 +537,8 @@
 
 	$.extend(Query.prototype, {
 		/**
-		 * 検索条件オブジェクトをセットします
+		 * 検索条件オブジェクトをセットします。<br>
+		 * 参考：<a href="/conts/web/view/reference/data-model-query">リファレンス/データモデルのクエリ</a>
 		 * <p>
 		 * 検索の実行({@link Query.execute})を実行した時に、ここで指定した検索条件オブジェクトに基づいて検索を実行します。
 		 * </p>
@@ -547,9 +549,6 @@
 		 * 演算子には、===,!==,==,!=,>=,<=,between,!between,in,!inを指定できます。省略した場合は===です。
 		 * </p>
 		 * 検索条件オブジェクトに"__op"プロパティを持たせて、値に'or'を記述すると、ORでの評価になります。 ('and'を設定すると記述しない場合と同様ANDでの評価になります。
-		 * </p>
-		 * <p>
-		 * 詳細は{@link (TODO 未作成)|リファレンス&gt;Criteriaオブジェクト}をご覧ください
 		 * </p>
 		 *
 		 * <pre class="sh_javascript">
@@ -581,16 +580,11 @@
 		 * <p>
 		 * {@link Query.setCriteria}で設定した検索条件で検索し、結果を{@link QueryResult}で返します。
 		 * </p>
-		 * <p>
-		 * また、{@link Query.onQueryComplete}に設定したハンドラが呼ばれます。
-		 * </p>
 		 *
 		 * @memberOf Query
 		 * @returns {QueryResult}
 		 */
 		execute: function() {
-			// 新しくdeferredを作成
-			this._executeDfd = h5.async.deferred();
 			var result = [];
 			for ( var id in this._model.items) {
 				var item = this._model.items[id];
@@ -624,24 +618,7 @@
 					return 0;
 				});
 			}
-			this._executeDfd.resolveWith(this, [result]);
 			return new QueryResult(result);
-		},
-
-		/**
-		 * execute()による検索が完了した時に実行するハンドラを登録
-		 * <p>
-		 * ハンドラの引数には検索結果(ObserevableArray)が渡されます
-		 * </p>
-		 *
-		 * @memberOf Query
-		 * @param {Function} completeHandler
-		 * @returns {Query}
-		 */
-		onQueryComplete: function(completeHandler) {
-			// TODO executeが呼ばれる前にハンドラを設定された場合はどうするか
-			this._executeDfd.done(completeHandler);
-			return this;
 		},
 
 		// TODO Liveクエリの仕様は再検討する
@@ -696,8 +673,8 @@
 		 *
 		 * <pre class="sh_javascript"><code>
 		 * query.setOrderFunction(function(a, b) {
-		 * 	// 比較関数の引数はそれぞれデータアイテム。第1引数を先にする場合は正の値、第2引数を先にする場合は負の値を返す
-		 * 		return parseInt(b.get('id')) - parseInt(a.get('id'));
+		 * 	// 比較関数の引数はそれぞれデータアイテム。第1引数のオブジェクトを先にする場合は負の値、第2引数のオブジェクトを先にする場合は正の値を返す。この場合、ageが小さい順（昇順）でソートされる。
+		 * 		return a.get('age') - b.get('age');
 		 * 	});
 		 * </code></pre>
 		 *

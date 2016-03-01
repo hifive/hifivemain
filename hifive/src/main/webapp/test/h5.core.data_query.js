@@ -899,29 +899,5 @@ $(function() {
 	//		query.execute();
 	//		strictEqual(result.length, 0, '再度execute()すると変更が反映されること');
 	//	});
-	//
-	//	module('onQueryComplete', {
-	//		setup: function() {
-	//			this.manager = h5.core.data.createManager('TestManager');
-	//			this.model = this.manager.createModel(itemSchema);
-	//			this.model.create(itemsData);
-	//		},
-	//		teardown: function() {
-	//			dropAllModel(this.manager);
-	//			this.manager = null;
-	//		},
-	//		manager: null,
-	//		model: null
-	//	});
-	//
-	//	test('onQueryCompleteハンドラの引数とthis', 3, function() {
-	//		var query = this.model.createQuery().setCriteria({
-	//			itemname: 'テレビ'
-	//		}).setLive().execute();
-	//		query.onQueryComplete(function(result) {
-	//			ok(true, 'execute()処理が完了するとonQueryCompleteハンドラが呼ばれること');
-	//			strictEqual(this, query, 'thisはqueryであること');
-	//			strictEqual(result, query.result, '引数に検索結果が渡されること');
-	//		});
-	//	});
+
 });

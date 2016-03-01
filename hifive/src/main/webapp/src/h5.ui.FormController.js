@@ -65,7 +65,7 @@
 					param, (param.violation[0].ruleValue.inclusive ? "以下の" : "未満の"));
 		},
 		pattern: '{displayName}は正規表現{violation[0].ruleValue.regexp}を満たす文字列を入力してください。',
-		digits: '{displayName}は整数部分{violation[0].ruleValue.integer}桁、小数部分{fruction}桁以下の数値を入力してください。',
+		digits: '{displayName}は整数部分{violation[0].ruleValue.integer}桁、小数部分{fraction}桁以下の数値を入力してください。',
 		size: function(param) {
 			var upperLimitMsg = '';
 			var lowerLimitMsg = '';
@@ -684,7 +684,7 @@
 	/**
 	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
 	 * <p>
-	 * baloonプラグインには以下の設定項目があります。
+	 * balloonプラグインには以下の設定項目があります。
 	 * </p>
 	 * <table><thead>
 	 * <tr>
@@ -711,10 +711,10 @@
 	 * </p>
 	 *
 	 * @class
-	 * @name h5.ui.validation.ErrorBaloon
+	 * @name h5.ui.validation.ErrorBalloon
 	 */
 	var controller = {
-		__name: 'h5.ui.validation.ErrorBaloon',
+		__name: 'h5.ui.validation.ErrorBalloon',
 		_executedOnValidate: false,
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 		_setting: {},
@@ -723,8 +723,8 @@
 		 * プラグイン設定を行う
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
-		 * @param {Object} setting bsBaloonプラグイン設定オブジェクト
+		 * @memberOf h5.ui.validation.ErrorBalloon
+		 * @param {Object} setting bsBalloonプラグイン設定オブジェクト
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
@@ -743,7 +743,7 @@
 		 * </p>
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 * @param {ValidationResult} result
 		 */
 		_onValidate: function(result) {
@@ -757,13 +757,13 @@
 		 * </p>
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
 		_onFocus: function(element, name, validationResult) {
-			this._setErrorBaloon(element, name, validationResult, 'focus');
+			this._setErrorBalloon(element, name, validationResult, 'focus');
 		},
 
 		/**
@@ -773,13 +773,13 @@
 		 * </p>
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
 		_onBlur: function(element, name, validationResult) {
-			this._setErrorBaloon(element, name, validationResult, 'blur');
+			this._setErrorBalloon(element, name, validationResult, 'blur');
 		},
 
 		/**
@@ -789,13 +789,13 @@
 		 * </p>
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 */
 		_onKeyup: function(element, name, validationResult) {
-			this._setErrorBaloon(element, name, validationResult, 'keyup');
+			this._setErrorBalloon(element, name, validationResult, 'keyup');
 		},
 
 		/**
@@ -804,10 +804,10 @@
 		 * 表示されているバルーンを削除します
 		 * </p>
 		 *
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 */
 		reset: function() {
-			this._hideBaloon();
+			this._hideBalloon();
 			this._executedOnValidate = false;
 		},
 
@@ -815,13 +815,13 @@
 		 * バルーンをセット
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 * @param element
 		 * @param name
 		 * @param {ValidationResult} validationResult
 		 * @param {string} type 要素で発生したイベントタイプ
 		 */
-		_setErrorBaloon: function(element, name, validationResult, type) {
+		_setErrorBalloon: function(element, name, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// _onValidateが１度も呼ばれていなければ何もしない
 				return;
@@ -844,7 +844,7 @@
 					|| (element !== document.activeElement && !$(document.activeElement).closest(
 							element).length)) {
 				// フォーカスが外れた時、該当要素または該当要素内の要素にフォーカスが当たっていない場合は非表示にする
-				this._hideBaloon();
+				this._hideBalloon();
 				return;
 			}
 			var placement = propSetting.placement || DEFAULT_PLACEMENT;
@@ -859,11 +859,11 @@
 					}
 					if (ev.isValid) {
 						// validならバルーンを隠す
-						this._hideBaloon();
+						this._hideBalloon();
 						return;
 					}
 					// invalidならバルーン表示
-					this._showBaloon(target, placement, container, this._messageOutputController
+					this._showBalloon(target, placement, container, this._messageOutputController
 							.getMessageByValidationResult(validationResult, ev.name));
 				}));
 				return;
@@ -872,12 +872,12 @@
 					&& validationResult.invalidReason[name];
 			if (!invalidReason) {
 				// validateエラーがないときはhideして終了
-				this._hideBaloon();
+				this._hideBalloon();
 				return;
 			}
 
 			// validateエラーがあるとき
-			this._showBaloon(target, placement, container, this._messageOutputController
+			this._showBalloon(target, placement, container, this._messageOutputController
 					.getMessageByValidationResult(validationResult, name));
 		},
 
@@ -885,55 +885,59 @@
 		 * バルーンを表示
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 * @param target
 		 * @param placement
 		 * @param message
 		 */
-		_showBaloon: function(target, placement, container, message) {
-			this._hideBaloon();
-			var baloonCtrl = this._baloonController;
-			if (!baloonCtrl) {
-				var c = h5.core.controller(this.rootElement, h5.ui.components.BaloonController);
+		_showBalloon: function(target, placement, container, message) {
+			this._hideBalloon();
+			var balloonCtrl = this._balloonController;
+			if (!balloonCtrl) {
+				var c = h5.core.controller(this.rootElement, h5.ui.components.BalloonController);
 				this.manageChild(c);
 				c.readyPromise.done(this.own(function() {
-					this._baloonController = c;
-					this._showBaloon(target, placement, container, message);
+					this._balloonController = c;
+					this._showBalloon(target, placement, container, message);
 				}));
 				return;
 			}
-			var baloon = this._baloonController.create(message);
+			var option = {
+				target: target,
+				container: container
+			};
+			var balloon = this._balloonController.create(message, option);
 			// 吹き出しの表示
-			baloon.show({
+			balloon.show({
 				target: target,
 				direction: placement
 			});
-			this._currentBaloon = baloon;
-			this._currentBaloonTarget = target;
+			this._currentBalloon = balloon;
+			this._currentBalloonTarget = target;
 		},
 
 		/**
 		 * バルーンを非表示
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 * @param target
 		 * @param placement
 		 * @param message
 		 */
-		_hideBaloon: function(target, placement, container, message) {
-			if (this._currentBaloon) {
-				this._currentBaloon.dispose();
-				this._currentBaloon = null;
+		_hideBalloon: function(target, placement, container, message) {
+			if (this._currentBalloon) {
+				this._currentBalloon.dispose();
+				this._currentBalloon = null;
 			}
-			this._currentBaloonTarget = null;
+			this._currentBalloonTarget = null;
 		},
 
 		/**
 		 * メッセージ出力コントローラの設定
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.ErrorBaloon
+		 * @memberOf h5.ui.validation.ErrorBalloon
 		 */
 		_setChildSetting: function() {
 			var setting = this._setting;
@@ -962,17 +966,17 @@
 	 * このプラグインはBootstrapに依存します。Bootstrapのtooltipを使用して表示してています。
 	 * </p>
 	 * <p>
-	 * API仕様は{@link h5.ui.validation.ErrorBaloon}と同じです。
+	 * API仕様は{@link h5.ui.validation.ErrorBalloon}と同じです。
 	 * </p>
 	 * <p>
 	 * プラグインの設定方法は、{@link h5.ui.FormController.setSetting}をご覧ください。
 	 * </p>
 	 *
 	 * @class
-	 * @name h5.ui.validation.BootstrapErrorBaloon
+	 * @name h5.ui.validation.BootstrapErrorBalloon
 	 */
 	var controller = {
-		__name: 'h5.ui.validation.BootstrapErrorBaloon',
+		__name: 'h5.ui.validation.BootstrapErrorBalloon',
 
 		/**
 		 * バルーンの削除
@@ -981,24 +985,24 @@
 		 * </p>
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBalloon
 		 */
-		_hideBaloon: function() {
+		_hideBalloon: function() {
 			// 常にバルーンは一つのみ表示している実装のため、その1つのバルーンを非表示
-			$(this._currentBaloonTarget).tooltip('hide');
+			$(this._currentBalloonTarget).tooltip('hide');
 		},
 
 		/**
 		 * bootstrapのtooltipを使ってバルーンを表示
 		 *
 		 * @private
-		 * @memberOf h5.ui.validation.BootstrapErrorBaloon
+		 * @memberOf h5.ui.validation.BootstrapErrorBalloon
 		 * @param target
 		 * @param placement
 		 * @param container
 		 * @param message
 		 */
-		_showBaloon: function(target, placement, container, message) {
+		_showBalloon: function(target, placement, container, message) {
 			$(target).attr({
 				'data-placement': placement,
 				'data-container': container,
@@ -1011,11 +1015,11 @@
 				trigger: 'manual'
 			});
 			$(target).tooltip('show');
-			this._currentBaloonTarget = target;
+			this._currentBalloonTarget = target;
 		}
 	};
-	// 他のメソッドやプロパティはErrorBaloonから流用
-	controller = $.extend({}, h5.ui.validation.ErrorBaloon, controller);
+	// 他のメソッドやプロパティはErrorBalloonから流用
+	controller = $.extend({}, h5.ui.validation.ErrorBalloon, controller);
 	h5.core.expose(controller);
 })();
 
@@ -1303,9 +1307,9 @@
 		 */
 		_onFocus: function(element, name, validationResult) {
 			var validatingProperties = validationResult.validatingProperties;
-			if ($.inArray(name, validatingProperties)) {
+			if ($.inArray(name, validatingProperties) !== -1) {
 				var element = this.parentController._getElementByName(name);
-				this._showIndicator(element, name, validatingProperties[i]);
+				this._showIndicator(element, name, validationResult);
 			} else {
 				this._hideIndicator(name);
 			}
@@ -1443,13 +1447,13 @@
 	var DEFAULT_PLUGINS = {
 		style: h5.ui.validation.Style,
 		composition: h5.ui.validation.Composition,
-		baloon: h5.ui.validation.ErrorBaloon,
-		bsBaloon: h5.ui.validation.BootstrapErrorBaloon,
+		balloon: h5.ui.validation.ErrorBalloon,
+		bsBalloon: h5.ui.validation.BootstrapErrorBalloon,
 		message: h5.ui.validation.Message,
 		asyncIndicator: h5.ui.validation.AsyncIndicator
 	};
 
-	// プラグインの表示リセットメui.validation.BootstrapErrorBaloonソッド名
+	// プラグインの表示リセットメui.validation.BootstrapErrorBalloonソッド名
 	var PLUGIN_METHOD_RESET = 'reset';
 
 	// デフォルトで用意しているvalidateルール生成関数
@@ -1629,7 +1633,7 @@
 		 * <pre class="sh_javascript"><code>
 		 * {
 		 * 	output: { // 各プラグイン毎の設定
-		 * 		baloon: { // キー名にプラグイン名
+		 * 		balloon: { // キー名にプラグイン名
 		 * 			placement: 'top' // 設定プロパティと値を記述
 		 * 		},
 		 * 		message: {...},
@@ -1640,7 +1644,7 @@
 		 * 			displayName: '名前', // 設定プロパティと値を記述
 		 * 			message: '必須です', // 設定プロパティと値を記述
 		 * 			output: { // 各プロパティについて各プラグイン固有の設定
-		 * 				baloon: {
+		 * 				balloon: {
 		 * 					placement: 'left' // 設定プロパティと値を記述
 		 * 				},
 		 * 				message: {
@@ -1710,7 +1714,7 @@
 		 * <td>false</td>
 		 * </tr>
 		 * </tbody></table>
-		 * <h4>メッセージを表示するプラグイン(message, composition, baloonで共通)</h4>
+		 * <h4>メッセージを表示するプラグイン(message, composition, balloonで共通)</h4>
 		 * <table class="params"><thead>
 		 * <tr>
 		 * <th>設定プロパティ名</th>
@@ -1754,7 +1758,7 @@
 		 * <td>デフォルトルール毎にデフォルトのメッセージが用意されており、それらが使用されます。</td>
 		 * </tr>
 		 * </tbody></table>
-		 * <h4>フォーム入力要素基準でエラー表示を行うプラグイン(style,message,baloon,asyncIndicatorで共通)</h4>
+		 * <h4>フォーム入力要素基準でエラー表示を行うプラグイン(style,message,balloon,asyncIndicatorで共通)</h4>
 		 * <table class="params"><thead>
 		 * <tr>
 		 * <th>設定プロパティ名</th>
@@ -1778,8 +1782,8 @@
 		 * <li>{@link h5.ui.validation.AsyncIndicator}
 		 * <li>{@link h5.ui.validation.Composition}
 		 * <li>{@link h5.ui.validation.Message}
-		 * <li>{@link h5.ui.validation.BootstrapErrorBaloon}
-		 * <li>{@link h5.ui.validation.ErrorBaloon}
+		 * <li>{@link h5.ui.validation.BootstrapErrorBalloon}
+		 * <li>{@link h5.ui.validation.ErrorBalloon}
 		 * <ul>
 		 *
 		 * @memberOf h5.ui.FormController
@@ -1905,11 +1909,11 @@
 		 * <td>バリデート時にバリデート失敗した項目についてメッセージを表示する</td>
 		 * </tr>
 		 * <tr>
-		 * <td>baloon</td>
+		 * <td>balloon</td>
 		 * <td>バリデート時にバリデート失敗した項目についてバルーンメッセージを表示する</td>
 		 * </tr>
 		 * <tr>
-		 * <td>bsBaloon</td>
+		 * <td>bsBalloon</td>
 		 * <td>バリデート時にバリデート失敗した項目についてブートストラップでバルーンメッセージを表示する(bootstrap依存)</td>
 		 * </tr>
 		 * <tr>

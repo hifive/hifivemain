@@ -22,8 +22,6 @@ $(function() {
 	// Constants
 	//
 	// =========================================================================
-	var WAIT_TIME_FOR_OPEN_WINDOW = 100;
-
 	var BUILD_TYPE_PARAM = 'h5testenv.buildType=' + H5_TEST_ENV.buildType;
 
 	// テスト対象モジュールのコード定義をここで受けて、各ケースでは ERR.ERR_CODE_XXX と簡便に書けるようにする
@@ -39,7 +37,6 @@ $(function() {
 	// Variables
 	//=============================
 	// testutils
-	var deleteProperty = testutils.u.deleteProperty;
 	var clearController = testutils.u.clearController;
 	var gate = testutils.async.gate;
 	var openPopupWindow = testutils.dom.openPopupWindow;
@@ -89,1057 +86,7 @@ $(function() {
 		};
 	}
 
-	// =========================================================================
-	//
-	// Test Module
-	//
-	// =========================================================================
-	//=============================
-	// Definition
-	//=============================
-	module('[jquery#-1.6.4]HTML要素の記述に基づいたコントローラの自動バインド', {
-		teardown: function() {
-			deleteProperty(window, 'h5scenetest');
-			deleteProperty(window, 'scenedata');
-			clearController();
-			$('[data-h5-controller]').removeAttr('data-h5-controller');
-			$('[data-h5-dyn-controller-bound]').removeAttr('data-h5-dyn-controller-bound');
-			boundControllerMap = {};
-		},
-		$fixture: $('#qunit-fixture')
-	});
 
-	//=============================
-	// Body
-	//=============================
-	test('data-h5-controller指定要素について、init()呼び出し時に指定したコントローラがバインドされること', function() {
-		createTestController('Body');
-		createTestController('Test');
-		$(document.body).attr('data-h5-controller', 'h5scenetest.Body');
-		var $test = $('<div data-h5-controller="h5scenetest.Test">');
-		this.$fixture.append($test);
-
-		h5.scene.init();
-		var testCtrl = boundControllerMap['h5scenetest.Test'];
-		var bodyCtrl = boundControllerMap['h5scenetest.Body'];
-		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-		ok(bodyCtrl, 'body要素でdata-h5-controller指定をしたコントローラがバインドされていること');
-		strictEqual(bodyCtrl.rootElement, document.body.children[0],
-				'body要素の場合メインシーンになるため、コントローラのバインド先はbody直下の要素になること');
-
-		// initは一度しか呼び出せないので、このケース以外でinit()の呼び出しはしない
-		// このケースで二度目のinit()を呼んでも何も起こらないことを確認している
-		createTestController('Test2');
-		var $test2 = $('<div data-h5-controller="h5scenetest.Test2">');
-		this.$fixture.append($test2);
-		h5.scene.init();
-		ok(!boundControllerMap['h5scenetest.Test2'],
-				'init()呼び出し後に追加したdata-h5-controller指定要素があっても、もう一度init()を呼んでもコントローラはバインドされないこと');
-	});
-
-	// TODO scan()は1.2.0では非公開APIとなったため、テストをコメントアウトしている #492
-	//	test('data-h5-controller指定要素について、scan()呼び出し時に指定したコントローラがバインドされること', function() {
-	//		createTestController('Body');
-	//		createTestController('Test');
-	//		$(document.body).attr('data-h5-controller', 'h5scenetest.Body');
-	//		var $test = $('<div data-h5-controller="h5scenetest.Test">');
-	//		this.$fixture.append($test);
-	//
-	//		h5.scene.scan();
-	//		var testCtrl = boundControllerMap['h5scenetest.Test'];
-	//		var bodyCtrl = boundControllerMap['h5scenetest.Body'];
-	//		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-	//		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//		ok(bodyCtrl, 'body要素でdata-h5-controller指定をしたコントローラがバインドされていること');
-	//		strictEqual(bodyCtrl.rootElement, document.body,
-	//				'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//	});
-	//
-	//	test('bodyをルートに指定してscan()', function() {
-	//		createTestController('Body');
-	//		createTestController('Test');
-	//		$(document.body).attr('data-h5-controller', 'h5scenetest.Body');
-	//		var $test = $('<div data-h5-controller="h5scenetest.Test">');
-	//		this.$fixture.append($test);
-	//
-	//		h5.scene.scan(document.body);
-	//		var testCtrl = boundControllerMap['h5scenetest.Test'];
-	//		var bodyCtrl = boundControllerMap['h5scenetest.Body'];
-	//		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-	//		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//		ok(bodyCtrl, 'body要素でdata-h5-controller指定をしたコントローラがバインドされていること');
-	//		strictEqual(bodyCtrl.rootElement, document.body,
-	//				'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//	});
-	//
-	//	test('body以下の要素をルートに指定してscan()', function() {
-	//		createTestController('Root');
-	//		createTestController('Brother');
-	//		createTestController('Test');
-	//
-	//		var $root = $('<div data-h5-controller="h5scenetest.Root">');
-	//		var $brother = $('<div data-h5-controller="h5scenetest.Brother">');
-	//		var $test = $('<div data-h5-controller="h5scenetest.Test">');
-	//		$root.append($test);
-	//		this.$fixture.append($root);
-	//		this.$fixture.append($brother);
-	//
-	//		h5.scene.scan($root);
-	//		var testCtrl = boundControllerMap['h5scenetest.Test'];
-	//		var rootCtrl = boundControllerMap['h5scenetest.Root'];
-	//		var brotherCtrl = boundControllerMap['h5scenetest.Brother'];
-	//
-	//		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-	//		strictEqual(testCtrl.rootElement, $test[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//		ok(rootCtrl, 'ルート要素でdata-h5-controller指定をしたコントローラがバインドされていること');
-	//		strictEqual(rootCtrl.rootElement, $root[0], 'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//		ok(!brotherCtrl, '指定したルートの兄弟要素にdata-h5-controller記述がしてあってもコントローラはバインドされないこと');
-	//	});
-	//
-	//	test('複数コントローラのバインド',
-	//			function() {
-	//				createTestController('Test1');
-	//				createTestController('Test2');
-	//				var $test = $('<div data-h5-controller="h5scenetest.Test1,h5scenetest.Test2">');
-	//				this.$fixture.append($test);
-	//
-	//				h5.scene.scan();
-	//				var test1Ctrl = boundControllerMap['h5scenetest.Test1'];
-	//				var test2Ctrl = boundControllerMap['h5scenetest.Test2'];
-	//
-	//				ok(test1Ctrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-	//				strictEqual(test1Ctrl.rootElement, $test[0],
-	//						'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//				ok(test2Ctrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-	//				strictEqual(test2Ctrl.rootElement, $test[0],
-	//						'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//			});
-	//
-	//	asyncTest('リソースキー指定によるバインド', function() {
-	//		var $test = $('<div data-h5-controller="scenedata.controller.SampleController">');
-	//		this.$fixture.append($test);
-	//
-	//		h5.scene.scan();
-	//		gate({
-	//			func: function() {
-	//				return h5.core.controllerManager.getControllers($test)[0];
-	//			},
-	//			failMsg: 'コントローラがバインドされませんでした'
-	//		}).done(
-	//				function(a) {
-	//					var testCtrl = h5.core.controllerManager.getControllers($test)[0];
-	//					ok(testCtrl, 'data-h5-controller指定をしたコントローラがリソースキーから解決されてバインドされていること');
-	//					strictEqual(testCtrl.rootElement, $test[0],
-	//							'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//				}).always(start);
-	//	});
-	//
-	//	test('シーン要素のdata-h5-controller指定',
-	//			function() {
-	//				createTestController('Test');
-	//				var $container = $('<div data-h5-scene-container>');
-	//				var $scene = $('<div data-h5-scene data-h5-controller="h5scenetest.Test">');
-	//				$container.append($scene);
-	//				this.$fixture.append($container);
-	//
-	//				h5.scene.scan();
-	//				var test1Ctrl = boundControllerMap['h5scenetest.Test'];
-	//
-	//				ok(test1Ctrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-	//				strictEqual(test1Ctrl.rootElement, $scene[0],
-	//						'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//			});
-	//
-	//	test(
-	//			'シーンを持つシーンコンテナ要素のdata-h5-controller指定',
-	//			function() {
-	//				createTestController('Test1');
-	//				createTestController('Container');
-	//				var $container = $('<div data-h5-scene-container data-h5-scene-container="h5scenetest.Container">');
-	//				var $scene = $('<div data-h5-scene data-h5-controller="h5scenetest.Test1">');
-	//				$container.append($scene);
-	//				this.$fixture.append($container);
-	//
-	//				h5.scene.scan();
-	//				var test1Ctrl = boundControllerMap['h5scenetest.Test1'];
-	//				var containerCtrl = boundControllerMap['Container'];
-	//				ok(test1Ctrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-	//				strictEqual(test1Ctrl.rootElement, $scene[0],
-	//						'コントローラのバインド先はdata-h5-controller指定をした要素であること');
-	//				ok(!containerCtrl, 'シーンコンテナ要素のdata-h5-controller指定は無効でコントローラはバインドされないこと');
-	//			});
-	//
-	//	test('シーンを持たないシーンコンテナ要素のdata-h5-controller指定', function() {
-	//		createTestController('Test');
-	//		var $container = $('<div data-h5-scene-container data-h5-controller="h5scenetest.Test">');
-	//		this.$fixture.append($container);
-	//
-	//		h5.scene.scan();
-	//		var testCtrl = boundControllerMap['h5scenetest.Test'];
-	//		ok(testCtrl, 'data-h5-controller指定をしたコントローラがバインドされていること');
-	//		strictEqual(testCtrl.rootElement, $container.children()[0],
-	//				'コントローラのバインド先はシーンコンテナ直下に作られたシーン要素であること');
-	//	});
-	//
-	//	test(
-	//			'data-h5-scene指定の要素の位置がシーンコンテナ直下でない場合のdata-h5-controller指定',
-	//			function() {
-	//				createTestController('Test1');
-	//				createTestController('Test2');
-	//				var $root = $('<div>');
-	//				var $container = $('<div data-h5-scene-container>');
-	//				var $scene1 = $('<div data-h5-scene data-h5-controller="h5scenetest.Test1">');
-	//				var $scene2 = $('<div data-h5-scene data-h5-controller="h5scenetest.Test2">');
-	//				var $div = $('<div>');
-	//				$root.append($scene1);
-	//				$div.append($scene2);
-	//				$container.append($div);
-	//				$root.append($container);
-	//				this.$fixture.append($root);
-	//				h5.scene.scan();
-	//
-	//				var test1Ctrl = boundControllerMap['h5scenetest.Test1'];
-	//				var test2Ctrl = boundControllerMap['h5scenetest.Test2'];
-	//
-	//				ok(!test1Ctrl,
-	//						'data-h5-scene指定要素がコンテナ以下でない要素の場合、data-h5-controller指定は無効でコントローラはバインドされないこと');
-	//				ok(!test2Ctrl,
-	//						'data-h5-scene指定要素がコンテナの直下でない要素の場合、data-h5-controller指定は無効でコントローラはバインドされないこと');
-	//			});
-
-	//=============================
-	// Definition
-	//=============================
-	module('[jquery#-1.6.4]シーンコンテナとシーン', {
-		teardown: function() {
-			deleteProperty(window, 'h5scenetest');
-			deleteProperty(window, 'scenedata');
-			clearController();
-			$('[data-h5-controller]').removeAttr('data-h5-controller');
-			$('[data-h5-dyn-controller-bound]').removeAttr('data-h5-dyn-controller-bound');
-			boundControllerMap = {};
-		},
-		$fixture: $('#qunit-fixture')
-	});
-
-	//=============================
-	// Body
-	//=============================
-	//	asyncTest('createContainer()で初期表示シーンにHTMLを指定', function() {
-	//		var $container = $('<div>');
-	//		this.$fixture.append($container);
-	//		h5.scene.createSceneContainer($container, false, 'scenedata/page/to1.html');
-	//		gate({
-	//			func: function() {
-	//				return $container.text() === 'to1';
-	//			},
-	//			failMsg: 'シーンが初期表示されませんでした'
-	//		}).done(function() {
-	//			strictEqual($container.text(), 'to1', 'シーンが初期表示されること');
-	//			start();
-	//		}).fail(start);
-	//	});
-	//
-	//	asyncTest('createContainer()で初期表示シーンにコントローラーを指定', function() {
-	//		var $container = $('<div>');
-	//		this.$fixture.append($container);
-	//		var container = h5.scene.createSceneContainer($container, false, 'scenedata.controller.ControllerSubController');
-	//		gate({
-	//			func: function() {
-	//				return $container.find('h2').text() === 'CONTROLLER_SUB';
-	//			},
-	//			failMsg: 'シーンが初期表示されませんでした'
-	//		}).done(
-	//				function() {
-	//					strictEqual(container._currentController.$find('h2').text(), 'CONTROLLER_SUB',
-	//							'シーンが初期表示されること');
-	//				}).always(start);
-	//	});
-
-
-	asyncTest('createContainer()で生成したシーンコンテナのメソッドによる遷移', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		var container = h5.scene.createSceneContainer($container);
-		container.navigate('scenedata/page/to1.html');
-		gate({
-			func: function() {
-				return $container.text() === 'to1';
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			strictEqual($container.text(), 'to1', 'シーンが変更されること');
-			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
-			var $scene1 = $container.children();
-			container.navigate({
-				to: 'scenedata/page/to2.html',
-				args: {
-					test: 'TEST'
-				}
-			});
-			gate({
-				func: function() {
-					return $container.text() === 'to2';
-				},
-				failMsg: 'シーンが変更されませんでした'
-			}).done(function() {
-				strictEqual($container.text(), 'to2', 'シーンが変更されること');
-				ok(!$scene1.parent()[0], '遷移前のシーン要素は削除されていること');
-				ok(container._currentController.args.test === 'TEST', '遷移パラメータが渡されていること');
-			}).always(start);
-		}).fail(start);
-	});
-
-	asyncTest('createContainer()で生成したシーンコンテナのイベントによる遷移', function() {
-		var $container = $('<div>');
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		this.$fixture.append($container);
-		var container = h5.scene.createSceneContainer($container);
-		$(container.rootElement).trigger('sceneChangeRequest', 'scenedata/page/to1.html');
-		gate({
-			func: function() {
-				return $container.text() === 'to1' && container._currentController;
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			strictEqual($container.text(), 'to1', 'シーンが変更されること');
-			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
-			var scene1 = container._currentController;
-			var $scene1 = $(scene1.rootElement);
-			scene1.scene.navigate({
-				to: 'scenedata/page/to2.html',
-				args: {
-					test: 'TEST'
-				}
-			});
-			gate({
-				func: function() {
-					return $container.text() === 'to2';
-				},
-				failMsg: 'シーンが変更されませんでした'
-			}).done(function() {
-				strictEqual($container.text(), 'to2', 'シーンが変更されること');
-				ok(!$scene1.parent()[0], '遷移前のシーン要素は削除されていること');
-				ok(container._currentController.args.test === 'TEST', '遷移パラメータが渡されていること');
-			}).always(start);
-		}).fail(start);
-	});
-
-	// TODO scan()は1.2.0では非公開APIとなったため、テストをコメントアウトしている #492
-	//	asyncTest('scan()で生成したシーンコンテナのイベントによる遷移', function() {
-	//		var $container = $('<div data-h5-scene-container>');
-	//		var $scene = $('<div data-h5-scene>');
-	//		$container.append($scene);
-	//		this.$fixture.append($container);
-	//		h5.scene.scan();
-	//		$scene.trigger('sceneChangeRequest', {
-	//			to: 'scenedata/page/to1.html'
-	//		});
-	//		gate({
-	//			func: function() {
-	//				return $container.text() === 'to1';
-	//			},
-	//			failMsg: 'シーンが変更されませんでした'
-	//		}).done(function() {
-	//			strictEqual($container.text(), 'to1', 'シーンが変更されること');
-	//			ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
-	//			var $scene1 = $container.children();
-	//			$scene1.trigger('sceneChangeRequest', {
-	//				to: 'scenedata/page/to2.html',
-	//				args: {
-	//					test: 'TEST'
-	//				}
-	//			});
-	//			gate({
-	//				func: function() {
-	//					return $container.text() === 'to2';
-	//				},
-	//				failMsg: 'シーンが変更されませんでした'
-	//			}).done(function() {
-	//				strictEqual($container.text(), 'to2', 'シーンが変更されること');
-	//				ok(!$scene1.parent()[0], '遷移前のシーン要素は削除されていること');
-	//				//scanの場合、containerが取れないので遷移パラメーター確認はスキップ
-	//			}).always(start);
-	//		}).fail(start);
-	//	});
-
-	asyncTest('コントローラーベースの遷移', function() {
-		var $container = $('<div>');
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		this.$fixture.append($container);
-		var container = h5.scene.createSceneContainer($container);
-		container.navigate({
-			to: 'scenedata.controller.ControllerSubController',
-			args: {
-				test: 'CTRL'
-			}
-		});
-		gate({
-			func: function() {
-				return container._currentController.$find('h2').text() === 'CONTROLLER_SUB';
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(
-				function() {
-					strictEqual(container._currentController.$find('h2').text(), 'CONTROLLER_SUB',
-							'シーンが変更されること');
-					ok(!$scene.parent()[0], '遷移前のシーン要素は削除されていること');
-					ok(container._currentController.args.test === 'CTRL', '遷移パラメータが渡されていること');
-				}).always(start);
-	});
-	asyncTest('遷移先のHTMLのbodyにシーンコンテナ要素が無い場合はbodyの中身が一つのシーンになる', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		var container = h5.scene.createSceneContainer($container);
-		container.navigate('scenedata/page/noContainerBody.html');
-		var expect = 'no container';
-		gate({
-			func: function() {
-				return $.trim($container.text()) === expect;
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			strictEqual($.trim($container.text()), expect, 'シーンが変更されること');
-		}).always(start);
-	});
-
-	asyncTest('遷移先のHTMLのbodyがテキストノードのみ', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		var container = h5.scene.createSceneContainer($container);
-		container.navigate('scenedata/page/textNodeBody.html');
-		var expect = 'text body';
-		gate({
-			func: function() {
-				return $.trim($container.text()) === expect;
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			strictEqual($.trim($container.text()), expect, 'シーンが変更されること');
-		}).always(start);
-	});
-
-	asyncTest('遷移先のHTMLのbodyがテキストノードで始まるHTML文字列', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		var container = h5.scene.createSceneContainer($container);
-		container.navigate('scenedata/page/textNodeAndElementBody.html');
-		var expect = 'text and element body';
-		gate({
-			func: function() {
-				return $.trim($container.text()) === expect;
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			strictEqual($.trim($container.text()), expect, 'シーンが変更されること');
-		}).always(start);
-	});
-
-	asyncTest('遷移先の部分HTMLにシーンコンテナ要素が無い場合はhtmlファイルの中身が一つのシーンになる', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		var container = h5.scene.createSceneContainer($container);
-		container.navigate('scenedata/page/noContainerPart.html');
-		var expect = 'no container';
-		gate({
-			func: function() {
-				return $.trim($container.text()) === expect;
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			strictEqual($.trim($container.text()), expect, 'シーンが変更されること');
-		}).always(start);
-	});
-
-	asyncTest('遷移先の部分HTMLの中身がテキストノードのみ', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		var container = h5.scene.createSceneContainer($container);
-		container.navigate('scenedata/page/textNodePart.html');
-		var expect = 'plain text';
-		gate({
-			func: function() {
-				return $.trim($container.text()) === expect;
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			strictEqual($.trim($container.text()), expect, 'シーンが変更されること');
-		}).always(start);
-	});
-
-	asyncTest('遷移先の部分HTMLの中身がテキストノードで始まるHTML文字列', function() {
-		var $container = $('<div>');
-		this.$fixture.append($container);
-		var $scene = $('<div data-h5-scene>');
-		$container.append($scene);
-		var container = h5.scene.createSceneContainer($container);
-		container.navigate('scenedata/page/textNodeAndElementPart.html');
-		var expect = 'plain text and element';
-		gate({
-			func: function() {
-				return $.trim($container.text()) === expect;
-			},
-			failMsg: 'シーンが変更されませんでした'
-		}).done(function() {
-			strictEqual($.trim($container.text()), expect, 'シーンが変更されること');
-		}).always(start);
-	});
-
-	//=============================
-	// Definition
-	//=============================
-	module('[jquery#-1.6.4]シーンコンテナの取得', {
-		setup: function() {
-			stop();
-			var $container = $('<div data-h5-scene-container="testContainer">');
-			var $mainContainer = $('<div data-h5-scene-container="testMainContainer">');
-			this.$fixture.append($container);
-			this.$fixture.append($mainContainer);
-			var container = h5.scene.createSceneContainer($container);
-			var mainContainer = h5.scene.createSceneContainer($mainContainer);
-			var containerBound, mainContainerBound;
-			var arg = {};
-			this.$container = $container;
-			this.$mainContainer = $mainContainer;
-			this.container = container;
-			this.mainContainer = mainContainer;
-			var that = this;
-			$container.bind('h5controllerbound', function(e, controller) {
-				containerBound = true;
-				that.sceneController = controller;
-				if (mainContainerBound) {
-					start();
-				}
-			});
-			$mainContainer.bind('h5controllerbound', function(e, controller) {
-				mainContainerBound = true;
-				that.mainSceneController = controller;
-				if (containerBound) {
-					start();
-				}
-			});
-		},
-		teardown: function() {
-			clearController();
-		},
-		$fixture: $('#qunit-fixture')
-	});
-
-	//=============================
-	// Body
-	//=============================
-
-	test('シーンコンテナの取得', function() {
-		var sceneController = this.sceneController;
-		var mainSceneController = this.mainSceneController;
-		var $container = this.$container;
-		var $mainContainer = this.$mainContainer;
-		var container = this.container;
-		var mainContainer = this.mainContainer;
-		strictEqual(sceneController.scene.getParentContainer(), container,
-				'ControllerのgetParentContainerで所属するシーンコンテナが取得できること');
-		strictEqual(mainSceneController.scene.getParentContainer(), mainContainer,
-				'ControllerのgetParentContainerで所属するシーンコンテナが取得できること');
-
-		var ret = h5.scene.getSceneContainerByName('testContainer');
-		strictEqual(ret, container, 'h5.scene.getSceneContainerByNameで名前を指定してシーンコンテナが取得できること');
-		ret = h5.scene.getSceneContainerByName('testMainContainer');
-		strictEqual(ret, mainContainer, 'h5.scene.getSceneContainerByNameで名前を指定してシーンコンテナが取得できること');
-
-		ret = h5.scene.getSceneContainers();
-		if (ret[0] !== container) {
-			var tmp = ret[0];
-			ret[0] = ret[1];
-			ret[1] = tmp;
-		}
-		strictEqual(ret[0], container, 'h5.scene.getSceneContainersで引数なしでシーンコンテナが取得できること');
-		strictEqual(ret[1], mainContainer, 'h5.scene.getSceneContainersで引数なしでシーンコンテナが取得できること');
-		strictEqual(ret.length, 2, '取得できるシーンコンテナの数が正しいこと');
-
-		ret = h5.scene.getSceneContainers($container);
-		strictEqual(ret[0], container, 'h5.scene.getSceneContainersに要素を指定した時、シーンコンテナが取得できること');
-		strictEqual(ret.length, 1, '取得できるシーンコンテナの数が正しいこと');
-
-		ret = h5.scene.getSceneContainers('#qunit-fixture');
-		if (ret[0] !== container) {
-			var tmp = ret[0];
-			ret[0] = ret[1];
-			ret[1] = tmp;
-		}
-		strictEqual(ret[0], container,
-				'h5.scene.getSceneContainersに要素を指定した時、指定した要素以下のシーンコンテナが取得できること');
-		strictEqual(ret[1], mainContainer,
-				'h5.scene.getSceneContainersに要素を指定した時、指定した要素以下のシーンコンテナが取得できること');
-		strictEqual(ret.length, 2, '取得できるシーンコンテナの数が正しいこと');
-
-		ret = h5.scene.getSceneContainers('#qunit-fixture', {
-			deep: false
-		});
-		strictEqual(ret.length, 0,
-				'h5.scene.getSceneContainersで、deep:falseを指定した時、指定した要素以下のシーンコンテナは取得できないこと');
-		ret = h5.scene.getSceneContainers($container, {
-			deep: false
-		});
-		strictEqual(ret[0], container,
-				'h5.scene.getSceneContainersで、deep:falseを指定した時、指定した要素のシーンコンテナのみ取得できること');
-		strictEqual(ret.length, 1, '取得できるシーンコンテナの数が正しいこと');
-	});
-
-
-
-	//=============================
-	// Definition
-	//=============================
-	module('[jquery#-1.6.4;browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナ', {
-		setup: function() {
-			stop();
-			var that = this;
-			openPopupWindow().done(function(w) {
-				that.w = w;
-				//window.focus(); //Chromeだと効かない
-				start();
-			}).fail(function(e) {
-				throw e;
-			});
-		},
-		teardown: function() {
-			deleteProperty(window, 'h5scenetest');
-			stop();
-			closePopupWindow(this.w).done(function() {
-				start();
-			});
-		},
-		$fixture: $('#qunit-fixture')
-	});
-
-	//=============================
-	// Body
-	//=============================
-	asyncTest(
-			'ブラウザ履歴連動遷移',
-			function() {
-				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
-				var that = this;
-				gate({
-					func: createFuncForWaitPouupMainContainer(this.w),
-					failMsg: 'メインシーンコンテナが取得できませんでした'
-				})
-						.done(
-								function() {
-									var mainContainer = that.w.h5.scene.getMainSceneContainer();
-									gate({
-										func: function() {
-											return !!mainContainer._currentController;
-										}
-									})
-											.done(
-													function() {
-														var controller = mainContainer._currentController;
-														var title = controller.$find('h1').text();
-														strictEqual(title, 'FROM',
-																'直接アクセスで画面が表示されていること');
-														//strictEqual(controller.__name, 'scenedata.controller.FromController', 'コントローラーバインド確認');
-														mainContainer.navigate({
-															to: 'to.html?' + BUILD_TYPE_PARAM,
-															args: {
-																test: 'hoge'
-															}
-														});
-														gate(
-																{
-																	func: function() {
-																		return mainContainer._currentController
-																				&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
-																	},
-																	failMsg: 'シーンが変更されませんでした'
-																})
-																.done(
-																		function() {
-																			var controller = mainContainer._currentController;
-																			var title = controller
-																					.$find('h1')
-																					.text();
-																			strictEqual(title,
-																					'TO',
-																					'画面が遷移されていること');
-																			var param = controller.args.test;
-																			strictEqual(param,
-																					'hoge',
-																					'画面間パラメータが渡されていること');
-																			ok(
-																					/\/to\.html(?:\?|#|$)/
-																							.test(that.w.location.href),
-																					'URLが連動していること');
-
-																			controller = null;
-
-																			that.w.history.back();
-																			gate(
-																					{
-																						func: function() {
-																							return mainContainer._currentController
-																									&& mainContainer._currentController.__name === 'scenedata.controller.FromController';
-																						},
-																						failMsg: 'シーンが変更されませんでした'
-																					})
-																					.done(
-																							function() {
-																								var controller = mainContainer._currentController;
-																								var title = controller
-																										.$find(
-																												'h1')
-																										.text();
-																								strictEqual(
-																										title,
-																										'FROM',
-																										'histroy.back()で画面が遷移されていること');
-																								ok(
-																										/\/from\.html(?:\?|#|$)/
-																												.test(that.w.location.href),
-																										'URLが連動していること');
-																								//履歴遷移でのパラメーター取得は未対応
-
-																								controller = null;
-
-																								that.w.history
-																										.forward();
-																								gate(
-																										{
-																											func: function() {
-																												return mainContainer._currentController
-																														&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
-																											},
-																											failMsg: 'シーンが変更されませんでした'
-																										})
-																										.done(
-																												function() {
-																													var controller = mainContainer._currentController;
-																													var title = controller
-																															.$find(
-																																	'h1')
-																															.text();
-																													strictEqual(
-																															title,
-																															'TO',
-																															'histroy.forward()で画面が遷移されていること');
-																													ok(
-																															/\/to\.html(?:\?|#|$)/
-																																	.test(that.w.location.href),
-																															'URLが連動していること');
-																													//履歴遷移でのパラメーター取得は未対応
-
-																													mainContainer = controller = null;
-
-																													that.w.location
-																															.reload(true);
-																													gate(
-																															{
-																																func: createFuncForWaitPouupMainContainer(that.w),
-																																failMsg: 'メインシーンコンテナが取得できませんでした'
-																															})
-																															.done(
-																																	function() {
-																																		mainContainer = that.w.h5.scene
-																																				.getMainSceneContainer(); //リロードしたので再度取得
-																																		gate(
-																																				{
-																																					func: function() {
-																																						return !!mainContainer._currentController;
-																																					},
-																																					failMsg: 'currentControllerが取得できませんでした'
-																																				})
-																																				.done(
-																																						function() {
-																																							var controller = mainContainer._currentController;
-																																							var title = controller
-																																									.$find(
-																																											'h1')
-																																									.text();
-																																							strictEqual(
-																																									title,
-																																									'TO',
-																																									'location.reload()で画面が再表示されていること');
-																																							ok(
-																																									/\/to\.html(?:\?|#|$)/
-																																											.test(that.w.location.href),
-																																									'URLが連動していること');
-																																							//履歴遷移でのパラメーター取得は未対応
-
-																																						})
-																																				.always(
-																																						start);
-																																	})
-																															.fail(
-																																	start);
-																												})
-																										.fail(
-																												start);
-																							})
-																					.fail(start);
-																		}).fail(start);
-													}).fail(start);
-								}).fail(start);
-			});
-
-	//	asyncTest(
-	//			'メインシーンコンテナの初期表示シーンの確認',
-	//			function() {
-	//				this.w.location.href = 'scenedata/page/init_scene.html?' + BUILD_TYPE_PARAM;
-	//				var that = this;
-	//				gate({
-	//					func: function() {
-	//						return that.w.h5 && that.w.h5.scene && that.w.h5.scene.getMainSceneContainer();
-	//					},
-	//					failMsg: 'メインシーンコンテナが取得できませんでした'
-	//				})
-	//						.done(
-	//								function() {
-	//									var mainContainer = that.w.h5.scene.getMainSceneContainer();
-	//									var controller = mainContainer._currentController;
-	//									var title = controller.$find('h1').text();
-	//									strictEqual(title, 'FROM', '初期表示シーンの画面が表示されていること');
-	//									ok(/\/init_scene\.html(?:\?|#|$)/.test(that.w.location.href),
-	//											'初期表示シーンはURL連動していないこと');
-	//									mainContainer.navigate('to.html?' + BUILD_TYPE_PARAM);
-	//									gate(
-	//											{
-	//												func: function() {
-	//													return mainContainer._currentController
-	//															&& mainContainer._currentController.__name === 'scenedata.controller.ToController';
-	//												},
-	//												failMsg: 'シーンが変更されませんでした'
-	//											})
-	//											.done(
-	//													function() {
-	//														var controller = mainContainer._currentController;
-	//														var title = controller.$find('h1').text();
-	//														strictEqual(title, 'TO', '画面が遷移されていること');
-	//														ok(/\/to\.html(?:\?|#|$)/
-	//																.test(that.w.location.href),
-	//																'URLが連動していること');
-	//													}).always(start);
-	//								}).fail(start);
-	//			});
-
-	//=============================
-	// Definition
-	//=============================
-	module('[jquery#-1.6.4;browser#and-and:all|sa-ios:all|ie-wp:all]フラグの確認', {
-		setup: function() {
-			stop();
-			var that = this;
-			openPopupWindow().done(function(w) {
-				that.w = w;
-				//window.focus(); //Chromeだと効かない
-				start();
-			}).fail(function(e) {
-				throw e;
-			});
-		},
-		teardown: function() {
-			deleteProperty(window, 'h5scenetest');
-			stop();
-			closePopupWindow(this.w).done(function() {
-				start();
-			});
-		}
-	});
-
-	//=============================
-	// Body
-	//=============================
-	asyncTest(
-			'h5.settings.scene.autoInitフラグの確認',
-			function() {
-				this.w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
-				var that = this;
-				gate({
-					func: createFuncForWaitPouupMainContainer(this.w),
-					failMsg: 'メインシーンコンテナが取得できませんでした'
-				})
-						.done(
-								function() {
-									strictEqual(that.w.h5.settings.scene.autoInit, true, 'フラグの確認');
-									var mainContainer = that.w.h5.scene.getMainSceneContainer();
-									ok(!!mainContainer, 'メインシーンコンテナが生成されていること');
-									ok(that.w.$('[data-h5-scene-container="sub_from"]').is(
-											'[data-h5-dyn-container-bound]'),
-											'通常のシーンコンテナが生成されていること');
-									var elm = that.w
-											.$('[data-h5-controller="scenedata.controller.SubController"]');
-									gate(
-											{
-												func: function() {
-													return !!that.w.h5.core.controllerManager
-															.getControllers(elm)[0];
-												},
-												failMsg: 'ポップアップウィンドウのDOM要素に記述されているコントローラがバインドされませんでした'
-											}).done(
-											function() {
-												var controller = that.w.h5.core.controllerManager
-														.getControllers(elm)[0];
-												strictEqual(controller && controller.__name,
-														'scenedata.controller.SubController',
-														'コントローラーがバインドされていること');
-											}).always(start);
-								}).fail(start);
-			});
-
-	//	//=============================
-	//	// Definition
-	//	//=============================
-	//	module('openWindow', {
-	//		setup: function() {
-	//			stop();
-	//			var that = this;
-	//			h5.scene.openWindow('data/scene.html', 'popup',
-	//					'width=400, height=300, menubar=no, toolbar=no, scrollbars=yes').done(
-	//					function(remoteWindow) {
-	//						that.remoteWindow = remoteWindow;
-	//						setTimeout(function() {
-	//							// FIXME 仮実装に合わせたタイムアウト処理。待機処理が実装されれば要らない
-	//							start();
-	//						}, WAIT_TIME_FOR_OPEN_WINDOW);
-	//					}).fail(function(e) {
-	//				throw e;
-	//			});
-	//		},
-	//		teardown: function() {
-	//			if (this.remoteWindow) {
-	//				stop();
-	//				start(); // FIXME
-	//				this.remoteWindow.close().always(function() {
-	//					start();
-	//				});
-	//			}
-	//		},
-	//		remoteWindow: null
-	//	});
-	//
-	//	//=============================
-	//	// Body
-	//	//=============================
-	//	test(
-	//			'リモートウィンドウオブジェクトの取得',
-	//			function() {
-	//				ok(this.remoteWindow, 'リモートウィンドウオブジェクトが取得できること');
-	//				strictEqual(this.remoteWindow.window.opener, window,
-	//						'windowオブジェクトが取得でき、openerがwindowであること');
-	//				strictEqual(this.remoteWindow.window.innerHeight, 300,
-	//						'開いたウィンドウはfeatureで指定した高さであること');
-	//				strictEqual(this.remoteWindow.window.innerWidth, 400, '開いたウィンドウはfeatureで指定した幅であること');
-	//			});
-	//
-	//	asyncTest('メインシーンのメソッド呼び出し(同期)', function() {
-	//		this.remoteWindow.invoke('getValue', [1, 2]).done(function(result) {
-	//			strictEqual(result, '3PageController', 'メインシーンのメソッドが実行され戻り値が取得できること');
-	//		}).fail(function() {
-	//			ok(false, 'invokeが失敗した');
-	//		}).always(start);
-	//	});
-	//
-	//	asyncTest('メインシーンのメソッド呼び出し(非同期)', function() {
-	//		this.remoteWindow.invoke('getValueAsync', [1, 2]).done(function(result) {
-	//			strictEqual(result, '3PageController', 'メインシーンのメソッドが実行され戻り値が取得できること');
-	//		}).fail(function() {
-	//			ok(false, 'invokeが失敗した');
-	//		}).always(start);
-	//	});
-	//
-	//	test('モーダル化', function() {
-	//		this.remoteWindow.setModal(true);
-	//		strictEqual($('.h5-indicator.overlay').length, 1, 'setModal(true)で親ウィンドウにオーバレイが表示されること');
-	//		this.remoteWindow.setModal(false);
-	//		strictEqual($('.h5-indicator.overlay').length, 0, 'setModal(false)で親ウィンドウのオーバレイが消去されること');
-	//	});
-
-	//	test('プロキシオブジェクトの取得', function() {
-	//		var proxy = this.remoteWindow.getControllerProxy();
-	//	});
-	//
-	//	test('セレクタを指定してプロキシオブジェクトの取得', function() {
-	//		var proxy = this.remoteWindow.getControllerProxy('.target1');
-	//	});
-
-	//	//=============================
-	//	// Definition
-	//	//=============================
-	//	module('openWindow先から親ウィンドウのRemoteWindowの操作', {
-	//		setup: function() {
-	//			stop();
-	//			var that = this;
-	//			// 親ウィンドウのbodyにコントろらをバインド
-	//			var controller = h5.core.controller(document.body, {
-	//				__name: 'PageController',
-	//				__ready: function() {
-	//					var dfd = h5.async.deferred();
-	//					this.methodExecutedDeferred = dfd;
-	//					this.methodExecutedPromise = dfd.promise();
-	//				},
-	//				method: function(arg) {
-	//					this.executedMethodArg = arg;
-	//					dfd.resolve();
-	//				}
-	//			});
-	//			this.parentWindowPageController = controller;
-	//			controller.readyPromise.done(function(){
-	//				h5.scene.openWindow('data/scene-getParentWindow.html?' + new Date().getTime(),
-	//						'popup' + new Date().getTime(),
-	//						'width=400, height=300, menubar=no, toolbar=no, scrollbars=yes').done(
-	//						function(remoteWindow) {
-	//							that.remoteWindow = remoteWindow;
-	//							setTimeout(function() {
-	//								// FIXME 仮実装に合わせたタイムアウト処理。待機処理が実装されれば要らない
-	//								start();
-	//							}, WAIT_TIME_FOR_OPEN_WINDOW);
-	//						}).fail(function(e) {
-	//					throw e;
-	//				});
-	//			});
-	//		},
-	//		teardown: function() {
-	//			if (this.remoteWindow) {
-	//				stop();
-	//				start(); // FIXME
-	//				this.remoteWindow.close().always(function() {
-	//					start();
-	//				});
-	//			}
-	//			this.parentWindowPageController.dispose();
-	//		},
-	//		remoteWindow: null,
-	//		parentWindowPageController:null
-	//	});
-	//
-	//	//=============================
-	//	// Body
-	//	//=============================
-	//	asyncTest('openWindow先から親ウィンドウのメソッド呼び出し', function() {
-	//		window.checkRemoteWindowCall = function() {
-	//			ok('子ウィンドウから親ウィンドウを参照できること');
-	//			delete window.checkRemoteWindowCall;
-	//		}
-	//		var moduleObj = this;
-	//		this.parentWindowPageController.methodExecutedDeferred.done(function(){
-	//			ok(true, '子ウィンドウから親ウィンドウのメソッドをinvokeで呼べること');
-	//			strictEqual(moduleObj.executedMethodArg, 'ok', 'invokeで実行したメソッドに引数が渡されていること');
-	//		});
-	//	});
 
 	//=============================
 	// Definition
@@ -1254,128 +201,1680 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module('[jquery#-1.6.4]createSceneContainer', {
+		setup: function() {
+			this.originalTitle = document.title;
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			clearController();
+			document.title = this.originalTitle;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('メインシーンコンテナを生成できること', function() {
+		var container = h5.scene.createSceneContainer(this.$container, true);
+		var mainContainer = h5.scene.getMainSceneContainer();
+		strictEqual(mainContainer, container, 'メインシーンコンテナを生成できること');
+	});
+
+	test('メインでないシーンコンテナを生成できること', function() {
+		var container = h5.scene.createSceneContainer(this.$container, false);
+		strictEqual(h5.scene.getSceneContainers()[0], container, 'メインシーンコンテナを生成できること');
+	});
+
+	test('第1引数にDOMを指定した場合はシーンコンテナを生成できること', function() {
+		var container = h5.scene.createSceneContainer(this.$container.get(0));
+		strictEqual(h5.scene.getSceneContainers()[0], container, 'シーンコンテナを生成できること');
+	});
+
+	test('第1引数にjQueryオブジェクトを指定した場合はシーンコンテナを生成できること', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		strictEqual(h5.scene.getSceneContainers()[0], container, 'シーンコンテナを生成できること');
+	});
+
+	test('第1引数にセレクタ文字列を指定した場合はシーンコンテナを生成できること', function() {
+		var container = h5.scene.createSceneContainer('.testContainer');
+		strictEqual(h5.scene.getSceneContainers()[0], container, 'シーンコンテナを生成できること');
+	});
+
+	test('第1引数に対象要素が複数あるDOMを指定すると例外を投げること', function() {
+		this.$container.after('<div class="testContainer"></div');
+		try {
+			h5.scene.createSceneContainer(document.getElementsByClassName('.testContainer'));
+			ok(false, '例外を投げない');
+		} catch (e) {
+			ok(true, '第1引数に対象要素が複数あるDOMを指定すると例外を投げること');
+		}
+	});
+
+	test('第1引数に対象要素が複数あるjQueryを指定すると例外を投げること', function() {
+		this.$container.after('<div class="testContainer"></div');
+		try {
+			h5.scene.createSceneContainer($('.testContainer'));
+			ok(false, '例外を投げない');
+		} catch (e) {
+			ok(true, '第1引数に対象要素が複数あるjQueryを指定すると例外を投げること');
+		}
+	});
+
+	test('第1引数に対象要素が複数あるセレクタ文字列を指定すると例外を投げること', function() {
+		this.$container.after('<div class="testContainer"></div');
+		try {
+			h5.scene.createSceneContainer('.testContainer');
+			ok(false, '例外を投げない');
+		} catch (e) {
+			ok(true, '第1引数に対象要素が複数あるセレクタ文字列を指定すると例外を投げること');
+		}
+	});
+
+	test('第1引数に対象要素が1つもない要素を指定すると例外を投げること', function() {
+		try {
+			h5.scene.createSceneContainer('.dummy');
+			ok(false, '例外を投げない');
+		} catch (e) {
+			ok(true, '第1引数に対象要素が1つもない要素を指定すると例外を投げること');
+		}
+	});
+
+	test('DOM|jQuery|Selector以外を指定した場合例外を投げること', function() {
+		try {
+			h5.scene.createSceneContainer(100);
+			ok(false, '例外を投げない');
+		} catch (e) {
+			ok(true, 'DOM|jQuery|Selector以外を指定した場合例外を投げること');
+		}
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]メインシーンコンテナの取得', {
+		setup: function() {
+			this.originalTitle = document.title;
+			var $container = $('<div class="testContainer">');
+			$('#qunit-fixture').append($container);
+			this.container = h5.scene.createSceneContainer(this.$container, true);
+		},
+		teardown: function() {
+			clearController();
+			document.title = this.originalTitle;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('scene.getMainSceneContainer()', function() {
+		strictEqual(h5.scene.getMainSceneContainer(), this.container, 'メインシーンコンテナを取得できること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナの取得 scene.getSceneContainerByName()', {
+		setup: function() {
+			this.originalTitle = document.title;
+		},
+		teardown: function() {
+			clearController();
+			document.title = this.originalTitle;
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('指定したシーンコンテナ名のメインでないシーンコンテナを取得できること', function() {
+		var $container = $('<div data-h5-scene-container="testContainer">');
+		$('#qunit-fixture').append($container);
+		var container = h5.scene.createSceneContainer($container);
+		strictEqual(h5.scene.getSceneContainerByName('testContainer'), container,
+				'メインでないシーンコンテナを取得できること');
+	});
+
+	test('指定したシーンコンテナ名のメインシーンコンテナを取得できること', function() {
+		var $container = $('<div data-h5-main-scene-container="testContainer">');
+		$('#qunit-fixture').append($container);
+		var container = h5.scene.createSceneContainer($container, true);
+		strictEqual(h5.scene.getSceneContainerByName('testContainer'), container,
+				'メインシーンコンテナを取得できること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	module(
-			'[jquery#-1.6.4;browser#ie:-9|op|and-and:all|sa-ios:all|ie-wp:all]メインシーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-h5-scene-title属性を持つこと',
+			'[jquery#-1.6.4]シーンコンテナの取得 scene.getSceneContainers()',
 			{
 				setup: function() {
-					this.pathname = location.pathname;
-					this.url = 'scenedata/page/title/dataTitle.html';
 					this.originalTitle = document.title;
-					this.$container = $('<div>');
-					var $scene = $('<div data-h5-scene>');
-					this.$container.append($scene);
-					$('#qunit-fixture').append(this.$container);
-					this.container = h5.scene.createSceneContainer(this.$container, true);
+					this.$containerA = $('<div class="testContainerA" data-h5-scene-container>');
+					this.$containerB = $('<div class="testContainerB" data-h5-scene-container>');
+					this.$mainContainer = $('<div class="testMainContainer" data-h5-main-scene-container>');
+					$('#qunit-fixture').append(this.$containerA);
+					$('body').append(this.$containerB);
+					$('#qunit-fixture').append(this.$mainContainer);
 				},
 				teardown: function() {
 					clearController();
+					this.$containerB.remove();
 					document.title = this.originalTitle;
-					history.pushState(null, null, this.pathname);
 				}
 			});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('タイトルに設定すること', function() {
-		var container = this.container;
-		container.navigate({
-			to: this.url
-		}).done(function() {
-			var title = container.getTitle();
-			strictEqual(title, 'changeTitle', 'シーン要素のdata-h5-scene-titleをgetTitle()で取得できること');
-		}).always(start);
+	test('第1引数を指定しない場合はbody以下からメインシーンコンテナ、メインでないシーンコンテナが取得できること', function() {
+		h5.scene.createSceneContainer(this.$containerA);
+		h5.scene.createSceneContainer(this.$containerB);
+		h5.scene.createSceneContainer(this.$mainContainer, true);
+		var containers = h5.scene.getSceneContainers();
+		strictEqual(containers.length, 3, 'メインシーンコンテナ、メインでないシーンコンテナを取得できること');
 	});
 
-	asyncTest('document.titleへ反映すること', function() {
-		var container = this.container;
-		container.navigate({
-			to: this.url
-		}).done(
-				function() {
-					strictEqual(document.title, 'changeTitle',
-							'シーン要素のdata-h5-scene-titleをdocument.titleに反映すること');
-				}).always(start);
+	test('第1引数に指定したDOM要素以下からメインシーンコンテナ、メインでないシーンコンテナが取得できること', function() {
+		h5.scene.createSceneContainer(this.$containerA);
+		h5.scene.createSceneContainer(this.$containerB);
+		h5.scene.createSceneContainer(this.$mainContainer, true);
+		var containers = h5.scene.getSceneContainers(document.getElementById('qunit-fixture'));
+		strictEqual(containers.length, 2, '第1引数に指定したDOM要素以下から取得できること');
+	});
+
+	test('第1引数に指定したjQueryオブジェクト要素以下からメインシーンコンテナ、メインでないシーンコンテナが取得できること', function() {
+		h5.scene.createSceneContainer(this.$containerA);
+		h5.scene.createSceneContainer(this.$containerB);
+		h5.scene.createSceneContainer(this.$mainContainer, true);
+		var containers = h5.scene.getSceneContainers($('#qunit-fixture'));
+		strictEqual(containers.length, 2, '第1引数に指定したjQuery要素以下から取得できること');
+	});
+
+	test('第1引数に指定したセレクタ文字列以下からメインシーンコンテナ、メインでないシーンコンテナが取得できること', function() {
+		h5.scene.createSceneContainer(this.$containerA);
+		h5.scene.createSceneContainer(this.$containerB);
+		h5.scene.createSceneContainer(this.$mainContainer, true);
+		var containers = h5.scene.getSceneContainers('#qunit-fixture');
+		strictEqual(containers.length, 2, '第1引数に指定したセレクタ文字列以下から取得できること');
+	});
+
+	test('第2引数を省略した場合は第1引数に指定した要素の子孫要素にバインドされているコントローラが取得できること', function() {
+		// MEMO 子孫要素のシーンコンテナも取得できるということ
+		var $containerZ = $('<div class="testContainerZ">');
+		this.$containerA.append($containerZ);
+		h5.scene.createSceneContainer(this.$containerA);
+		h5.scene.createSceneContainer($containerZ);
+		var containers = h5.scene.getSceneContainers('#qunit-fixture');
+		strictEqual(containers.length, 2, '第1引数に指定した要素の子孫にバインドされているコントローラも取得できること');
+	});
+
+	test('第2引数にtrueを指定した場合は第1引数に指定した要素の子孫要素にバインドされているコントローラが取得できること', function() {
+		// MEMO 子孫要素のシーンコンテナも取得できるということ
+		var $containerZ = $('<div class="testContainerZ">');
+		this.$containerA.append($containerZ);
+		h5.scene.createSceneContainer(this.$containerA);
+		h5.scene.createSceneContainer($containerZ);
+		var containers = h5.scene.getSceneContainers('#qunit-fixture', {
+			deep: true
+		});
+		strictEqual(containers.length, 2, '第1引数に指定した要素の子孫にバインドされているコントローラも取得できること');
+	});
+
+	test('第2引数にfalseを指定した場合は子孫要素にバインドされているコントローラは含まないこと', function() {
+		// MEMO 子孫要素のシーンコンテナも取得できるということ
+		var $containerZ = $('<div class="testContainerZ">');
+		this.$containerA.append($containerZ);
+		h5.scene.createSceneContainer(this.$containerA);
+		h5.scene.createSceneContainer($containerZ);
+		var containers = h5.scene.getSceneContainers(this.$containerA, {
+			deep: false
+		});
+		strictEqual(containers.length, 1, '第1引数に指定した要素の子孫にバインドされているコントローラも取得できること');
 	});
 
 	//=============================
 	// Definition
 	//=============================
-	module('[jquery#-1.6.4]シーンコンテナのnavigate()のtoプロパティでページURLを指定。シーン要素がdata-h5-scene-title属性を持つ', {
+	module('[jquery#-1.6.4]シーンコンテナの取得 Controller.scene.getParentSceneContainer()', {
 		setup: function() {
-			this.url = 'scenedata/page/title/dataTitle.html';
-			this.originalTitle = document.title;
-			this.$container = $('<div>');
-			var $scene = $('<div data-h5-scene>');
-			this.$container.append($scene);
-			$('#qunit-fixture').append(this.$container);
-			this.container = h5.scene.createSceneContainer(this.$container, false);
+			stop();
+			var that = this;
+			var html = '<div class="testContainer" data-h5-scene-container>';
+			html += '<div class="testController" data-h5-scene>';
+			html += '</div></div>';
+			$('#qunit-fixture').append(html);
+			var controllerDef = {
+				__name: 'testController'
+			};
+			h5.core.expose(controllerDef);
+			this.controller = h5.core.controller('.testController', controllerDef);
+			this.controller.readyPromise.done(function() {
+				that.container = h5.scene.createSceneContainer('.testContainer');
+				start();
+			});
 		},
 		teardown: function() {
 			clearController();
-			document.title = this.originalTitle;
 		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('タイトルに設定すること', function() {
-		var container = this.container;
-		container.navigate({
-			to: this.url
-		}).done(function() {
-			var title = container.getTitle();
-			strictEqual(title, 'changeTitle', 'シーン要素のdata-h5-scene-titleをgetTitle()で取得できること');
+	test('自身が所属するシーンコンテナを取得できること', function() {
+		var container = this.controller.scene.getParentContainer();
+		strictEqual(container, this.container, '自身が所属するシーンコンテナを取得できること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナ内の遷移方法', {
+		setup: function() {
+			this.url = 'scenedata/page/navigate/toWithBody.html';
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('SceneContainer.navigate()', function() {
+		var $container = this.$container;
+		var container = h5.scene.createSceneContainer($container);
+		container.navigate(this.url).done(function() {
+			var msg = $container.find('.message').text();
+			strictEqual(msg, 'toWithBody', 'SceneContainer.navigate()でシーンの遷移が行えること');
 		}).always(start);
 	});
 
-	asyncTest('document.titleへ反映しない', function() {
-		var container = this.container;
-		var that = this;
-		container.navigate({
+	asyncTest('sceneChangeRequestイベント', function() {
+		var $container = this.$container;
+		h5.scene.createSceneContainer($container);
+		$container.trigger('sceneChangeRequest', {
 			to: this.url
-		}).done(
+		});
+		// FIXME シーンが遷移し終わったタイミングの判定方法
+		setTimeout(function() {
+			var msg = $container.find('.message').text();
+			strictEqual(msg, 'toWithBody', 'SceneContainer.navigate()でシーンの遷移が行えること');
+			start();
+		}, 1000);
+	});
+
+	asyncTest('Controller.scene.navigate()', function() {
+		var that = this;
+		var $container = this.$container;
+		var testController = {
+			__name: 'testController'
+		};
+		h5.core.expose(testController);
+		$container.append('<div class="test" data-h5-scene>');
+		var controller = h5.core.controller('.test', testController);
+		controller.readyPromise.done(function() {
+			h5.scene.createSceneContainer($container);
+			controller.scene.navigate(that.url);
+			// FIXME シーンが遷移し終わったタイミングの判定方法
+			setTimeout(function() {
+				var msg = $container.find('.message').text();
+				strictEqual(msg, 'toWithBody', 'SceneContainer.navigate()でシーンの遷移が行えること');
+				start();
+			}, 1000);
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナの遷移先にコントローラを指定', {
+		setup: function() {
+			var html = '<div class="testContainer" data-h5-scene-container>';
+			html += '<div class="testController" data-h5-scene></div></div>';
+			$('#qunit-fixture').append(html);
+			this.$container = $('.testContainer');
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('既に存在するコントローラ', function() {
+		var controllerDef = {
+			__name: 'testController',
+			__init: function() {
+				$(this.rootElement).append('<div class="message">testController</div>');
+			}
+		};
+		h5.core.expose(controllerDef);
+		var container = h5.scene.createSceneContainer(this.$container);
+		container.navigate('testController').done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				strictEqual($('.message').text(), 'testController', 'コントローラを指定できること');
+				start();
+			}, 0);
+		});
+	});
+
+	asyncTest('存在しないコントローラ', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		container.navigate('scenedata.controller.ToController').done(function() {
+			// TODO 指定したコントローラの__initが終わる前にresolveされているので
+			// messageクラス要素に値がまだ入っていない
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				strictEqual($('.message').text(), 'ToController', 'コントローラを指定できること');
+				start();
+			}, 0);
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナの遷移先にHTMLを指定', {
+		setup: function() {
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+			this.container = h5.scene.createSceneContainer('.testContainer');
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('bodyがありシーンコンテナがない場合', function() {
+		this.container.navigate('scenedata/page/navigate/toWithBody.html').done(function() {
+			strictEqual($('.message').text(), 'toWithBody', 'bodyタグ以下のHTMLがシーンコンテナに表示されること');
+		}).always(start);
+	});
+
+	asyncTest('bodyもシーンコンテナもない場合', function() {
+		this.container.navigate('scenedata/page/navigate/toWithoutBodyAndContainer.html').done(
 				function() {
-					strictEqual(document.title, that.originalTitle,
-							'シーン要素のdata-h5-scene-titleをdocument.titleに反映しないこと');
+					strictEqual($('.message').text(), 'toWithoutBodyAndContainer',
+							'HTMLがシーンコンテナに表示されること');
 				}).always(start);
 	});
+
+	asyncTest('シーンコンテナがある場合', function() {
+		this.container.navigate('scenedata/page/navigate/toWithContainer.html').done(function() {
+			strictEqual($('.message').text(), 'toWithContainer', 'シーンコンテナ以下のHTMLがシーンコンテナに表示されること');
+		}).always(start);
+	});
+
+	asyncTest('シーンコンテナが複数ある場合', function() {
+		this.container.navigate('scenedata/page/navigate/toWithMultiSceneContainer.html').done(
+				function() {
+					strictEqual($('.message').text(), 'toWithMultiSceneContainer1',
+							'先頭のシーンコンテナが表示されること');
+				}).always(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	// FIXME JSエラーが起きている
+	module('[jquery#-1.6.4]履歴管理', {
+		setup: function() {
+			this.href = location.href;
+			this.originalTitle = document.title;
+			this.container;
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			stop();
+			var that = this;
+			this.container.navigate(this.href).done(function() {
+				// TODO 仮実装に合わせたタイムアウト処理
+				setTimeout(function() {
+					document.title = that.originalTitle;
+					clearController();
+					$('.testContainer').remove();
+					start();
+				}, 0);
+			});
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('メインシーンコンテナは遷移時にブラウザ履歴が残る', function() {
+		var container = this.container = h5.scene.createSceneContainer('.testContainer', true);
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html'
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					failMsg: 'シーンが遷移しない',
+					maxWait: 1000
+				}).done(function() {
+					container.navigate({
+						to: '/hifive/test/scenedata/page/navigate/toWithBody.html',
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+							gate({
+								func: function() {
+									return $('.message').text() === 'toWithBody';
+								},
+								failMsg: 'シーンが遷移しない',
+								maxWait: 1000
+							}).done(function() {
+								window.history.back();
+								gate({
+									func: function() {
+										return $('.message').text() === 'to';
+									},
+									failMsg: 'シーンが遷移しない',
+									maxWait: 1000
+								}).done(function() {
+									strictEqual($('.message').text(), 'to', 'ブラウザ履歴が残ること');
+								}).always(start);
+							});
+						}, 0);
+					});
+				});
+			}, 0);
+		});
+	});
+
+	asyncTest('履歴遷移（戻る、進む）で、メインシーンコンテナ以外の要素は変わらない', function() {
+		this.$container.wrap('<div class="outOfContainer"></div>');
+		this.$container.after('<div class="afterOfContainer">afterOfContainer</div>');
+		var $container = this.$container;
+		var container = this.container = h5.scene.createSceneContainer('.testContainer', true);
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html'
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					failMsg: 'シーンが遷移しない',
+					maxWait: 1000
+				}).done(function() {
+					container.navigate({
+						to: '/hifive/test/scenedata/page/navigate/toWithBody.html',
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+							gate({
+								func: function() {
+									return $('.message').text() === 'toWithBody';
+								},
+								failMsg: 'シーンが遷移しない',
+								maxWait: 1000
+							}).done(function() {
+								window.history.back();
+								gate({
+									func: function() {
+										return $('.message').text() === 'to';
+									},
+									failMsg: 'シーンが遷移しない',
+									maxWait: 1000
+								}).done(function() {
+									var assertMsg = 'ブラウザバックしてもメインシーンコンテナ以外の要素は変わらないこと';
+									var parentEl = $container.parent('.outOfContainer');
+									var afterEl = $container.next('.afterOfContainer');
+									strictEqual(parentEl.length, 1, assertMsg);
+									strictEqual(afterEl.length, 1, assertMsg);
+									window.history.forward();
+									gate({
+										func: function() {
+											return $('.message').text() === 'toWithBody';
+										},
+										failMsg: 'シーンが遷移しない',
+										maxWait: 1000
+									}).done(function() {
+										assertMsg = 'ブラウザフォワードしてもメインシーンコンテナ以外の要素は変わらないこと';
+										parentEl = $container.parent('.outOfContainer');
+										afterEl = $container.next('.afterOfContainer');
+										strictEqual(parentEl.length, 1, assertMsg);
+										strictEqual(afterEl.length, 1, assertMsg);
+									}).always(start);
+								});
+							});
+						}, 0);
+					});
+				});
+			}, 0);
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナのタイトルとdocument.title', {
+		setup: function() {
+			this.url = location.href;
+			this.defaultTitle = document.title;
+			document.title = 'defaultTitle';
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			stop();
+			var that = this;
+			this.container.navigate(this.url).done(function() {
+				document.title = that.defaultTitle;
+				// TODO 仮実装に合わせたタイムアウト処理
+				setTimeout(function() {
+					clearController();
+					start();
+				}, 0);
+			});
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('メインシーンコンテナのタイトルがdocument.titleに反映されること', function() {
+		var that = this;
+		this.container = h5.scene.createSceneContainer(this.$container, true);
+		this.container.navigate('scenedata/page/title/dataTitle.html').done(
+				function() {
+					strictEqual(document.title, that.container.getTitle(),
+							'メインシーンコンテナのタイトルがdocument.titleに反映されること');
+					start();
+				});
+	});
+
+	asyncTest('メインでないシーンコンテナのタイトルがdocument.titleに反映されないこと', function() {
+		this.container = h5.scene.createSceneContainer(this.$container);
+		this.container.navigate('scenedata/page/title/dataTitle.html').done(
+				function() {
+					strictEqual(document.title, 'defaultTitle',
+							'メインでないシーンコンテナのタイトルがdocument.titleに反映されないこと');
+					start();
+				});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナのタイトルを設定', {
+		setup: function() {
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('navigate()のtitleプロパティ値がシーンコンテナのタイトルに設定されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		container.navigate({
+			to: 'scenedata/page/title/dataTitle.html',
+			title: 'changeTitleByProperty'
+		}).done(
+				function() {
+					strictEqual(container.getTitle(), 'changeTitleByProperty',
+							'navigate()のtitleプロパティ値がシーンコンテナのタイトルに設定されること');
+					start();
+				});
+	});
+
+	asyncTest('コントローラ遷移の場合、遷移先のシーンコントローラのsceneTitleプロパティ値がシーンコンテナのタイトルに設定されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		container.navigate({
+			to: 'scenedata.controller.ToController'
+		}).done(
+				function() {
+					strictEqual(container.getTitle(), 'changeTitleBySceneTitleProperty',
+							'遷移先のシーンコントローラのsceneTitleプロパティ値がシーンコンテナのタイトルに設定されること');
+					start();
+				});
+	});
+
+	asyncTest('遷移先シーン要素のdata-h5-scene-title属性値がシーンコンテナのタイトルに設定されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		container.navigate({
+			to: 'scenedata/page/title/dataTitle.html'
+		}).done(
+				function() {
+					strictEqual(container.getTitle(), 'changeTitle',
+							'遷移先シーン要素のdata-h5-scene-title属性値がシーンコンテナのタイトルに設定されること');
+					start();
+				});
+	});
+
+	asyncTest('遷移先シーン要素の子孫のタイトルタグの値がシーンコンテナのタイトルに設定されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		container.navigate({
+			to: 'scenedata/page/title/childTitleTag.html'
+		}).done(
+				function() {
+					strictEqual(container.getTitle(), 'changeTitleByTitleTag',
+							'遷移先シーン要素の子孫のタイトルタグの値がシーンコンテナのタイトルに設定されること');
+					start();
+				});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]シーンコンテナのタイトルを設定(優先順位)', {
+		setup: function() {
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest(
+			'navigate()のtitleプロパティと遷移先シーンコントローラにsceneTitleプロパティが存在する場合、titleプロパティが優先されること',
+			function() {
+				var container = h5.scene.createSceneContainer(this.$container);
+				container
+						.navigate({
+							to: 'scenedata.controller.ToController',
+							title: 'changeTitleByProperty'
+						})
+						.done(
+								function() {
+									strictEqual(container.getTitle(), 'changeTitleByProperty',
+											'navigate()のtitleプロパティと遷移先シーンコントローラにsceneTitleプロパティが存在する場合、titleプロパティが優先されること');
+									start();
+								});
+			});
+
+	asyncTest('navigate()のtitleプロパティと遷移先シーン要素の子孫のタイトルタグが存在する場合、titleプロパティが優先されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		container.navigate({
+			to: 'scenedata/page/title/childTitleTag.html',
+			title: 'changeTitleByProperty'
+		}).done(
+				function() {
+					strictEqual(container.getTitle(), 'changeTitleByProperty',
+							'navigate()のtitleプロパティと遷移先シーン要素の子孫のタイトルタグが存在する場合、titleプロパティが優先されること');
+					start();
+				});
+	});
+
+	asyncTest(
+			'コントローラ遷移で指定したコントローラのsceneTitleプロパティと遷移先HTMLにdata-h5-scene-title属性が存在する場合、sceneTitleプロパティが優先されること',
+			function() {
+				var container = h5.scene.createSceneContainer(this.$container);
+				container
+						.navigate({
+							to: 'scenedata.controller.SceneTitleAndDataTitleController',
+						})
+						.done(
+								function() {
+									strictEqual(container.getTitle(),
+											'changeTitleBySceneTitleProperty',
+											'コントローラ遷移で指定したコントローラのsceneTitleプロパティと遷移先HTMLにdata-h5-scene-title属性が存在する場合、sceneTitleプロパティが優先されること');
+									start();
+								});
+			});
+
+	asyncTest(
+			'遷移先HTMLのシーン要素にdata-h5-scene-title属性とタイトルタグが存在する場合、data-h5-scene-title属性が優先されること',
+			function() {
+				var container = h5.scene.createSceneContainer(this.$container);
+				container
+						.navigate({
+							to: 'scenedata/page/title/dataTitleAndTitleTag.html'
+						})
+						.done(
+								function() {
+									strictEqual(container.getTitle(), 'changeTitle',
+											'遷移先HTMLのシーン要素にdata-h5-scene-title属性とタイトルタグが存在する場合、data-h5-scene-title属性が優先されること');
+									start();
+								});
+			});
 
 	//=============================
 	// Definition
 	//=============================
 	module('[jquery#-1.6.4]createSceneContainer() data-h5-scene-title属性', {
 		setup: function() {
-			this.originalTitle = document.title;
-			this.$container = $('<div>');
-			var $scene = $('<div data-h5-scene data-h5-scene-title="testDataTitle">');
-			this.$container.append($scene);
+			this.$container = $('<div class="testContainer">');
 			$('#qunit-fixture').append(this.$container);
 		},
 		teardown: function() {
 			clearController();
-			document.title = this.originalTitle;
 		}
 	});
 
 	//=============================
 	// Body
 	//=============================
-	test('メインシーンコンテナの場合 メインシーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること', function() {
-		var container = h5.scene.createSceneContainer(this.$container, true);
-		var title = container.getTitle();
-		strictEqual(title, 'testDataTitle', 'メインシーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること');
-		strictEqual(document.title, 'testDataTitle',
-				'document.titleがdata-h5-scene-title属性値に反映されること');
+	asyncTest('対象シーンコンテナ要素の直下先頭シーン要素のdata-h5-scene-titleプロパティがシーンコンテナのタイトルに設定されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		container.navigate({
+			to: 'scenedata/page/title/multiDataTitle.html'
+		}).done(
+				function() {
+					strictEqual(container.getTitle(), 'changeTitleA',
+							'対象シーンコンテナ要素の直下先頭シーン要素のdata-h5-scene-titleプロパティがシーンコンテナのタイトルに設定されること');
+					start();
+				});
 	});
 
-	test('シーンコンテナの場合 シーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること', function() {
-		var container = h5.scene.createSceneContainer(this.$container, false);
-		var title = container.getTitle();
-		strictEqual(title, 'testDataTitle', 'シーンコンテナのタイトルがdata-h5-scene-title属性値に設定されること');
-		strictEqual(document.title, this.originalTitle,
-				'document.titleがdata-h5-scene-title属性値に反映されないこと');
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]setTitle()', {
+		setup: function() {
+			this.originalTitle = document.title;
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+		},
+		teardown: function() {
+			document.title = this.originalTitle;
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('setTitleで指定したタイトルがシーンコンテナのタイトルになること', function() {
+		var container = h5.scene.createSceneContainer(this.$container);
+		var title = 'settingTitle';
+		container.setTitle(title);
+		strictEqual(container.getTitle(), title, 'setTitleで指定したタイトルがシーンコンテナのタイトルになること');
+	});
+
+	test('メインシーンコンテナの場合、document.titleにも反映されること', function() {
+		var container = h5.scene.createSceneContainer(this.$container, true);
+		var title = 'settingTitle';
+		container.setTitle(title);
+		strictEqual(container.getTitle(), title, 'setTitleで指定したタイトルがメインシーンコンテナのタイトルになること');
+		strictEqual(document.title, title, 'setTitleで指定したタイトルがdocument.titleに反映されること');
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]navigate(文字列)', {
+		setup: function() {
+			this.originalTitle = document.title;
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+			this.container = h5.scene.createSceneContainer(this.$container);
+		},
+		teardown: function() {
+			document.title = this.originalTitle;
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('ページURLを指定', function() {
+		var container = this.container;
+		container.navigate('scenedata/page/navigate/toWithContainer.html').done(function() {
+			strictEqual($('.message').text(), 'toWithContainer', '指定したHTMLにシーン遷移すること');
+			start();
+		});
+	});
+
+	asyncTest('コントローラ名を指定', function() {
+		var container = this.container;
+		container.navigate('scenedata.controller.ToController').done(function() {
+			// FIXME 指定したコントローラのコントローラ化が終わる前にアサートしているため失敗している
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				strictEqual($('.message').text(), 'ToController', '指定したコントローラをバインドすること');
+				start();
+			}, 0);
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]navigate()のargsプロパティ', {
+		setup: function() {
+			this.originalTitle = document.title;
+			this.$container = $('<div class="testContainer">');
+			$('#qunit-fixture').append(this.$container);
+			this.container = h5.scene.createSceneContainer(this.$container);
+		},
+		teardown: function() {
+			document.title = this.originalTitle;
+			clearController();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('最初に表示されるシーンのコントローラ生成時の第3引数に設定されること', function() {
+		var container = this.container;
+		container.navigate({
+			to: 'scenedata.controller.SceneTitleAndDataTitleController',
+			args: {
+				test: 'testValue'
+			}
+		}).done(
+				function() {
+					// FIXME 指定したコントローラのコントローラ化が終わる前にアサートしているため失敗している
+					// MEMO toプロパティで指定したコントローラの__initでargs.testをmessageクラス要素に出力している
+					// TODO 仮実装に合わせたタイムアウト処理
+					setTimeout(function() {
+						strictEqual($('.message').text(), 'testValue',
+								'最初に表示されるシーンのコントローラ生成時の第3引数に設定されること');
+						start();
+					}, 0);
+				});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]navigate()のnavigationTypeプロパティ', {
+		setup: function() {
+			this.href = location.href;
+			this.originalTitle = document.title;
+			var html = '<div class="testContainer"><div data-h5-scene>';
+
+			html += '</div></div>';
+			// FIXME qunit-fixtureの下に配置するとqunit-fixtureの入れ子構造が何故かできる
+			$('#qunit-fixture').append(html);
+			this.$container = $('.testContainer');
+			this.container = h5.scene.createSceneContainer(this.$container, true);
+		},
+		teardown: function() {
+			stop();
+			var that = this;
+			this.container.navigate(this.href).done(function() {
+				document.title = that.originalTitle;
+				// TODO 仮実装に合わせたタイムアウト処理
+				setTimeout(function() {
+					clearController();
+					$('.testContainer').remove();
+					start();
+				}, 0);
+			});
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('normalを指定した場合はURLに開発者指定のパラメータが入ること', function() {
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			navigationType: 'normal',
+			args: {
+				test: 'testValue'
+			}
+		}).done(function() {
+			gate({
+				func: function() {
+					return $('.message').text() === 'to';
+				},
+				failMsg: 'シーンが遷移しない',
+				maxWait: 1000
+			}).done(function() {
+				// FIXME 指定したコントローラのコントローラ化が終わる前にアサートしているため失敗している
+				// MEMO toプロパティで指定したコントローラの__initでargs.testをmessageクラス要素に出力している
+				var reg = /\??\&?_cltest_/;
+				var search = location.search;
+				ok(reg.test(search), 'URLに開発者指定のパラメータが入ること');
+			}).always(start);
+		});
+	});
+
+	asyncTest('normalを指定した場合はブラウザバックで再表示できること', function() {
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			navigationType: 'normal'
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					failMsg: 'シーンが遷移しない',
+					maxWait: 1000
+				}).done(function() {
+					container.navigate({
+						to: '/hifive/test/scenedata/page/navigate/toWithBody.html'
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+							gate({
+								func: function() {
+									return $('.message').text() === 'toWithBody';
+								},
+								failMsg: 'シーンが遷移しない',
+								maxWait: 1000
+							}).done(function() {
+								window.history.back();
+								gate({
+									func: function() {
+										return $('.message').text() === 'to';
+									},
+									maxWait: 1000,
+									failMsg: 'ブラウザバックで再表示できない'
+								}).done(function() {
+									strictEqual($('.message').text(), 'to', 'ブラウザバックで再表示できること');
+								}).always(start);
+							});
+						}, 0);
+					});
+				}).fail(start);
+			}, 0);
+		});
+	});
+
+	asyncTest('normalを指定した場合はブラウザバックでパラメータが再表示できること', function() {
+		var container = this.container;
+		var url = '/hifive/test/scenedata/page/navigate/toWithBody.html';
+		container.navigate({
+			to: url,
+			navigationType: 'normal',
+			args: {
+				test: 'testValue'
+			}
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'toWithBody';
+					},
+					failMsg: 'シーンが遷移しない',
+					maxWait: 1000
+				}).done(function() {
+					var parameter = location.search;
+					url = '/hifive/test/scenedata/page/navigate/to.html';
+					container.navigate({
+						to: url
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+							gate({
+								func: function() {
+									return $('.message').text() === 'to';
+								},
+								maxWait: 1000,
+								failMsg: 'シーンが遷移しない'
+							}).done(function() {
+								window.history.back();
+								gate({
+									func: function() {
+										return location.search === parameter;
+									},
+									maxWait: 1000,
+									failMsg: 'パラメータが再表示されない'
+								}).done(function() {
+									var assertMsg = 'ブラウザバックでパラメータが再表示できること';
+									strictEqual(location.search, parameter, assertMsg);
+								}).always(start);
+							}).fail(start);
+						}, 0);
+					});
+				}).fail(start);
+			}, 0);
+		});
+	});
+
+	asyncTest('onceを指定した場合はURLに開発者指定のパラメータを入れず、フレームワーク用パラメータのみとなること', function() {
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			navigationType: 'once',
+			args: {
+				test: 'testValue'
+			}
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					maxWait: 1000,
+					failMsg: 'シーンが遷移しない'
+				}).done(function() {
+					container.navigate({
+						to: '/hifive/test/scenedata/page/navigate/toWithBody.html',
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+
+							gate({
+								func: function() {
+									return $('.message').text() === 'toWithBody';
+								},
+								maxWait: 1000,
+								failMsg: 'シーンが遷移しない'
+							}).done(function() {
+								window.history.back();
+								gate({
+									func: function() {
+										var $el = $('.testContainer > div > h1');
+										return $el.text() === 'この画面は再表示できません。';
+									},
+									maxWait: 1000,
+									failMsg: 'シーンが遷移しない'
+								}).done(function() {
+									var search = location.search;
+									var reg = /\??\&?_cltest_/;
+									ok(!reg.test(search), 'URLに開発者指定のパラメータが入らないこと');
+								}).always(start);
+							});
+						}, 0);
+					}).fail(start);
+				});
+			}, 0);
+		}).fail(start);
+	});
+
+	asyncTest('onceを指定した場合はブラウザバックで再表示不可のメッセージ画面を表示すること', function() {
+		var notShowableMsg = 'この画面は再表示できません。';
+		var container = this.container;
+		var toUrl = '/hifive/test/scenedata/page/navigate/to.html';
+		var toWithBodyUrl = '/hifive/test/scenedata/page/navigate/toWithBody.html';
+		container.navigate({
+			to: toUrl,
+			navigationType: 'once',
+			args: {
+				test: 'testValue'
+			}
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					maxWait: 1000,
+					failMsg: 'シーンが遷移しない'
+				}).done(function() {
+					container.navigate({
+						to: toWithBodyUrl,
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+							gate({
+								func: function() {
+									return $('.message').text() === 'toWithBody';
+								},
+								maxWait: 1000,
+								failMsg: 'シーンが遷移しない'
+							}).done(function() {
+								window.history.back();
+								var $h1;
+								gate({
+									func: function() {
+										$h1 = $('.testContainer > div > h1');
+										return $h1.text() === notShowableMsg;
+									},
+									maxWait: 1000,
+									failMsg: 'シーンが遷移しない'
+								}).done(function() {
+									var assertMsg = '再表示不可のメッセージ画面を表示すること';
+									strictEqual($h1.text(), notShowableMsg, assertMsg);
+								}).always(start);
+							});
+						}, 0);
+					}).fail(start);
+				});
+			}, 0);
+		}).fail(start);
+	});
+
+	asyncTest('silentを指定した場合はURLが変化せずに遷移すること', function() {
+		var container = this.container;
+		var beforeHref = location.href;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			navigationType: 'silent',
+			args: {
+				test: 'testValue'
+			}
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					maxWait: 1000,
+					failMsg: 'シーンが遷移しない'
+				}).done(function() {
+					var afterHref = location.href;
+					strictEqual(beforeHref, afterHref, 'URLが変化せずに遷移すること');
+				}).always(start);
+			}, 0);
+		}).fail(start);
+	});
+
+	asyncTest('silentを指定した場合はブラウザバックで戻れないこと', function() {
+		// messageクラス要素の文字列を返す
+		var getMsgClassElText = function(window) {
+			return window.$('.message').text();
+		};
+		// FIXME ブラウザバックを行うと画面遷移してしまうので、新しいウィンドウで行う必要があるか
+		openPopupWindow().done(function(nWindow) {
+			var w = nWindow;
+			w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
+			gate({
+				func: createFuncForWaitPouupMainContainer(w)
+			}).done(function() {
+				var container = w.h5.scene.getMainSceneContainer();
+				var toUrl = '/hifive/test/scenedata/page/navigate/to.html';
+				container.navigate({
+					to: toUrl,
+					navigationType: 'silent'
+				}).done(function() {
+					// TODO 仮実装に合わせたタイムアウト処理
+					setTimeout(function() {
+						gate({
+							func: function() {
+								return getMsgClassElText(w) === 'to';
+							},
+							maxWait: 1000,
+							failMsg: 'シーンが遷移しない'
+						}).done(function() {
+							w.history.back();
+							gate({
+								func: function() {
+									return getMsgClassElText(w) === 'to';
+								},
+								maxWait: 1000
+							}).done(function() {
+								var assertMsg = 'ブラウザバックができないこと';
+								strictEqual(getMsgClassElText(w), 'to', assertMsg);
+							}).always(function() {
+								closePopupWindow(w);
+								start();
+							});
+						});
+					}, 0);
+				}).fail(start);
+			});
+		}).fail(function(e) {
+			throw e;
+		});
+	});
+
+	asyncTest('指定なしの場合はurlHistoryMode設定が使用されること(デフォルトはnormal)', function() {
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html'
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					failMsg: 'シーンが遷移しない',
+					maxWait: 1000
+				}).done(function() {
+					var parameter = location.search;
+					container.navigate({
+						to: '/hifive/test/scenedata/page/navigate/toWithBody.html'
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+							gate({
+								func: function() {
+									return $('.message').text() === 'toWithBody';
+								},
+								failMsg: 'シーンが遷移しない',
+								maxWait: 1000
+							}).done(function() {
+								window.history.back();
+								gate({
+									func: function() {
+										return $('.message').text() === 'to';
+									},
+									maxWait: 1000,
+									failMsg: 'ブラウザバックで再表示できない'
+								}).done(function() {
+									strictEqual($('.message').text(), 'to', 'ブラウザバックで再表示できること');
+									strictEqual(location.search, parameter, 'パラメータを再表示できること');
+								}).always(start);
+							});
+						}, 0);
+					});
+				}).fail(start);
+			}, 0);
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]navigate()のreplaceHistoryプロパティを指定', {
+		setup: function() {
+			this.href = location.href;
+			this.originalTitle = document.title;
+			var html = '<div class="testContainer"><div data-h5-scene>';
+
+			html += '</div></div>';
+			// FIXME qunit-fixtureの下に配置するとqunit-fixtureの入れ子構造が何故かできる
+			$('#qunit-fixture').append(html);
+			this.$container = $('.testContainer');
+			this.container = h5.scene.createSceneContainer(this.$container, true);
+		},
+		teardown: function() {
+			stop();
+			var that = this;
+			this.container.navigate(this.href).done(function() {
+				// TODO 仮実装に合わせたタイムアウト処理
+				setTimeout(function() {
+					document.title = that.originalTitle;
+					clearController();
+					$('.testContainer').remove();
+					start();
+				}, 0);
+			});
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('falseの場合は置換しないで遷移すること(デフォルト)', function() {
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			replaceHistory: false
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					failMsg: 'シーンが遷移しない',
+					maxWait: 1000
+				}).done(function() {
+					var search = location.search;
+					container.navigate({
+						to: '/hifive/test/scenedata/page/navigate/toWithBody.html'
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+
+							gate({
+								func: function() {
+									return $('.message').text() === 'toWithBody';
+								},
+								failMsg: 'シーンが遷移しない',
+								maxWait: 1000
+							}).done(function() {
+								window.history.back();
+								gate({
+									func: function() {
+										return $('.message').text() === 'to';
+									},
+									failMsg: 'シーンが遷移しない',
+									maxWait: 1000
+								}).done(function() {
+									strictEqual(location.search, search, 'ブラウザバックでシーンが遷移すること');
+								}).always(start);
+							});
+
+						}, 0);
+					});
+				});
+
+			}, 0);
+		});
+	});
+
+	asyncTest('trueの場合はブラウザバックでシーンが遷移できなくなること', function() {
+		// messageクラス要素の文字列を返す
+		var getMsgClassElText = function(window) {
+			return window.$('.message').text();
+		};
+		var toUrl = '/hifive/test/scenedata/page/navigate/to.html';
+		var toWithBodyUrl = '/hifive/test/scenedata/page/navigate/toWithBody.html';
+		openPopupWindow().done(function(nWindow) {
+			var w = nWindow;
+			w.location.href = 'scenedata/page/from.html?' + BUILD_TYPE_PARAM;
+			gate({
+				func: createFuncForWaitPouupMainContainer(w)
+			}).done(function() {
+				var container = w.h5.scene.getMainSceneContainer();
+				container.navigate({
+					to: toUrl,
+					replaceHistory: true
+				}).done(function() {
+					// TODO 仮実装に合わせたタイムアウト処理
+					setTimeout(function() {
+
+						gate({
+							func: function() {
+								return getMsgClassElText(w) === 'to';
+							},
+							maxWait: 1000,
+							failMsg: 'シーンが遷移しない'
+						}).done(function() {
+							container.navigate({
+								to: toWithBodyUrl
+							}).done(function() {
+								// TODO 仮実装に合わせたタイムアウト処理
+								setTimeout(function() {
+
+									gate({
+										func: function() {
+											return getMsgClassElText(w) === 'toWithBody';
+										},
+										maxWait: 1000,
+										failMsg: 'シーンが遷移しない'
+									}).done(function() {
+										w.history.back();
+										gate({
+											func: function() {
+												return getMsgClassElText(w) === 'to';
+											},
+											maxWait: 1000
+										}).done(function() {
+											gate({
+												func: function() {
+													return w.document.readyState === 'complete';
+												}
+											}).done(function() {
+												var assertMsg = '前のシーンに遷移ができず画面遷移となること';
+												strictEqual(w.location.pathname, toUrl, assertMsg);
+												closePopupWindow(w);
+											}).always(start);
+										});
+									});
+
+								}, 0);
+							}).fail(start);
+						});
+
+					}, 0);
+				}).fail(start);
+			});
+		}).fail(function(e) {
+			throw e;
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]navigate()のmethodプロパティを指定', {
+		setup: function() {
+			this.href = location.href;
+			this.originalTitle = document.title;
+			var html = '<div class="testContainer"><div data-h5-scene>';
+			html += '</div></div>';
+			$('#qunit-fixture').append(html);
+			this.$container = $('.testContainer');
+			this.container = h5.scene.createSceneContainer(this.$container, true);
+		},
+		teardown: function() {
+			stop();
+			var that = this;
+			this.container.navigate(this.href).done(function() {
+				document.title = that.originalTitle;
+				// TODO 仮実装に合わせたタイムアウト処理
+				setTimeout(function() {
+					clearController();
+					$('.testContainer').remove();
+					start();
+				}, 0);
+			});
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('getの場合はgetメソッドで取得すること(デフォルト)', function() {
+		var isGetMethod;
+		var oldH5Ajax = h5.ajax;
+		h5.ajax = function() {
+			isGetMethod = arguments[0].method === 'get';
+			return oldH5Ajax(arguments);
+		};
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			method: 'get'
+		}).done(function() {
+			ok(isGetMethod, 'getメソッドで取得すること');
+		}).always(function() {
+			h5.ajax = oldH5Ajax;
+			start();
+		});
+	});
+
+	asyncTest('postの場合はpostメソッドで取得すること', function() {
+		var isPostMethod;
+		var oldH5Ajax = h5.ajax;
+		h5.ajax = function() {
+			isPostMethod = arguments[0].method === 'post';
+			return oldH5Ajax(arguments);
+		};
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			method: 'post'
+		}).done(function() {
+			ok(isPostMethod, 'postメソッドで取得すること');
+		}).always(function() {
+			h5.ajax = oldH5Ajax;
+			start();
+		});
+	});
+
+	// FIXME テストが止まる
+	asyncTest('postの場合はブラウザバックで再表示不可のメッセージ画面を表示すること', function() {
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			method: 'post'
+		}).done(function() {
+			// TODO 仮実装に合わせたタイムアウト処理
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.message').text() === 'to';
+					},
+					failMsg: 'シーンが遷移しない',
+					maxWait: 1000
+				}).done(function() {
+					container.navigate({
+						to: '/hifive/test/scenedata/page/navigate/toWithBody.html'
+					}).done(function() {
+						// TODO 仮実装に合わせたタイムアウト処理
+						setTimeout(function() {
+							gate({
+								func: function() {
+									return $('.message').text() === 'toWithBody';
+								},
+								failMsg: 'シーンが遷移しない',
+								maxWait: 1000
+							}).done(function() {
+								window.history.back();
+								var expectMsg = 'この画面は再表示できません。';
+								gate({
+									func: function() {
+										return $('.testContainer > div > h1').text() === expectMsg;
+									},
+									maxWait: 1000
+								}).done(function() {
+									var resultMsg = $('.testContainer > div > h1').text();
+									var assertMsg = '再表示不可のメッセージ画面が表示されること';
+									strictEqual(resultMsg, expectMsg, assertMsg);
+								}).always(start);
+							});
+						}, 0);
+					});
+				});
+			}, 0);
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]navigate()のserverArgsプロパティを指定', {
+		setup: function() {
+			this.href = location.href;
+			this.originalTitle = document.title;
+			var html = '<div class="testContainer"><div data-h5-scene>';
+
+			html += '</div></div>';
+			$('#qunit-fixture').append(html);
+			this.$container = $('.testContainer');
+			this.container = h5.scene.createSceneContainer(this.$container, true);
+		},
+		teardown: function() {
+			stop();
+			var that = this;
+			this.container.navigate(this.href).done(function() {
+				document.title = that.originalTitle;
+				// TODO 仮実装に合わせたタイムアウト処理
+				setTimeout(function() {
+					clearController();
+					$('.testContainer').remove();
+					start();
+				}, 0);
+			});
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('serverArgsがAjaxでのHTMLデータ取得時にdataプロパティとして設定されること', function() {
+		var serverArgs = {
+			test: 'testValue'
+		};
+		var data;
+		var oldH5Ajax = h5.ajax;
+		h5.ajax = function() {
+			data = arguments[0].data;
+			return oldH5Ajax(arguments);
+		};
+		var container = this.container;
+		container.navigate({
+			to: '/hifive/test/scenedata/page/navigate/to.html',
+			method: 'post',
+			serverArgs: serverArgs
+		}).done(
+				function() {
+					strictEqual(JSON.stringify(data), JSON.stringify(serverArgs),
+							'HTMLデータ取得時にdataプロパティとして設定されること');
+				}).always(function() {
+			h5.ajax = oldH5Ajax;
+			start();
+		});
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('[jquery#-1.6.4]h5.settings.scene.urlMaxLength', {
+		setup: function() {
+			this.href = location.href;
+			this.originalTitle = document.title;
+			var html = '<div class="testContainer"><div data-h5-scene>';
+
+			html += '</div></div>';
+			$('#qunit-fixture').append(html);
+			this.$container = $('.testContainer');
+			this.container = h5.scene.createSceneContainer(this.$container, true);
+		},
+		teardown: function() {
+			stop();
+			var that = this;
+			this.container.navigate(this.href).done(function() {
+				document.title = that.originalTitle;
+				// TODO 仮実装に合わせたタイムアウト処理
+				setTimeout(function() {
+					clearController();
+					$('.testContainer').remove();
+					start();
+				}, 0);
+			});
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('[build#min]遷移先のURL長(URL全体)が1800(デフォルト)を超過した場合、dev版ではエラーを出すこと', function() {
+		var str = '';
+		for (var i = 0; i < 180; i++) {
+			str += '0123456789';
+		}
+		var container = this.container;
+		try {
+			container.navigate({
+				to: '/hifive/test/scenedata/page/to.html',
+				args: {
+					test: str
+				}
+			});
+		} catch (e) {
+			ok(true, 'dev版ではエラーを出すこと');
+		}
+	});
+
+	test('[build#dev]遷移先のURL長(URL全体)が1800(デフォルト)を超過した場合、min版では警告ログを出力すること', function() {
+		var str = '';
+		for (var i = 0; i < 180; i++) {
+			str += '0123456789';
+		}
+		var container = this.container;
+		try {
+			container.navigate({
+				to: '/hifive/test/scenedata/page/to.html',
+				args: {
+					test: str
+				}
+			});
+			// FIXME 警告ログを出していることの確認が必要
+			ok(true, 'エラーを出さないこと');
+		} catch (e) {
+			ok(false, 'エラーがでる');
+		}
 	});
 
 });
