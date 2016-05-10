@@ -1035,7 +1035,7 @@
 		 * @param message
 		 */
 		_showBalloon: function(target, placement, container, message) {
-			$(target).attr({
+			$(target).removeAttr('title').attr({
 				'data-placement': placement,
 				'data-container': container,
 				'data-original-title': message,
@@ -1045,8 +1045,8 @@
 				'data-animation': false
 			}).tooltip({
 				trigger: 'manual'
-			});
-			$(target).tooltip('show');
+			}).tooltip('show');
+
 			this._addBalloonTarget(target);
 		}
 	};
