@@ -718,7 +718,7 @@
 		_executedOnValidate: false,
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 		_setting: {},
-
+		_balloonTargets: [],
 		/**
 		 * プラグイン設定を行う
 		 *
@@ -807,7 +807,9 @@
 		 * @memberOf h5.ui.validation.ErrorBalloon
 		 */
 		reset: function() {
-			this._hideBalloon();
+			$(this._balloonTargets).each(this.own(function(el) {
+				this._hideBalloon(el);
+			}));
 			this._executedOnValidate = false;
 		},
 
@@ -844,7 +846,7 @@
 					|| (element !== document.activeElement && !$(document.activeElement).closest(
 							element).length)) {
 				// フォーカスが外れた時、該当要素または該当要素内の要素にフォーカスが当たっていない場合は非表示にする
-				this._hideBalloon();
+				this._hideBalloon(element);
 				return;
 			}
 			var placement = propSetting.placement || DEFAULT_PLACEMENT;
@@ -859,7 +861,7 @@
 					}
 					if (ev.isValid) {
 						// validならバルーンを隠す
-						this._hideBalloon();
+						this._hideBalloon(element);
 						return;
 					}
 					// invalidならバルーン表示
@@ -872,7 +874,7 @@
 					&& validationResult.invalidReason[name];
 			if (!invalidReason) {
 				// validateエラーがないときはhideして終了
-				this._hideBalloon();
+				this._hideBalloon(element);
 				return;
 			}
 
@@ -891,7 +893,7 @@
 		 * @param message
 		 */
 		_showBalloon: function(target, placement, container, message) {
-			this._hideBalloon();
+			this._hideBalloon(target);
 			var balloonCtrl = this._balloonController;
 			if (!balloonCtrl) {
 				var c = h5.core.controller(this.rootElement, h5.ui.components.BalloonController);
@@ -913,7 +915,7 @@
 				direction: placement
 			});
 			this._currentBalloon = balloon;
-			this._currentBalloonTarget = target;
+			this._addBalloonTarget(target);
 		},
 
 		/**
@@ -930,7 +932,7 @@
 				this._currentBalloon.dispose();
 				this._currentBalloon = null;
 			}
-			this._currentBalloonTarget = null;
+			this._removeBalloonTarget(target);
 		},
 
 		/**
@@ -953,6 +955,36 @@
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
+		},
+
+		/**
+		 * バルーンの表示先要素を管理対象に追加します
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.ErrorBalloon
+		 */
+		_addBalloonTarget: function(target) {
+			if ($.inArray(target, this._balloonTargets) > -1) {
+				return;
+			}
+
+			this._balloonTargets.push(target);
+		},
+
+		/**
+		 * バルーンの表示先要素を管理対象から除去します
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.ErrorBalloon
+		 */
+		_removeBalloonTarget: function(target) {
+			var index = $.inArray(target, this._balloonTargets);
+
+			if (index === -1) {
+				return;
+			}
+
+			this._balloonTargets.splice(index, 1);
 		}
 	};
 	h5.core.expose(controller);
@@ -987,9 +1019,9 @@
 		 * @private
 		 * @memberOf h5.ui.validation.BootstrapErrorBalloon
 		 */
-		_hideBalloon: function() {
-			// 常にバルーンは一つのみ表示している実装のため、その1つのバルーンを非表示
-			$(this._currentBalloonTarget).tooltip('hide');
+		_hideBalloon: function(target) {
+			$(target).tooltip('hide');
+			this._removeBalloonTarget(target);
 		},
 
 		/**
@@ -1015,7 +1047,7 @@
 				trigger: 'manual'
 			});
 			$(target).tooltip('show');
-			this._currentBalloonTarget = target;
+			this._addBalloonTarget(target);
 		}
 	};
 	// 他のメソッドやプロパティはErrorBalloonから流用
