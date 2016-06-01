@@ -26,6 +26,7 @@
 
 	var ERR_CONSTRUCTOR_CHAIN = '親クラスのコンストラクタ呼び出しが途中で行われていません。継承関係のあるすべてのクラスのコンストラクタの先頭で Foo._super.call(this) のような親コンストラクタの呼び出しが行われていることを確認してください。';
 	var ERR_CANNOT_DEFINE_ROOT_CLASS_PROPERTY = '親クラスで定義されているプロパティは再定義できません。';
+	var ERR_CLASS_IS_ABSTRACT = 'このクラスは抽象クラスです。インスタンスを生成することはできません。';
 
 	var PROPERTY_BACKING_STORE_PREFIX = '_p_';
 
@@ -164,6 +165,11 @@
 		},
 
 		create: function() {
+			if(this._descriptor.isAbstract === true) {
+				//TODO throwFwError
+				throw new Error(ERR_CLASS_IS_ABSTRACT);
+			}
+
 			var argsArray = Array.prototype.slice.call(arguments, 0);
 			var instance = Object.create(this._ctor.prototype);
 
