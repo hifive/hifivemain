@@ -154,7 +154,12 @@
 	}
 	$.extend(HifiveClassDescriptor.prototype, {
 		extend: function(classDescriptor) {
-			var subClass = defineClass(this, classDescriptor);
+			var clsDesc = classDescriptor;
+			if (typeof classDescriptor === 'function') {
+				clsDesc = classDescriptor();
+			}
+
+			var subClass = defineClass(this, clsDesc);
 			return subClass;
 		},
 
@@ -190,8 +195,8 @@
 	var rootClassDesc = {
 		name: 'h5.cls.RootClass',
 		method: {
-			constructor: function HifiveRootClass() {
-				HifiveRootClass._super.call(this);
+			constructor: function HifiveRootObject() {
+				HifiveRootObject._super.call(this);
 				this._class._isCtorChained = true;
 			},
 			getClass: function() {
