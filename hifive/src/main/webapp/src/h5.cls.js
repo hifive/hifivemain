@@ -90,6 +90,18 @@
 
 		var newClass = new HifiveClassDescriptor(classDescriptor, ctor, parentClass);
 
+		//クラスディスクリプタ記述時、constructor: function() MyClass {} のように
+		//名前付き関数で書くことが推奨であり、この場合
+		// var MyClass = Class.extend({ constructor: function MyClass(){ MyClass._super.call(this) } });
+		//のコンストラクタ内のMyClassが指すのはコンストラクタ関数自身である。
+		//しかし、コンストラクタを匿名関数にした場合、
+		//（var MyClass = Class.extend({ constructor: function(){ MyClass._super.call(this) } });
+		//のように書かれた場合をイメージ）
+		//その時にコンストラクタ内で参照されるのは変数のMyClassになる。
+		//そのような場合にも正しくスーパークラスのコンストラクタを呼び出せるよう
+		//Classインスタンスの_super変数にも親クラスのコンストラクタをセットしておく。
+		newClass._super = ctor._super;
+
 		ctor.prototype.__name = classDescriptor.name;
 		ctor.prototype._class = newClass;
 
@@ -165,7 +177,7 @@
 		},
 
 		create: function() {
-			if(this._descriptor.isAbstract === true) {
+			if (this._descriptor.isAbstract === true) {
 				//TODO throwFwError
 				throw new Error(ERR_CLASS_IS_ABSTRACT);
 			}
