@@ -28,18 +28,21 @@
 	var ERR_CONSTRUCTOR_CHAIN = '親クラスのコンストラクタ呼び出しが途中で行われていません。継承関係のあるすべてのクラスのコンストラクタの先頭で Foo._super.call(this) のような親コンストラクタの呼び出しが行われていることを確認してください。';
 	var ERR_CANNOT_DEFINE_ROOT_CLASS_PROPERTY = '親クラスで定義されているプロパティは再定義できません。';
 	var ERR_CLASS_IS_ABSTRACT = 'このクラスは抽象クラスです。インスタンスを生成することはできません。';
+	var ERR_METHOD_MUST_BE_FUNCTION = 'クラスディスクリプタのmethodには、関数以外は指定できません。';
 
 	var PROPERTY_BACKING_STORE_PREFIX = '_p_';
 
-	function setupProperty(instance, propertyDesc, parentClass) {
-		var parentCls = parentClass.getParentClass();
-		if (parentCls) {
-			setupProperty(instance, parentCls.getDescriptor().property, parentCls);
+	function setupProperty(instance, klass) {
+		var parentClass = klass.getParentClass();
+		if (parentClass) {
+			setupProperty(instance, parentClass);
 		}
-		initProperty(instance, propertyDesc);
+		initProperty(instance, klass.getDescriptor());
 	}
 
-	function initProperty(instance, propertyDescriptor) {
+	function initProperty(instance, classDescriptor) {
+		var propertyDescriptor = classDescriptor.property;
+
 		if (!propertyDescriptor) {
 			return;
 		}
@@ -110,7 +113,11 @@
 			if (m === 'constructor') {
 				continue;
 			}
-			ctor.prototype[m] = classDescriptor.method[m];
+			var method = classDescriptor.method[m];
+			if (typeof method !== 'function') {
+				throw new Error(ERR_METHOD_MUST_BE_FUNCTION + 'メソッド名=' + m); //TODO throwFwError()
+			}
+			ctor.prototype[m] = method;
 		}
 
 		var propDesc = classDescriptor.property;
@@ -186,8 +193,16 @@
 			var argsArray = Array.prototype.slice.call(arguments, 0);
 			var instance = Object.create(this._ctor.prototype);
 
-			setupProperty(instance, this._descriptor.property, this._parentClass);
+			//プロパティの初期化（追加）
+			setupProperty(instance, this);
 
+			//明示的に拡張可能(dynamic)と指定されない限り、プロパティの追加・削除・設定変更を禁止
+			//TODO いずれかの親クラスでisDynamicが明示的にfalseに指定されたら、再度trueにはできないようにすべきか？
+			if (this._descriptor.isDynamic !== true) {
+				Object.seal(instance);
+			}
+
+			//コンストラクタ実行
 			this._ctor.apply(instance, argsArray);
 
 			if (this._isCtorChained === false) {
