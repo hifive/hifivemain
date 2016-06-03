@@ -23,6 +23,7 @@
 	//（その場合、backingStore自体のプロパティも定義する必要有）
 	//TODO propertyChangeイベントをあげるように
 	//TODO propertyChangeイベントをクラスからあげられるように
+	//TODO setupPropertyで、DescをObjectとして作成してdefineProperty()をまとめて一度だけ呼ぶようにする
 
 	var ERR_CONSTRUCTOR_CHAIN = '親クラスのコンストラクタ呼び出しが途中で行われていません。継承関係のあるすべてのクラスのコンストラクタの先頭で Foo._super.call(this) のような親コンストラクタの呼び出しが行われていることを確認してください。';
 	var ERR_CANNOT_DEFINE_ROOT_CLASS_PROPERTY = '親クラスで定義されているプロパティは再定義できません。';
@@ -207,6 +208,11 @@
 
 		getFullName: function() {
 			return this._descriptor.name;
+		},
+
+		isClassOf: function(obj) {
+			var ret = obj instanceof this._ctor;
+			return ret;
 		}
 	});
 
