@@ -29,6 +29,7 @@
 	var ERR_CANNOT_DEFINE_ROOT_CLASS_PROPERTY = '親クラスで定義されているプロパティは再定義できません。';
 	var ERR_CLASS_IS_ABSTRACT = 'このクラスは抽象クラスです。インスタンスを生成することはできません。';
 	var ERR_METHOD_MUST_BE_FUNCTION = 'クラスディスクリプタのmethodには、関数以外は指定できません。';
+	var ERR_CANNOT_DEFINE_ACCESSOR_OF_SAME_NAME = '指定されたアクセサと同名のフィールドやメソッドは定義できません。';
 
 	var PROPERTY_BACKING_STORE_PREFIX = '_p_';
 
@@ -41,29 +42,40 @@
 	}
 
 	function initProperty(instance, classDescriptor) {
-		var propertyDescriptor = classDescriptor.property;
-
-		if (!propertyDescriptor) {
-			return;
+		//通常のフィールドを定義
+		var fieldDesc = classDescriptor.field;
+		if (fieldDesc) {
+			for ( var fieldName in fieldDesc) {
+				var fd = fieldDesc[fieldName];
+				var defaultValue = null;
+				if (fd && fd.defaultValue !== undefined) {
+					defaultValue = fd.defaultValue;
+				}
+				instance[fieldName] = defaultValue;
+			}
 		}
 
-		for ( var propName in propertyDescriptor) {
-			var desc = propertyDescriptor[propName];
-			var defaultValue = null;
-			if (desc && desc.defaultValue !== undefined) {
-				defaultValue = desc.defaultValue;
-			}
+		//アクセサプロパティ(getter/setter)のバッキングストアを定義
+		//ただし、get, setを独自に定義している場合は作成しない
+		//(ユーザーはバッキングストアとして使用するフィールドをfieldで定義しておく必要がある)
+		var accessorDesc = classDescriptor.accessor;
+		if (accessorDesc) {
+			for ( var accessorName in accessorDesc) {
+				var ad = accessorDesc[accessorName];
+				var defaultValue = null;
+				if (ad && ad.defaultValue !== undefined) {
+					defaultValue = ad.defaultValue;
+				}
 
-			//TODO バリデータセット(type, constraint)
-			if (desc && (desc.isAccessor === true)) {
-				Object.defineProperty(instance, PROPERTY_BACKING_STORE_PREFIX + propName, {
-					writable: true,
-					configurable: false,
-					enumerable: false,
-					value: defaultValue
-				});
-			} else {
-				instance[propName] = defaultValue;
+				if (ad == null) {
+					//TODO バリデータセット(type, constraint)
+					Object.defineProperty(instance, PROPERTY_BACKING_STORE_PREFIX + accessorName, {
+						writable: true,
+						configurable: false,
+						enumerable: false,
+						value: defaultValue
+					});
+				}
 			}
 		}
 	}
@@ -109,56 +121,75 @@
 		ctor.prototype.__name = classDescriptor.name;
 		ctor.prototype._class = newClass;
 
-		for ( var m in classDescriptor.method) {
+		var methodDesc = classDescriptor.method;
+		for ( var m in methodDesc) {
 			if (m === 'constructor') {
 				continue;
 			}
-			var method = classDescriptor.method[m];
+			var method = methodDesc[m];
 			if (typeof method !== 'function') {
 				throw new Error(ERR_METHOD_MUST_BE_FUNCTION + 'メソッド名=' + m); //TODO throwFwError()
 			}
 			ctor.prototype[m] = method;
 		}
 
-		var propDesc = classDescriptor.property;
-		if (propDesc) {
-			if ('_class' in propDesc) {
+		var accessorDesc = classDescriptor.accessor;
+		if (accessorDesc) {
+			if ('_class' in accessorDesc) {
 				//TODO ルートクラスで必ず定義されるプロパティを再定義しようとしていないかチェック(汎化)
 				throw new Error(ERR_CANNOT_DEFINE_ROOT_CLASS_PROPERTY + 'プロパティ名=' + '_class');
 			}
 
-			for ( var propName in propDesc) {
-				var pd = propDesc[propName];
-				if (pd && pd.isAccessor === true) {
-					if (pd.isReadOnly === true) {
-						(function(p) {
-							Object.defineProperty(ctor.prototype, propName, {
-								configurable: false,
-								enumerable: true,
-								get: function() {
-									return this[PROPERTY_BACKING_STORE_PREFIX + p];
-								},
-								set: function(value) {
-									throw new Error('このプロパティは読み取り専用です。property=' + p + ', value='
-											+ value);
-								}
-							});
-						})(propName);
-					} else {
-						(function(p) {
-							Object.defineProperty(ctor.prototype, propName, {
-								configurable: false,
-								enumerable: true,
-								get: function() {
-									return this[PROPERTY_BACKING_STORE_PREFIX + p];
-								},
-								set: function(value) {
-									this[PROPERTY_BACKING_STORE_PREFIX + p] = value;
-								}
-							});
-						})(propName);
+			var fieldDesc = classDescriptor.field;
+			for ( var propName in accessorDesc) {
+				if (propName in fieldDesc || propName in methodDesc) {
+					//fieldやmethodで同名のプロパティが存在する
+					throw new Error(ERR_CANNOT_DEFINE_ACCESSOR_OF_SAME_NAME);
+				}
 
-					}
+				var ad = accessorDesc[propName];
+				if (ad && ad.isReadOnly === true) {
+					//isReadOnlyが書かれていた場合
+					//TODO isReadOnlyとget, setの関数は同時には書けないようにエラーチェック
+					(function(p) {
+						Object.defineProperty(ctor.prototype, propName, {
+							configurable: false,
+							enumerable: true,
+							get: function() {
+								return this[PROPERTY_BACKING_STORE_PREFIX + p];
+							},
+							set: function(value) {
+								throw new Error('このプロパティは読み取り専用です。property=' + p + ', value='
+										+ value);
+							}
+						});
+					})(propName);
+				} else if (ad) {
+					//アクセサとしてgetter, setter関数が書いてある場合
+					//TODO この即時関数を関数化
+					(function(p) {
+						Object.defineProperty(ctor.prototype, propName, {
+							configurable: false,
+							enumerable: true,
+							get: ad.get,
+							set: ad.set
+						});
+					})(propName);
+				} else {
+					//アクセサだけ定義がある場合
+					//TODO propertyChangeイベントをあげるアクセサをデフォルトでセットする
+					(function(p) {
+						Object.defineProperty(ctor.prototype, propName, {
+							configurable: false,
+							enumerable: true,
+							get: function() {
+								return this[PROPERTY_BACKING_STORE_PREFIX + p];
+							},
+							set: function(value) {
+								this[PROPERTY_BACKING_STORE_PREFIX + p] = value;
+							}
+						});
+					})(propName);
 				}
 			}
 		}
