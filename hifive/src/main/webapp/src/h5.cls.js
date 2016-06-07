@@ -104,7 +104,7 @@
 			};
 		}
 
-		var newClass = new HifiveClassDescriptor(classDescriptor, ctor, parentClass);
+		var newClass = new HifiveClass(classDescriptor, ctor, parentClass);
 
 		//クラスディスクリプタ記述時、constructor: function() MyClass {} のように
 		//名前付き関数で書くことが推奨であり、この場合
@@ -198,13 +198,13 @@
 	}
 
 
-	function HifiveClassDescriptor(classDescriptor, ctor, parentClass) {
+	function HifiveClass(classDescriptor, ctor, parentClass) {
 		this._descriptor = classDescriptor;
 		this._ctor = ctor;
 		this._parentClass = parentClass;
 		this._isCtorChained = false;
 	}
-	$.extend(HifiveClassDescriptor.prototype, {
+	$.extend(HifiveClass.prototype, {
 		extend: function(classDescriptor) {
 			var clsDesc = classDescriptor;
 			if (typeof classDescriptor === 'function') {
