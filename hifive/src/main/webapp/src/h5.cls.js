@@ -30,6 +30,7 @@
 	var ERR_CLASS_IS_ABSTRACT = 'このクラスは抽象クラスです。インスタンスを生成することはできません。';
 	var ERR_METHOD_MUST_BE_FUNCTION = 'クラスディスクリプタのmethodには、関数以外は指定できません。';
 	var ERR_CANNOT_DEFINE_ACCESSOR_OF_SAME_NAME = '指定されたアクセサと同名のフィールドやメソッドは定義できません。';
+	var ERR_ROOT_CLASS_IS_ALREADY_DEFINED = 'このマネージャのルートクラスは既に定義済みです。ルートクラスを取得したい場合はgetRootClass()を、ルートクラスを継承した子クラスを定義したい場合はクラスのextend()メソッドを呼び出してください。';
 
 	var PROPERTY_BACKING_STORE_PREFIX = '_p_';
 
@@ -80,7 +81,7 @@
 		}
 	}
 
-	function defineClass(parentClass, classDescriptor) {
+	function defineClass(classManager, parentClass, classDescriptor) {
 		if (!classDescriptor || !classDescriptor.name) {
 			//TODO throwFwError()にする
 			throw new Error('classDescritporがない、またはnameがありません。');
@@ -104,7 +105,7 @@
 			};
 		}
 
-		var newClass = new HifiveClass(classDescriptor, ctor, parentClass);
+		var newClass = new HifiveClass(classManager, classDescriptor, ctor, parentClass);
 
 		//クラスディスクリプタ記述時、constructor: function() MyClass {} のように
 		//名前付き関数で書くことが推奨であり、この場合
@@ -195,15 +196,19 @@
 			}
 		}
 
+		//全てが完了したら、このクラスのマネージャにクラスを登録する(getClass()でこのクラスオブジェクトを取得できるようになる)
+		classManager._classMap[classDescriptor.name] = newClass;
+
 		return newClass;
 	}
 
 
-	function HifiveClass(classDescriptor, ctor, parentClass) {
+	function HifiveClass(classManager, classDescriptor, ctor, parentClass) {
 		this._descriptor = classDescriptor;
 		this._ctor = ctor;
 		this._parentClass = parentClass;
 		this._isCtorChained = false;
+		this._manager = classManager;
 	}
 	$.extend(HifiveClass.prototype, {
 		extend: function(classDescriptor) {
@@ -212,7 +217,7 @@
 				clsDesc = classDescriptor();
 			}
 
-			var subClass = defineClass(this, clsDesc);
+			var subClass = defineClass(this._manager, this, clsDesc);
 			return subClass;
 		},
 
@@ -260,6 +265,47 @@
 		isClassOf: function(obj) {
 			var ret = obj instanceof this._ctor;
 			return ret;
+		},
+
+		getManager: function() {
+			return this._manager;
+		}
+	});
+
+	function HifiveClassManager() {
+		this._rootClass = null;
+		// クラス名(FQCN) -> クラスオブジェクト　のマップ
+		this._classMap = {};
+	}
+	$.extend(HifiveClassManager.prototype, {
+		/**
+		 * @memberOf h5.cls.HifiveClassManager
+		 */
+		defineRootClass: function(classDescriptor) {
+			if (this._rootClass) {
+				throw new Error(ERR_ROOT_CLASS_IS_ALREADY_DEFINED);
+			}
+
+			this._rootClass = defineClass(this, null, classDescriptor);
+			return this._rootClass;
+		},
+		getRootClass: function() {
+			return this._rootClass;
+		},
+		getClass: function(name) {
+			var cls = this._classMap[name];
+			//undefinedではなくnullを返す(設計ポリシー)
+			cls = cls === undefined ? null : cls;
+			return cls;
+		},
+
+		/**
+		 * 指定された名前空間に属するクラスをそのクラス名をキーとして保持するオブジェクトを返します。
+		 *
+		 * @param namespace
+		 */
+		getNamespaceObject: function(namespace) {
+		// TODO namespace objectを返す
 		}
 	});
 
@@ -276,9 +322,13 @@
 		}
 	};
 
-	var RootClass = defineClass(null, rootClassDesc);
+	var defaultClassManager = new HifiveClassManager();
+	defaultClassManager.defineRootClass(rootClassDesc);
+
+	var RootClass = defaultClassManager.getRootClass();
 
 	h5.u.obj.expose('h5.cls', {
+		manager: defaultClassManager,
 		RootClass: RootClass
 	});
 
