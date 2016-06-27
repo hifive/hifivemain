@@ -168,6 +168,33 @@ $(function() {
 		}).isValid, true, 'undefinedはvalid');
 	});
 
+	test('max 先頭が数字で以降に数字以外の文字列を含むとバリデーションエラーとなること', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1 : {
+				max : 5
+			}
+		});
+		strictEqual(validator.validate({
+			p1: '4a'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '5a'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '6a'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '4a3e'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '4.a1'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '-4a'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+	});
+
 	test('min', function() {
 		var validator = this.validator;
 		validator.addRule({
@@ -200,6 +227,33 @@ $(function() {
 		strictEqual(validator.validate({
 			p1: undefined
 		}).isValid, true, 'undefinedはvalid');
+	});
+
+	test('min 先頭が数字で以降に数字以外の文字列を含むとバリデーションエラーとなること', function() {
+		var validator = this.validator;
+		validator.addRule({
+			p1 : {
+				min : 5
+			}
+		});
+		strictEqual(validator.validate({
+			p1: '4a'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '5a'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '6a'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '6a3e'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '6.a1'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
+		strictEqual(validator.validate({
+			p1: '-6a'
+		}).isValid, false, '数字以外の文字列を含むためバリデーションエラー');
 	});
 
 	test('digits', function() {
