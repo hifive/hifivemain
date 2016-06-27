@@ -2178,8 +2178,7 @@
 						indexMap[name] = indexMap[name] ? indexMap[name] + 1 : 0;
 						value = value[indexMap[name]];
 					}
-					// 値が一致するならチェック
-					$(this).prop('checked', $(this).val() === value);
+					$(this).prop('checked', value);
 					return;
 				}
 				// select multipleの場合
