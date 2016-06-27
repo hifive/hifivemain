@@ -506,6 +506,19 @@ $(function() {
 		strictEqual($('.p5').val(), '', '指定していないフォーム部品に値はセットされないこと');
 	});
 
+	test('boolean型の値でcheckboxの値を設定できること', function() {
+		var $p2 = $('.p2');
+		this.formController.setValue({
+			b: true
+		});
+		strictEqual($p2.prop('checked'), true, 'checkboxに値がセットされること');
+
+		this.formController.setValue({
+			b: false
+		});
+		strictEqual($p2.prop('checked'), false, 'checkboxに値がセットされること');
+	});
+
 	//=============================
 	// Definition
 	//=============================
