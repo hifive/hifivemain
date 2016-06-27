@@ -2630,6 +2630,101 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
+	module('bsBalloonプラグイン グループ内のinput要素にルールを設定しても、keyup/blur時にバルーンが非表示なること', {
+		setup: function() {
+			stop();
+			var cssFile = '/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css';
+			var jsFile = '/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js';
+			this.errorMessage = 'errorMessage';
+			var that = this;
+			h5.res.dependsOn([cssFile, jsFile]).resolve().done(
+					function(all, bsCss, bsJs) {
+						that.bsCss = bsCss;
+						that.bsJs = bsJs;
+						var html = '<form class="testForm">';
+						html += '<div class="testBalloonContainer" data-h5-input-group-container="testGroup">';
+						html += '<input class="inputA" name="a"><input class="inputB" name="b">';
+						html += '</div></form>';
+						$('body').append(html);
+						var formCtrl = that.formController = h5.core.controller('.testForm',
+								h5.ui.FormController);
+						formCtrl.readyPromise.done(function() {
+							this.addRule({
+								a: {
+									required: true
+								},
+								testGroup: {
+									customFunc: function(group) {
+										var a = group.a;
+										var b = group.b;
+										return (a && b);
+									}
+								}
+							});
+							this.addOutput('bsBalloon');
+							this.validate();
+							start();
+						});
+					}).fail(start);
+		},
+		teardown: function() {
+			clearController();
+			$('.testForm').remove();
+			$(this.bsCss).remove();
+			$(this.bsJs).remove();
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	asyncTest('keyup時にバルーンが非表示になること',function() {
+		$('.inputA').focus();
+		gate({
+			func: function() {
+				return $('.tooltip').length === 2;// inputA,グループの2つのバルーンが表示される
+			},
+			maxWait: 1000
+		}).done(function() {
+			$('.inputA').val('hoge');
+			$('.inputB').val('fuga');
+			$('.inputA').keyup();
+			gate({
+				func: function() {
+					return $('.tooltip').length === 0;
+				},
+				maxWait: 1000
+			}).done(function() {
+				strictEqual($('.tooltip').length === 0, true, 'keyupしたinput要素のバルーンが非表示になること');
+			}).always(start);
+		}).fail(start);
+	});
+
+	asyncTest('blur時にバルーンが非表示になること',function() {
+		$('.inputA').focus();
+		gate({
+			func: function() {
+				return $('.tooltip').length === 2;// inputA,グループの2つのバルーンが表示される
+			},
+			maxWait: 1000
+		}).done(function() {
+			$('.inputA').val('hoge');
+			$('.inputB').val('fuga');
+			$('.inputA').blur();
+			gate({
+				func: function() {
+					return $('.tooltip').length === 0;
+				},
+				maxWait: 1000
+			}).done(function() {
+				strictEqual($('.tooltip').length === 0, true, 'blurしたinput要素のバルーンが非表示になること');
+			}).always(start);
+		}).fail(start);
+	});
+
+	//=============================
+	// Definition
+	//=============================
 	module('bsBalloonプラグイン 全体バリデートを行っていない場合', {
 		setup: function() {
 			stop();
