@@ -1337,12 +1337,28 @@
 			switch (ruleName) {
 			case DEFAULT_RULE_NAME_MAX:
 			case DEFAULT_RULE_NAME_MIN:
-				return parseFloat(value);
+				return this._isNumber(value) ? parseFloat(value) : NaN;
 			case DEFAULT_RULE_NAME_FUTURE:
 			case DEFAULT_RULE_NAME_PAST:
 				return new Date(value);
 			}
 			return value;
+		},
+
+		/**
+		 * value が Number 型であるか判定する
+		 *
+		 * @private
+		 * @memberOf h5.validation.FormValidationLogic
+		 * @param {Any} value
+		 * @param {boolean}
+		 */
+		_isNumber: function(value) {
+			var type = typeof value;
+			if (type !== 'number' && type !== 'string') {
+				return false;
+			}
+			return value == parseFloat(value) && isFinite(value);
 		}
 	};
 
