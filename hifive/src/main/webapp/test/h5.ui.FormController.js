@@ -2614,6 +2614,19 @@ $(function() {
 		}).always(start);
 	});
 
+	asyncTest('input要素にtitle属性を指定してもメッセージが正しく表示されること', function() {
+		$('.inputA').attr('title','hoge');
+		$('.inputA').focus();
+		gate({
+			func: function() {
+				return $('.tooltip').length === 1;
+			},
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			strictEqual($('.tooltip-inner').text(), 'aは必須項目です', 'title属性を指定しても正しくメッセージが表示されること');
+		}).always(start);
+	});
+
 	//=============================
 	// Definition
 	//=============================
