@@ -116,6 +116,8 @@
 	 * @returns {boolean} type:'number'指定のプロパティに代入可能か
 	 */
 	function isNumberValue(val, isStrict) {
+		// TODO h5.core.data.jsと重複して定義しているので内部モジュールとして分離する
+
 		// nullまたはundefinedはtrue
 		// NaNを直接入れた場合はtrue
 		// new Number() で生成したオブジェクトはtrue
@@ -1337,28 +1339,12 @@
 			switch (ruleName) {
 			case DEFAULT_RULE_NAME_MAX:
 			case DEFAULT_RULE_NAME_MIN:
-				return this._isNumber(value) ? parseFloat(value) : NaN;
+				return isNumberValue(value) ? parseFloat(value) : NaN;
 			case DEFAULT_RULE_NAME_FUTURE:
 			case DEFAULT_RULE_NAME_PAST:
 				return new Date(value);
 			}
 			return value;
-		},
-
-		/**
-		 * value が Number 型であるか判定する
-		 *
-		 * @private
-		 * @memberOf h5.validation.FormValidationLogic
-		 * @param {Any} value
-		 * @param {boolean}
-		 */
-		_isNumber: function(value) {
-			var type = typeof value;
-			if (type !== 'number' && type !== 'string') {
-				return false;
-			}
-			return value == parseFloat(value) && isFinite(value);
 		}
 	};
 
