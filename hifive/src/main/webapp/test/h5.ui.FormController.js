@@ -2615,7 +2615,7 @@ $(function() {
 	});
 
 	asyncTest('input要素にtitle属性を指定してもメッセージが正しく表示されること', function() {
-		$('.inputA').attr('title','hoge');
+		$('.inputA').attr('title', 'hoge');
 		$('.inputA').focus();
 		gate({
 			func: function() {
@@ -2630,55 +2630,60 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('bsBalloonプラグイン グループ内のinput要素にルールを設定しても、keyup/blur時にバルーンが非表示なること', {
-		setup: function() {
-			stop();
-			var cssFile = '/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css';
-			var jsFile = '/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js';
-			this.errorMessage = 'errorMessage';
-			var that = this;
-			h5.res.dependsOn([cssFile, jsFile]).resolve().done(
-					function(all, bsCss, bsJs) {
-						that.bsCss = bsCss;
-						that.bsJs = bsJs;
-						var html = '<form class="testForm">';
-						html += '<div class="testBalloonContainer" data-h5-input-group-container="testGroup">';
-						html += '<input class="inputA" name="a"><input class="inputB" name="b">';
-						html += '</div></form>';
-						$('body').append(html);
-						var formCtrl = that.formController = h5.core.controller('.testForm',
-								h5.ui.FormController);
-						formCtrl.readyPromise.done(function() {
-							this.addRule({
-								a: {
-									required: true
-								},
-								testGroup: {
-									customFunc: function(group) {
-										var a = group.a;
-										var b = group.b;
-										return (a && b);
-									}
-								}
-							});
-							this.addOutput('bsBalloon');
-							this.validate();
-							start();
-						});
-					}).fail(start);
-		},
-		teardown: function() {
-			clearController();
-			$('.testForm').remove();
-			$(this.bsCss).remove();
-			$(this.bsJs).remove();
-		}
-	});
+	module(
+			'bsBalloonプラグイン グループ内のinput要素にルールを設定しても、keyup/blur時にバルーンが非表示なること',
+			{
+				setup: function() {
+					stop();
+					var cssFile = '/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css';
+					var jsFile = '/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js';
+					this.errorMessage = 'errorMessage';
+					var that = this;
+					h5.res
+							.dependsOn([cssFile, jsFile])
+							.resolve()
+							.done(
+									function(all, bsCss, bsJs) {
+										that.bsCss = bsCss;
+										that.bsJs = bsJs;
+										var html = '<form class="testForm">';
+										html += '<div class="testBalloonContainer" data-h5-input-group-container="testGroup">';
+										html += '<input class="inputA" name="a"><input class="inputB" name="b">';
+										html += '</div></form>';
+										$('body').append(html);
+										var formCtrl = that.formController = h5.core.controller(
+												'.testForm', h5.ui.FormController);
+										formCtrl.readyPromise.done(function() {
+											this.addRule({
+												a: {
+													required: true
+												},
+												testGroup: {
+													customFunc: function(group) {
+														var a = group.a;
+														var b = group.b;
+														return (a && b);
+													}
+												}
+											});
+											this.addOutput('bsBalloon');
+											this.validate();
+											start();
+										});
+									}).fail(start);
+				},
+				teardown: function() {
+					clearController();
+					$('.testForm').remove();
+					$(this.bsCss).remove();
+					$(this.bsJs).remove();
+				}
+			});
 
 	//=============================
 	// Body
 	//=============================
-	asyncTest('keyup時にバルーンが非表示になること',function() {
+	asyncTest('keyup時にバルーンが非表示になること', function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
@@ -2700,7 +2705,7 @@ $(function() {
 		}).fail(start);
 	});
 
-	asyncTest('blur時にバルーンが非表示になること',function() {
+	asyncTest('blur時にバルーンが非表示になること', function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
