@@ -229,4 +229,27 @@
 		return desc;
 	});
 
+	var Event = RootClass.extend(function() {
+		var desc = {
+			name: 'h5.event.Event',
+			field: {
+				_type: null
+			},
+			accessor: {
+				type: {
+					get: function() {
+						return this._type;
+					}
+				}
+			},
+			method: {
+				constructor: function Event(type) {
+					Event._super.call(this);
+					this._type = type;
+				}
+			}
+		};
+		return desc;
+	});
+
 });
