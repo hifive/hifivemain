@@ -20,6 +20,12 @@
 
 	var RootClass = h5.cls.RootClass;
 
+	//TODO 当座、このファイルを単体で読み込んでも使えるようにする
+	//最終的にはh5scolepdglobals.jsに入っているのでなくす
+	function isString(target) {
+		return typeof target === 'string';
+	}
+
 	/**
 	 * イベントディスパッチャ
 	 * <p>
