@@ -47,28 +47,6 @@
 			if (!event.timeStamp) {
 				event.timeStamp = new Date().getTime();
 			}
-
-			// isDefaultPreventedがないなら、isDefaultPrevented()とpreventDefault()を追加
-			if (!event.isDefaultPrevented) {
-				var _isDefaultPrevented = false;
-				event.isDefaultPrevented = function() {
-					return _isDefaultPrevented;
-				};
-				event.preventDefault = function() {
-					_isDefaultPrevented = true;
-				};
-			}
-
-			// isImmediatePropagationStoppedがないなら、isImmediatePropagationStopped()とstopImmediatePropagation()を追加
-			if (!event.isImmediatePropagationStopped) {
-				var _isImmediatePropagationStopped = false;
-				event.isImmediatePropagationStopped = function() {
-					return _isImmediatePropagationStopped;
-				};
-				event.stopImmediatePropagation = function() {
-					_isImmediatePropagationStopped = true;
-				};
-			}
 		}
 
 		var desc = {
@@ -233,7 +211,9 @@
 		var desc = {
 			name: 'h5.event.Event',
 			field: {
-				_type: null
+				_type: null,
+				_isDefaultPrevented: null,
+				_isImmediatePropagationStopped: null
 			},
 			accessor: {
 				type: {
@@ -245,7 +225,22 @@
 			method: {
 				constructor: function Event(type) {
 					Event._super.call(this);
+
 					this._type = type;
+					this._isDefaultPrevented = false;
+					this._isImmediatePropagationStopped = false;
+				},
+				preventDefault: function() {
+					this._isDefaultPrevented = true;
+				},
+				isDefaultPrevented: function() {
+					return this._isDefaultPrevented;
+				},
+				stopImmediatePropagation: function() {
+					this._isImmediatePropagationStopped = true;
+				},
+				isImmediatePropagationStopped: function() {
+					return this._isImmediatePropagationStopped;
 				}
 			}
 		};
