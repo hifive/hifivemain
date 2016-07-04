@@ -521,16 +521,16 @@
 	 * @private
 	 * @param {DataModel} model データモデル
 	 */
-	function Query(model) {
+	function Query(src) {
 		/**
-		 * 検索対象のデータモデル
+		 * クエリ対象のデータソース。データモデルまたは配列を指定可能。
 		 *
 		 * @private
-		 * @name _model
+		 * @name _src
 		 * @memberOf Query
 		 * @type {DataModel}
 		 */
-		this._model = model;
+		this._src = src;
 	}
 	// TODO 今は何もイベントをあげていないのでeventDispatcherにする必要がない。仕様が決まったら対応する。
 	//	h5.mixin.eventDispatcher.mix(Query.prototype);
@@ -586,13 +586,22 @@
 		 */
 		execute: function() {
 			var result = [];
-			for ( var id in this._model.items) {
-				var item = this._model.items[id];
-				// マッチするなら結果に追加
-				if (this._criteria.match(item.get())) {
-					result.push(item);
+			var dataSource = this._getDataSource();
+			//データソース配列の各要素がDataItemかどうか
+			var isDataItemSrc = isArray(this._src);
+
+			//条件に基づいてフィルタリング
+			for (var i = 0, len = dataSource.length; i < len; i++) {
+				var data = dataSource[i];
+				if (isDataItemSrc) {
+					if (this._criteria.match(data.get())) {
+						result.push(data);
+					}
+				} else if (this._criteria.match(data)) {
+					result.push(data);
 				}
 			}
+
 			// ソート
 			if (this._orderFunction) {
 				result.sort(this._orderFunction);
@@ -606,8 +615,8 @@
 						var order = addedOrders[i];
 						var key = order.key;
 						var isAsc = order.isAsc;
-						var val1 = item1.get(key);
-						var val2 = item2.get(key);
+						var val1 = isDataItemSrc ? item1.get(key) : item;
+						var val2 = isDataItemSrc ? item2.get(key) : item;
 						if (val1 > val2) {
 							return isAsc ? 1 : -1;
 						}
@@ -740,16 +749,17 @@
 		 * @returns {Query}
 		 */
 		addOrder: function(key, isAsc) {
-			// keyがschemaにあるかどうかチェックする
-			var schema = this._model.schema;
-			if (!schema.hasOwnProperty(key)) {
-				// スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
-				throwFwError(ERR_CODE_ORDER_BY_KEY, ['addOrder', key, this._model.name]);
+			if (!isArray(this._src) && !this._src.schema.hasOwnProperty(key)) {
+				// データソースがDataModelの場合、keyがschemaにあるかどうかチェックする。
+				// スキーマに存在しないプロパティをkeyに指定しようとしたらエラーにする
+				throwFwError(ERR_CODE_ORDER_BY_KEY, ['addOrder', key, this._src.name]);
 			}
+
 			if (this._orderFunction) {
 				// setOrderFunctionですでにオーダー関数が設定済みの場合はaddOrderできない
 				throwFwError(ERR_CODE_ALREADY_SET_ORDER_FUNCTION);
 			}
+
 			this._addedOrders = this._addedOrders || [];
 			this._addedOrders.push({
 				key: key,
@@ -771,6 +781,22 @@
 			this._addedOrders = null;
 			this._orderFunction = null;
 			return this;
+		},
+
+		/**
+		 * データソースの配列を返す。データソースは配列またはDataModelがあり得るので、配列に正規化する。
+		 *
+		 * @private
+		 * @returns データソース配列
+		 */
+		_getDataSource: function() {
+			if (isArray(this._src)) {
+				//srcが配列の場合はそのまま返す
+				return this._src;
+			}
+
+			//DataModelの場合は、アイテムを配列化して返す
+			return this._src.toArray();
 		}
 	});
 
@@ -780,13 +806,23 @@
 	//
 	// =========================================================================
 	/**
-	 * Queryクラスを作成して返します
+	 * Queryクラスを作成して返します。このメソッドはDataModelのメソッドとなり、実行時のthisはDataModelインスタンスになります。
 	 *
 	 * @private
 	 * @returns {Query} 検索を行うQueryクラスを返します
 	 */
 	function createQuery() {
 		return new Query(this);
+	}
+
+	/**
+	 * Queryクラスを作成します。
+	 *
+	 * @param {Array} src クエリの対象となるデータソースです。配列を指定できます。
+	 * @returns {Query} クエリオブジェクト
+	 */
+	function createGenericQuery(src) {
+		return new Query(src);
 	}
 
 	// =============================
@@ -797,4 +833,8 @@
 	h5internal.data = {
 		createQuery: createQuery
 	};
+
+	h5.u.obj.expose('h5.core.data', {
+		createQuery: createGenericQuery
+	});
 })();
