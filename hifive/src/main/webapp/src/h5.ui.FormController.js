@@ -14,6 +14,7 @@
  * limitations under the License.
  *
  */
+/* h5.ui.FormController */
 (function() {
 	// =========================================================================
 	//
