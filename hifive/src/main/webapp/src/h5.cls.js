@@ -129,7 +129,8 @@
 			}
 			var method = methodDesc[m];
 			if (typeof method !== 'function') {
-				throw new Error(ERR_METHOD_MUST_BE_FUNCTION + 'メソッド名=' + m); //TODO throwFwError()
+				throw new Error(ERR_METHOD_MUST_BE_FUNCTION + 'メソッド=' + classDescriptor.name + '.'
+						+ m); //TODO throwFwError()
 			}
 			ctor.prototype[m] = method;
 		}
