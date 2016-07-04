@@ -98,13 +98,13 @@
 	var componentMap = {};
 
 	/** registerされるのを待っているDeferredのマップ */
-	waitingInfoMap = {};
+	var waitingInfoMap = {};
 
 	/** setImmediateでresolve処理を待っているdeferredの配列 */
-	waitingForImmediateDeferred = [];
+	var waitingForImmediateDeferred = [];
 
 	/** 非同期でresolveするのを待機するタイマーID(タイマーを複数作成しないようにするため) */
-	waitingImmediateTimer = null;
+	var waitingImmediateTimer = null;
 
 	/**
 	 * ViewTemplateクラス

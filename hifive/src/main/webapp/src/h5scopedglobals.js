@@ -294,7 +294,7 @@ function isValidNamespaceIdentifier(property) {
  * @param {Document} [context=document] createElementを行うDocumentオブジェクト。省略した場合はdocumentを使用します
  * @param {Boolean} [keppScripts=false] script要素を生成するかどうか。デフォルトは生成しない(false)です
  */
-parseHTML = $.parseHTML ? $.parseHTML : function(data, context, keepScripts) {
+var parseHTML = $.parseHTML ? $.parseHTML : function(data, context, keepScripts) {
 	if (!data || !isString(data)) {
 		return null;
 	}
