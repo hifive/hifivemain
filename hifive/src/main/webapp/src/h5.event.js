@@ -18,8 +18,6 @@
 (function() {
 	'use strict';
 
-	var RootClass = h5.cls.RootClass;
-
 	//TODO 当座、このファイルを単体で読み込んでも使えるようにする
 	//最終的にはh5scolpedglobals.jsに入っているのでなくす
 	function isString(target) {
@@ -42,6 +40,9 @@
 		};
 	})();
 
+
+
+	var RootClass = h5.cls.RootClass;
 
 	/**
 	 * イベントディスパッチャ
@@ -78,6 +79,9 @@
 				_eventListeners: null
 			},
 			method: {
+				/**
+				 * @mebmerOf h5.event.EventDispatcher
+				 */
 				constructor: function EventDispatcher() {
 					EventDispatcher._super.call(this);
 
@@ -223,7 +227,7 @@
 						}
 					}
 
-					return event.isDefaultPrevented();
+					return event.defaultPrevented;
 				}
 			}
 		};
@@ -235,7 +239,7 @@
 			name: 'h5.event.Event',
 			field: {
 				_type: null,
-				_isDefaultPrevented: null,
+				defaultPrevented: null,
 				_isImmediatePropagationStopped: null
 			},
 			accessor: {
@@ -246,18 +250,21 @@
 				}
 			},
 			method: {
+				/**
+				 * @memberOf h5.event.Event
+				 */
 				constructor: function Event(type) {
 					Event._super.call(this);
 
 					this._type = type;
-					this._isDefaultPrevented = false;
+					this.defaultPrevented = false;
 					this._isImmediatePropagationStopped = false;
 				},
 				preventDefault: function() {
-					this._isDefaultPrevented = true;
+					this.defaultPrevented = true;
 				},
 				isDefaultPrevented: function() {
-					return this._isDefaultPrevented;
+					return this.defaultPrevented;
 				},
 				stopImmediatePropagation: function() {
 					this._isImmediatePropagationStopped = true;
