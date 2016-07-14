@@ -239,13 +239,18 @@
 			name: 'h5.event.Event',
 			field: {
 				_type: null,
-				defaultPrevented: null,
+				_defaultPrevented: null,
 				_isImmediatePropagationStopped: null
 			},
 			accessor: {
 				type: {
 					get: function() {
 						return this._type;
+					}
+				},
+				defaultPrevented: {
+					get: function() {
+						return this._defaultPrevented;
 					}
 				}
 			},
@@ -257,14 +262,14 @@
 					Event._super.call(this);
 
 					this._type = type;
-					this.defaultPrevented = false;
+					this._defaultPrevented = false;
 					this._isImmediatePropagationStopped = false;
 				},
 				preventDefault: function() {
-					this.defaultPrevented = true;
+					this._defaultPrevented = true;
 				},
 				isDefaultPrevented: function() {
-					return this.defaultPrevented;
+					return this._defaultPrevented;
 				},
 				stopImmediatePropagation: function() {
 					this._isImmediatePropagationStopped = true;
