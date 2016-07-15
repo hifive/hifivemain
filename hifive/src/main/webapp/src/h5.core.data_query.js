@@ -588,7 +588,7 @@
 			var result = [];
 			var dataSource = this._getDataSource();
 			//データソース配列の各要素がDataItemかどうか
-			var isDataItemSrc = isArray(this._src);
+			var isDataItemSrc = !isArray(this._src);
 
 			//条件に基づいてフィルタリング
 			for (var i = 0, len = dataSource.length; i < len; i++) {
