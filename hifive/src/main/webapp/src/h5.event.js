@@ -238,6 +238,8 @@
 		var desc = {
 			name: 'h5.event.Event',
 			field: {
+				target: null,
+				timeStamp: null,
 				_type: null,
 				_defaultPrevented: null,
 				_isImmediatePropagationStopped: null
