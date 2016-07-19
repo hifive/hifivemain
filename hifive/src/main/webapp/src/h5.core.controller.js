@@ -1675,20 +1675,26 @@
 		// h5trackmove,h5trackendの場合は、ハンドラ呼び出し前にオフセット計算処理を行うようラップする
 		normalBindObj = getNormalBindObj(controller, eventName, function(context) {
 			var event = context.event;
-			var h5DelegatingEvent = event.h5DelegatingEvent;
-			if (!h5DelegatingEvent) {
-				// マウスやタッチではなくtriggerで呼ばれた場合はオフセット正規化はしない
-				return func.apply(this, arguments);
-			}
-			// マウスイベントによる発火なら場合はオフセットを正規化する
-			var originalEventType = h5DelegatingEvent.type;
-			if (originalEventType === 'mousemove' || originalEventType === 'mouseup') {
-				var offset = $(event.currentTarget).offset() || {
-					left: 0,
-					top: 0
-				};
-				event.offsetX = event.pageX - offset.left;
-				event.offsetY = event.pageY - offset.top;
+
+			// offsetXとoffsetYがnullまたはundefinedの場合は、offsetXとoffsetYを定義する
+			// （offsetXとoffsetYを定義していないブラウザが存在するため）
+			if (event && event.offsetX == null && event.offsetY == null) {
+
+				var h5DelegatingEvent = event.h5DelegatingEvent;
+				if (!h5DelegatingEvent) {
+					// マウスやタッチではなくtriggerで呼ばれた場合はオフセット正規化はしない
+					return func.apply(this, arguments);
+				}
+				// マウスイベントによる発火なら場合はオフセットを正規化する
+				var originalEventType = h5DelegatingEvent.type;
+				if (originalEventType === 'mousemove' || originalEventType === 'mouseup') {
+					var offset = $(event.currentTarget).offset() || {
+						left: 0,
+						top: 0
+					};
+					event.offsetX = event.pageX - offset.left;
+					event.offsetY = event.pageY - offset.top;
+				}
 			}
 			func.apply(this, arguments);
 		});
@@ -1997,11 +2003,16 @@
 		} else if (target === window || target === document) {
 			target = document.body;
 		}
-		var offset = getOffset(target);
-		var offsetX = pageX - offset.left;
-		var offsetY = pageY - offset.top;
-		event.offsetX = originalEvent.offsetX = offsetX;
-		event.offsetY = originalEvent.offsetY = offsetY;
+
+		// offsetXとoffsetYがnullまたはundefinedの場合は、offsetXとoffsetYを定義する
+		// （offsetXとoffsetYを定義していないブラウザが存在するため）
+		if (event && event.offsetX == null && event.offsetY == null) {
+			var offset = getOffset(target);
+			var offsetX = pageX - offset.left;
+			var offsetY = pageY - offset.top;
+			event.offsetX = originalEvent.offsetX = offsetX;
+			event.offsetY = originalEvent.offsetY = offsetY;
+		}
 	}
 	/**
 	 * イベントオブジェクトを正規化します。
@@ -2019,6 +2030,7 @@
 			} else if (target === window || target === document) {
 				target = document.body;
 			}
+
 			var offset = getOffset(target);
 			event.offsetX = event.pageX - offset.left;
 			event.offsetY = event.pageY - offset.top;
