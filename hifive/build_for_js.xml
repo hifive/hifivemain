@@ -22,7 +22,7 @@
 	</path>
 
 	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpathref="base.path" />
-	<taskdef name="buildService" classname="com.htmlhifive.dev.service.ant.BuilderServiceTask" classpathref="base.path" />
+	<taskdef name="buildService" classname="com.htmlhifive.sourcebuilder.ant.BuilderServiceTask" classpathref="base.path" />
 
 
 	<target name="all" depends="build, jscoverage" />

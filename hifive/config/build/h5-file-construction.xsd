@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-	<xs:element name="h5-file-constraction">
+	<xs:element name="h5-file-construction">
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="module" type="module" maxOccurs="unbounded" minOccurs="0"></xs:element>

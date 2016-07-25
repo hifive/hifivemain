@@ -45,7 +45,7 @@
 
 	<dependencies>
 		<!-- closurecompiler -->
-		<dependency org="com.google.javascript" name="closure-compiler" rev="r1810" conf="closurecompiler->*"
+		<dependency org="com.google.javascript" name="closure-compiler" rev="v20160619" conf="closurecompiler->*"
 			transitive="true">
 			<exclude name="ant" />
 			<exclude name="ant-launcher" />
@@ -53,6 +53,11 @@
 			<exclude name="caja" />
 			<exclude name="junit" />
 			<exclude name="jarjar" />
+			<exclude name="gson" />
+			<exclude name="guava" />
+			<exclude name="jsr305" />
+			<exclude name="protobuf-java" />
+			<exclude name="closure-compiler-externs" />
 		</dependency>
 
 		<!-- commons -->

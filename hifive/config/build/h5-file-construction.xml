@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<h5-file-constraction xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="h5-file-constraction.xsd">
+<h5-file-construction xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="h5-file-construction.xsd">
 
 	<module name="scopedglobals" description="" selectable="false">
 		<dependencies>
@@ -194,4 +194,4 @@
 		</cssfiles>
 	</module>
 
-</h5-file-constraction>
+</h5-file-construction>
