@@ -293,7 +293,7 @@
 		 * @returns {string} エラーメッセージ
 		 */
 		getMessageByValidationResult: function(validationResult, name) {
-			var invalidReason = validationResult.invalidReason[name];
+			var invalidReason = validationResult.invalidReason && validationResult.invalidReason[name];
 			if (!invalidReason) {
 				return null;
 			}
