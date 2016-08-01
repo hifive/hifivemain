@@ -177,6 +177,49 @@ $(function() {
 		ok(result.isValid, 'プロパティを配列で複数指定した場合は複数プロパティのルールを削除できること');
 	});
 
+	test('指定したプロパティのルールが削除されて、ルールのプロパティを持っていないこと', function() {
+		var formCtrl = this.formController;
+		formCtrl.removeRule('a');
+		formCtrl.validate();
+		var propRule;
+		propRule = formCtrl._validationLogic._rule['a'];
+		ok(!propRule.hasOwnProperty('required'), 'プロパティはルールのプロパティを持っていないこと');
+		propRule = formCtrl._validationLogic._rule['b'];
+		ok(!propRule.hasOwnProperty('required'), 'プロパティはルールのプロパティを持っていないこと');
+	});
+
+	test('指定していないプロパティのルールが削除されていないで、ルーツのプロパティを持っていること', function() {
+		var formCtrl = this.formController;
+		formCtrl.addRule({
+			b: {
+				required: true
+			}
+		});
+		formCtrl.removeRule('a');
+		formCtrl.validate();
+		var propRule;
+		propRule = formCtrl._validationLogic._rule['a'];
+		ok(!propRule.hasOwnProperty('required'), 'プロパティはルールのプロパティを持っていないこと');
+		propRule = formCtrl._validationLogic._rule['b'];
+		ok(propRule.hasOwnProperty('required'), 'プロパティはルールのプロパティを持っていること');
+	});
+
+	test('プロパティを配列で複数指定した場合は複数プロパティのルールを削除できるて、ルールプロパティを持っていないこと', function() {
+		var formCtrl = this.formController;
+		formCtrl.addRule({
+			b: {
+				required: true
+			}
+		});
+		formCtrl.removeRule(['a', 'b']);
+		formCtrl.validate();
+		var propRule;
+		propRule = formCtrl._validationLogic._rule['a'];
+		ok(!propRule.hasOwnProperty('required'), 'プロパティはルールのプロパティを持っていないこと');
+		propRule = formCtrl._validationLogic._rule['b'];
+		ok(!propRule.hasOwnProperty('required'), 'プロパティはルールのプロパティを持っていないこと');
+	});
+
 	//=============================
 	// Definition
 	//=============================
