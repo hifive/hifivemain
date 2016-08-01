@@ -1057,10 +1057,11 @@
 		 */
 		removeRule: function(keys) {
 			if (!isArray(keys)) {
-				delete this._rule[keys];
-			}
-			for (var i = 0, l = keys.length; i < l; i++) {
-				delete this._rule[keys[i]];
+				this._rule[keys] = {};
+			} else {
+				for (var i = 0, l = keys.length; i < l; i++) {
+					this._rule[keys[i]] = {};
+				}
 			}
 		},
 
