@@ -682,10 +682,28 @@
 		 * </p>
 		 *
 		 * @param {Any} value 判定する値
+		 * @param {Any} param 入力値と比較したい時刻
 		 * @returns {boolean}
 		 */
-		future: function(value) {
-			return value == null || value instanceof Date && new Date().getTime() < value.getTime();
+		future: function(value, param) {
+			var target = (function() {
+				if (param instanceof Date) {
+					return param;
+				} else if ($.isNumeric(param)) {
+					return new Date(typeof param === "number" ? param : parseInt(param));
+				} else if (param == null) {
+					return new Date();
+				} else if (param === true) {
+					return new Date();
+				}
+
+				var date = Date.parse(param);
+				if (!isNaN(date)) {
+					return new Date(date);
+				}
+				throw new Error('future:Date型に変換できないパラメータが指定されています');
+			})();
+			return value == null || value instanceof Date && target.getTime() < value.getTime();
 		},
 
 		/**
@@ -698,10 +716,28 @@
 		 * </p>
 		 *
 		 * @param {Any} value 判定する値
+		 * @param {Any} param 入力値と比較したい時刻
 		 * @returns {boolean}
 		 */
-		past: function(value) {
-			return value == null || value instanceof Date && value.getTime() < new Date().getTime();
+		past: function(value, param) {
+			var target = (function() {
+				if (param instanceof Date) {
+					return param;
+				} else if ($.isNumeric(param)) {
+					return new Date(typeof param === "number" ? param : parseInt(param));
+				} else if (param == null) {
+					return new Date();
+				} else if (param === true) {
+					return new Date();
+				}
+
+				var date = Date.parse(param);
+				if (!isNaN(date)) {
+					return new Date(date);
+				}
+				throw new Error('past:Date型に変換できないパラメータが指定されています');
+			})();
+			return value == null || value instanceof Date && value.getTime() < target.getTime();
 		},
 
 		/**
