@@ -394,8 +394,9 @@ $(function() {
 	test('futureのパラメータを指定し、入力が未来の時刻だけtrueになること', function() {
 		var validator = this.validator;
 		var current = new Date();
-		var future = new Date(current.getTime() + 1);
-		var past = new Date(current.getTime() - 1);
+		current.setMilliseconds(0);
+		var future = new Date(current.getTime() + 1000);
+		var past = new Date(current.getTime() - 1000);
 
 		validator.addRule({
 			p1: {
@@ -556,8 +557,9 @@ $(function() {
 	test('pastのパラメータを指定し、入力が過去の時刻だけtrueになること', function() {
 		var validator = this.validator;
 		var current = new Date();
-		var future = new Date(current.getTime() + 1);
-		var past = new Date(current.getTime() - 1);
+		current.setMilliseconds(0);
+		var future = new Date(current.getTime() + 1000);
+		var past = new Date(current.getTime() - 1000);
 
 		validator.addRule({
 			p1: {
