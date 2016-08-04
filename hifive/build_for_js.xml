@@ -12,9 +12,9 @@
 
 	<property name="configBaseDir" value="${basedir}/config/build" />
 	<property name="constructionFile" value="h5-file-construction.xml"/>
-	<property name="jsTempFile" value="template/hifive-ui-js.vm" />
-	<property name="ejsTempFile" value="template/hifive-ui-ejs.vm" />
-	<property name="cssTempFile" value="template/hifive-ui-css.vm" />
+	<property name="jsTempFile" value="template/h5.vm" />
+	<property name="ejsTempFile" value="template/ejs-header.vm" />
+	<property name="cssTempFile" value="template/h5css.vm" />
 	<property name="minHeaderFile" value="template/min-header.vm" />
 
 	<path id="base.path">
@@ -48,23 +48,25 @@
 	<target name="build" depends="prepare,cleanCurrent,getVersion,getGitHash">
 		<buildService>
 			<buildParameter
-				tmpFiles="false"
-				templateEngineName="ejs-h5mod.js"
-				cssName="h5.css"
-				releaseName="h5.js"
-				devName="h5.dev.js"
-				jsDir="src/main/webapp/src"
-				cssDir="src/main/webapp/srcCss"
+				tempFileFlag="false"
+				templateEngineFileName="ejs-h5mod.js"
+				cssReleaseFileName="h5.css"
+				jsReleaseFileName="h5.js"
+				jsDevFileName="h5.dev.js"
+				jsSrcDir="src/main/webapp/src"
+				cssSrcDir="src/main/webapp/srcCss"
 				templateEngineSrcDir="src/main/webapp/src/ejs"
-				dstDir="${releaseDir}"
+				destDir="${releaseDir}"
 				version="${versionNumber}"
 				templateEngineVersion="1.0"
 				configBaseDir="${configBaseDir}"
-				jsTemplateFile="${jsTempFile}"
-				cssTemplateFile="${cssTempFile}"
-				minHeaderFile="${minHeaderFile}"
-				constructionFile="${constructionFile}"
-				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
+				jsTemplateFileName="${jsTempFile}"
+				cssTemplateFileName="${cssTempFile}"
+				minHeaderFileName="${minHeaderFile}"
+				templateEngineFile="${ejsTempFile}"
+				constructionFileName="${constructionFile}"
+				templateEngineSrcFileName= "ejs-1.0.js"
+				modules="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
@@ -79,23 +81,23 @@
 	<target name="build-nightly" depends="prepare,cleanCurrent,getNightlyVersion,getGitHash">
 		<buildService>
 			<buildParameter
-				tmpFiles="false"
-				templateEngineName="ejs-h5mod.js"
-				cssName="h5.css"
-				releaseName="h5.js"
-				devName="h5.dev.js"
-				jsDir="/src/main/webapp/src"
-				cssDir="/src/main/webapp/srcCss"
+				tempFileFlag="false"
+				templateEngineFileName="ejs-h5mod.js"
+				cssReleaseFileName="h5.css"
+				jsReleaseFileName="h5.js"
+				jsDevFileName="h5.dev.js"
+				jsSrcDir="/src/main/webapp/src"
+				cssSrcDir="/src/main/webapp/srcCss"
 				templateEngineSrcDir="/src/main/webapp/src/ejs"
-				dstDir="${releaseDir}"
+				destDir="${releaseDir}"
 				version="Nightly_${nightly.version}"
 				templateEngineVersion="1.0"
 				configBaseDir="${configBaseDir}"
-				jsTemplateFile="${jsTempFile}"
-				cssTemplateFile="${cssTempFile}"
-				minHeaderFile="${minHeaderFile}"
-				constructionFile="${constructionFile}"
-				moduleNames="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
+				jsTemplateFileName="${jsTempFile}"
+				cssTemplateFileName="${cssTempFile}"
+				minHeaderFileName="${minHeaderFile}"
+				constructionFileName="${constructionFile}"
+				modules="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
