@@ -66,7 +66,7 @@
 				templateEngineFile="${ejsTempFile}"
 				constructionFileName="${constructionFile}"
 				templateEngineSrcFileName= "ejs-1.0.js"
-				modules="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
+				modules="util,async,cls,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
@@ -97,7 +97,7 @@
 				cssTemplateFileName="${cssTempFile}"
 				minHeaderFileName="${minHeaderFile}"
 				constructionFileName="${constructionFile}"
-				modules="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
+				modules="util,async,cls,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>

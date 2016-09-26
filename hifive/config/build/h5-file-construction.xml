@@ -40,6 +40,17 @@
 		</cssfiles>
 	</module>
 
+	<module name="cls" description="module.cls.description">
+		<dependencies>
+			<dependency name="util" />
+		</dependencies>
+		<files>
+			<file name="h5.cls.js" />
+		</files>
+		<cssfiles>
+		</cssfiles>
+	</module>
+
 	<module name="resource" description="module.resource.description">
 		<dependencies>
 			<dependency name="util" />
