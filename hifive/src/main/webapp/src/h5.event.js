@@ -316,7 +316,7 @@
 				constructor: function PropertyChangeEvent(propertyName, oldValue, newValue) {
 					PropertyChangeEvent._super.call(this, EVENT_NAME_PROPERTY_CHANGE);
 
-					if (propertyName != null) {
+					if (propertyName == null) {
 						throwFwError(ERR_CODE_PROPERTY_NAME_IS_REQUIRED);
 					}
 
