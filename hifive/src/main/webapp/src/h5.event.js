@@ -40,7 +40,7 @@
 		};
 	})();
 
-
+	var ERR_CODE_PROPERTY_NAME_IS_REQUIRED = 90001; //TODO 要エラーコード採番
 
 	var RootClass = h5.cls.RootClass;
 
@@ -281,6 +281,52 @@
 				}
 			}
 		};
+		return desc;
+	});
+
+	var PropertyChangeEvent = Event.extend(function() {
+
+		var EVENT_NAME_PROPERTY_CHANGE = 'propertyChange';
+
+		var desc = {
+			name: 'h5.event.PropertyChangeEvent',
+			field: {
+				_propertyName: null,
+				_oldValue: null,
+				_newValue: null
+			},
+			accessor: {
+				propertyName: {
+					get: function() {
+						return this._propertyName;
+					}
+				},
+				oldValue: {
+					get: function() {
+						return this._oldValue;
+					}
+				},
+				newValue: {
+					get: function() {
+						return this._newValue;
+					}
+				}
+			},
+			method: {
+				constructor: function PropertyChangeEvent(propertyName, oldValue, newValue) {
+					PropertyChangeEvent._super.call(this, EVENT_NAME_PROPERTY_CHANGE);
+
+					if (propertyName != null) {
+						throwFwError(ERR_CODE_PROPERTY_NAME_IS_REQUIRED);
+					}
+
+					this._propertyName = propertyName;
+					this._oldValue = oldValue !== undefined ? oldValue : null;
+					this._newValue = newValue !== undefined ? newValue : null;
+				}
+			}
+		};
+
 		return desc;
 	});
 
