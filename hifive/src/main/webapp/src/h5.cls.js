@@ -110,7 +110,7 @@
 			return ctor.apply(this, argsArray);
 		};
 
-		//TODO 下のループ内で、callOnlySuperFuncに、メソッドとアクセサを直接ぶら下げる（コピーする）。
+		// callOnlySuperFuncに、メソッドとアクセサを直接ぶら下げる（コピーする）。
 		// このcallOnlySuperFuncは、extend(function(_super){}) のように引数で渡され、
 		// _super.call(this); _super.myMethod.call(this); のように
 		// call()（またはapply()）の形でのみ使用されることを意図したものである。
@@ -120,6 +120,7 @@
 		// これによって、 extend()時に MyClass._super.prototype.myMethod.call();
 		// が _super.myMethod.call(this, xxx); にできる。
 		// なお、直近の広報互換性のため、下記のnewClass._superの代入は残しておくこと。
+		// TODO プロパティアクセサのコピーには対応していない
 
 		var newClass = new HifiveClass(classManager, classDescriptor, ctor, parentClass,
 				callOnlySuperFunc);
@@ -151,6 +152,28 @@
 			}
 			ctor.prototype[m] = method;
 		}
+
+		// callOnlySuperFuncにRootから辿ってメソッドをコピー
+		var methods = [classDescriptor.method];
+		if (parentClass) {
+			var p = parentClass;
+			do {
+				methods.unshift(p._descriptor.method);
+			}
+			while (p = p._parentClass);
+		}
+
+		methods.forEach(function(methodDesc) {
+			if (!methodDesc) {
+				return;
+			}
+
+			for ( var m in methodDesc) {
+				if (m !== 'constructor') {
+					callOnlySuperFunc[m] = methodDesc[m];
+				}
+			}
+		});
 
 		var accessorDesc = classDescriptor.accessor;
 		if (accessorDesc) {
