@@ -105,7 +105,24 @@
 			};
 		}
 
-		var newClass = new HifiveClass(classManager, classDescriptor, ctor, parentClass);
+		var callOnlySuperFunc = function() {
+			var argsArray = Array.prototype.slice.call(arguments, 0);
+			return ctor.apply(this, argsArray);
+		};
+
+		//TODO 下のループ内で、callOnlySuperFuncに、メソッドとアクセサを直接ぶら下げる（コピーする）。
+		// このcallOnlySuperFuncは、extend(function(_super){}) のように引数で渡され、
+		// _super.call(this); _super.myMethod.call(this); のように
+		// call()（またはapply()）の形でのみ使用されることを意図したものである。
+		// 従い、下記ループ中では　callOnlySuperFunc.myMethod = myMethodFunc; のように
+		// 単純にコピーしていけばよい。
+		// アクセサについては、callOnlySuperFuncを対象にdefinePropertyすればよい。
+		// これによって、 extend()時に MyClass._super.prototype.myMethod.call();
+		// が _super.myMethod.call(this, xxx); にできる。
+		// なお、直近の広報互換性のため、下記のnewClass._superの代入は残しておくこと。
+
+		var newClass = new HifiveClass(classManager, classDescriptor, ctor, parentClass,
+				callOnlySuperFunc);
 
 		//クラスディスクリプタ記述時、constructor: function() MyClass {} のように
 		//名前付き関数で書くことが推奨であり、この場合
@@ -204,18 +221,19 @@
 	}
 
 
-	function HifiveClass(classManager, classDescriptor, ctor, parentClass) {
+	function HifiveClass(classManager, classDescriptor, ctor, parentClass, callOnlySuperFunction) {
 		this._descriptor = classDescriptor;
 		this._ctor = ctor;
 		this._parentClass = parentClass;
 		this._isCtorChained = false;
 		this._manager = classManager;
+		this._callOnlySuperFunction = callOnlySuperFunction;
 	}
 	$.extend(HifiveClass.prototype, {
 		extend: function(classDescriptor) {
 			var clsDesc = classDescriptor;
 			if (typeof classDescriptor === 'function') {
-				clsDesc = classDescriptor();
+				clsDesc = classDescriptor(this._callOnlySuperFunction);
 			}
 
 			var subClass = defineClass(this._manager, this, clsDesc);
