@@ -31,6 +31,7 @@
 	var ERR_METHOD_MUST_BE_FUNCTION = 'クラスディスクリプタのmethodには、関数以外は指定できません。';
 	var ERR_CANNOT_DEFINE_ACCESSOR_OF_SAME_NAME = '指定されたアクセサと同名のフィールドやメソッドは定義できません。';
 	var ERR_ROOT_CLASS_IS_ALREADY_DEFINED = 'このマネージャのルートクラスは既に定義済みです。ルートクラスを取得したい場合はgetRootClass()を、ルートクラスを継承した子クラスを定義したい場合はクラスのextend()メソッドを呼び出してください。';
+	var ERR_DUPLICATE_MEMBER = 'メンバーの名前 "{0}" が重複しています。';
 
 	var PROPERTY_BACKING_STORE_PREFIX = '_p_';
 
@@ -141,6 +142,37 @@
 		ctor.prototype.__name = classDescriptor.name;
 		ctor.prototype._class = newClass;
 
+		// 親から辿ってデスクリプタの配列とフィールド一覧を作成する。
+		var classes = [{
+			descriptor: classDescriptor,
+			ctor: ctor
+		}];
+		var members = {};
+		if (parentClass) {
+			var p = parentClass;
+			do {
+				classes.unshift({
+					descriptor: p._descriptor,
+					ctor: p._ctor
+				});
+
+				for ( var m in (p._descriptor.field || {})) {
+					members[m] = 'field';
+				}
+				for ( var m in (p._descriptor.accessor || {})) {
+					members[m] = 'accessor';
+				}
+				for ( var m in (p._descriptor.method || {})) {
+					if (m !== 'constructor') {
+						members[m] = 'method';
+					}
+				}
+			}
+			while (p = p._parentClass);
+		}
+
+		var fieldDesc = classDescriptor.field;
+		var accessorDesc = classDescriptor.accessor;
 		var methodDesc = classDescriptor.method;
 		for ( var m in methodDesc) {
 			if (m === 'constructor') {
@@ -151,22 +183,36 @@
 				throw new Error(ERR_METHOD_MUST_BE_FUNCTION + 'メソッド=' + classDescriptor.name + '.'
 						+ m); //TODO throwFwError()
 			}
+			// 重複チェック
+			if ((m in members && members[m] !== 'method') ||
+				(fieldDesc && m in fieldDesc) ||
+				(accessorDesc && m in accessorDesc)) {
+				throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, m));
+			}
 			ctor.prototype[m] = method;
 		}
 
-		var accessorDesc = classDescriptor.accessor;
+		if (fieldDesc) {
+			for ( var f in fieldDesc) {
+				if ((f in members && members[f] !== 'field') ||
+					(accessorDesc && f in accessorDesc) ||
+					(f in methodDesc)) {
+					throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, f));
+				}
+			}
+		}
+
 		if (accessorDesc) {
 			if ('_class' in accessorDesc) {
 				//TODO ルートクラスで必ず定義されるプロパティを再定義しようとしていないかチェック(汎化)
 				throw new Error(ERR_CANNOT_DEFINE_ROOT_CLASS_PROPERTY + 'プロパティ名=' + '_class');
 			}
 
-			var fieldDesc = classDescriptor.field;
 			for ( var propName in accessorDesc) {
-				if ((fieldDesc && (propName in fieldDesc))
-						|| (methodDesc && (propName in methodDesc))) {
-					//fieldやmethodで同名のプロパティが存在する
-					throw new Error(ERR_CANNOT_DEFINE_ACCESSOR_OF_SAME_NAME);
+				if ((propName in members && members[propName] !== 'accessor') ||
+					(fieldDesc && propName in fieldDesc) ||
+					(propName in methodDesc)) {
+					throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, propName));
 				}
 
 				var ad = accessorDesc[propName];
@@ -190,7 +236,7 @@
 					//アクセサとしてgetter, setter関数が書いてある場合
 					//TODO この即時関数を関数化
 					(function(p) {
-						Object.defineProperty(ctor.prototype, propName, {
+						Object.defineProperty(ctor.prototype, p, {
 							configurable: false,
 							enumerable: true,
 							get: ad.get,
@@ -201,7 +247,7 @@
 					//アクセサだけ定義がある場合
 					//TODO propertyChangeイベントをあげるアクセサをデフォルトでセットする
 					(function(p) {
-						Object.defineProperty(ctor.prototype, propName, {
+						Object.defineProperty(ctor.prototype, p, {
 							configurable: false,
 							enumerable: true,
 							get: function() {
@@ -216,22 +262,7 @@
 			}
 		}
 
-		// superObjectにRootから辿ってメソッドとアクセサをコピー
-		var classes = [{
-			descriptor: classDescriptor,
-			ctor: ctor
-		}];
-		if (parentClass) {
-			var p = parentClass;
-			do {
-				classes.unshift({
-					descriptor: p._descriptor,
-					ctor: p._ctor
-				});
-			}
-			while (p = p._parentClass);
-		}
-
+		// SuperObjectにメソッドとアクセサをコピー
 		classes.forEach(function(cls) {
 			// メソッド
 			if (cls.descriptor.method) {
