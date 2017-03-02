@@ -25,6 +25,11 @@ $(function() {
 	//
 	// =========================================================================
 
+	var JS_PRESERVED_NAMES = ['length', 'name', 'displayName', 'arguments', 'prototype', 'caller'];
+	var H5_PRESERVED_NAMES = ['_super', 'extend', 'create', 'getParentClass', 'isClassOf', '_ctor',
+			'_descriptor', '_isCtorChained', '_manager', '_parentClass', '_superObject',
+			'constructor', 'getDescriptor', 'getFullName', 'getManager'];
+
 	// =========================================================================
 	//
 	// Privates
@@ -1675,5 +1680,480 @@ $(function() {
 	});
 
 
+	//=============================
+	// Definition
+	//=============================
+
+	module('StaticFieldDescriptor');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('JS予約名を使用', function() {
+		JS_PRESERVED_NAMES.forEach(function(name) {
+			throws(function() {
+				h5.cls.RootClass.extend(function(_super) {
+					var description = {
+						name: 'TestClass',
+						staticField: {},
+						method: {
+							constructor: function TestClass() {
+								_super.constructor.call(this);
+							}
+						}
+					};
+					description.staticField[name] = null;
+					return description;
+				});
+			}, Error, name + 'を定義するとエラーになること。');
+		});
+	});
+
+	test('h5予約名を使用', function() {
+		H5_PRESERVED_NAMES.forEach(function(name) {
+			throws(function() {
+				h5.cls.RootClass.extend(function(_super) {
+					var description = {
+						name: 'TestClass',
+						staticField: {},
+						method: {
+							constructor: function TestClass() {
+								_super.constructor.call(this);
+							}
+						}
+					};
+					description.staticField[name] = null;
+					return description;
+				});
+			}, Error, name + 'を定義するとエラーになること。');
+		});
+	});
+
+	test('fieldがnull', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticField: {
+					sf1: null
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sf1' in cls, '静的フィールドが定義されていること。');
+		ok(Object.keys(cls).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		strictEqual(cls.sf1, null, 'デフォルト値はnullであること。');
+
+		cls.sf1 = 1;
+		strictEqual(cls.sf1, 1, '静的フィールドの読み書きができること。');
+
+		var obj = cls.create();
+		strictEqual(obj.sf1, undefined, 'インスタンスからはアクセスできないこと。');
+	});
+
+	test('fieldが空オブジェクト', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticField: {
+					sf1: {}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sf1' in cls, '静的フィールドが定義されていること。');
+		ok(Object.keys(cls).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		strictEqual(cls.sf1, null, 'デフォルト値はnullであること。');
+
+		cls.sf1 = 1;
+		strictEqual(cls.sf1, 1, '静的フィールドの読み書きができること。');
+
+		var obj = cls.create();
+		strictEqual(obj.sf1, undefined, 'インスタンスからはアクセスできないこと。');
+	});
+
+	test('fieldのデフォルト値', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticField: {
+					sf1: {
+						defaultValue: 2
+					}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sf1' in cls, '静的フィールドが定義されていること。');
+		ok(Object.keys(cls).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		strictEqual(cls.sf1, 2, 'デフォルト値が設定されていること。');
+
+		cls.sf1 = 3;
+		strictEqual(cls.sf1, 3, '静的フィールドの読み書きができること。');
+
+		var obj = cls.create();
+		strictEqual(obj.sf1, undefined, 'インスタンスからはアクセスできないこと。');
+	});
+
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('StaticAccessorDescriptor');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('JS予約名を使用', function() {
+		JS_PRESERVED_NAMES.forEach(function(name) {
+			throws(function() {
+				h5.cls.RootClass.extend(function(_super) {
+					var description = {
+						name: 'TestClass',
+						staticAccessor: {},
+						method: {
+							constructor: function TestClass() {
+								_super.constructor.call(this);
+							}
+						}
+					};
+					description.staticAccessor[name] = null;
+					return description;
+				});
+			}, Error, name + 'を定義するとエラーになること。');
+		});
+	});
+
+	test('h5予約名を使用', function() {
+		H5_PRESERVED_NAMES.forEach(function(name) {
+			throws(function() {
+				h5.cls.RootClass.extend(function(_super) {
+					var description = {
+						name: 'TestClass',
+						staticAccessor: {},
+						method: {
+							constructor: function TestClass() {
+								_super.constructor.call(this);
+							}
+						}
+					};
+					description.staticAccessor[name] = null;
+					return description;
+				});
+			}, Error, name + 'を定義するとエラーになること。');
+		});
+	});
+
+	test('accessorがnull', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticAccessor: {
+					sp1: null
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sp1' in cls, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls.sp1, null, 'デフォルト値はnullであること。');
+
+		cls.sp1 = 1;
+		strictEqual(cls.sp1, 1, '静的プロパティの読み書きができること。');
+
+		var obj = cls.create();
+		strictEqual(obj.sp1, undefined, 'インスタンスからはアクセスできないこと。');
+	});
+
+	test('accessorが空オブジェクト', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticAccessor: {
+					sp1: {}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sp1' in cls, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls.sp1, undefined, '値が読み取れないこと。');
+
+		throws(function() {
+			cls.sp1 = 1;
+		}, TypeError, '静的プロパティに値が設定できないこと。');
+	});
+
+	test('getter', function() {
+		var backing = 1;
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticAccessor: {
+					sp1: {
+						get: function() {
+							return backing;
+						}
+					}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sp1' in cls, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls.sp1, 1, '値が取得できること。');
+
+		backing = 2;
+		strictEqual(cls.sp1, 2, '値が取得できること。');
+
+		throws(function() {
+			cls.sp1 = 1;
+		}, TypeError, '静的プロパティに値が設定できないこと。');
+	});
+
+	test('setter', function() {
+		var backing = 1;
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticAccessor: {
+					sp1: {
+						set: function(val) {
+							backing = val;
+						}
+					}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sp1' in cls, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls.sp1, undefined, '値が取得できないこと。');
+
+		cls.sp1 = 2;
+		strictEqual(backing, 2, '値が設定できること。');
+	});
+
+	test('getter/setter', function() {
+		var backing = 1;
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticAccessor: {
+					sp1: {
+						get: function() {
+							return backing;
+						},
+						set: function(val) {
+							backing = val;
+						}
+					}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sp1' in cls, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls.sp1, 1, '値が取得できること。');
+
+		cls.sp1 = 2;
+		strictEqual(cls.sp1, 2, '値の読み書きができること。');
+		strictEqual(backing, 2, '値の読み書きができること。');
+	});
+
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('StaticMethodDescriptor');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('JS予約名を使用', function() {
+		JS_PRESERVED_NAMES.forEach(function(name) {
+			throws(function() {
+				h5.cls.RootClass.extend(function(_super) {
+					var description = {
+						name: 'TestClass',
+						staticMethod: {},
+						method: {
+							constructor: function TestClass() {
+								_super.constructor.call(this);
+							}
+						}
+					};
+					description.staticMethod[name] = function() {
+					// Do nothing
+					};
+					return description;
+				});
+			}, Error, name + 'を定義するとエラーになること。');
+		});
+	});
+
+	test('h5予約名を使用', function() {
+		H5_PRESERVED_NAMES.forEach(function(name) {
+			throws(function() {
+				h5.cls.RootClass.extend(function(_super) {
+					var description = {
+						name: 'TestClass',
+						staticMethod: {},
+						method: {
+							constructor: function TestClass() {
+								_super.constructor.call(this);
+							}
+						}
+					};
+					description.staticMethod[name] = function() {
+					// Do nothing
+					};
+					return description;
+				});
+			}, Error, name + 'を定義するとエラーになること。');
+		});
+	});
+
+	test('メソッドの定義', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticMethod: {
+					sm1: function() {
+						return 1;
+					}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		strictEqual(cls.sm1(), 1, '静的メソッドが呼び出せること。');
+		throws(function() {
+			var obj = cls.create();
+			obj.sm1();
+		}, TypeError, 'インスタンスからは呼び出せないこと。');
+	});
+
+
+	//=============================
+	// Definition
+	//=============================
+
+	module('staticメンバーの重複');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('fieldとaccessorの重複', function() {
+		throws(function() {
+			h5.cls.RootClass.extend(function(_super) {
+				return {
+					name: 'TestClass',
+					staticField: {
+						dup: null
+					},
+					staticAccessor: {
+						dup: null
+					},
+					method: {
+						constructor: function TestClass() {
+							_super.constructor.call(this);
+						}
+					}
+				};
+			});
+		}, Error, 'fieldとaccessorの重複はエラーとなること。')
+	});
+
+	test('fieldとmethodの重複', function() {
+		throws(function() {
+			h5.cls.RootClass.extend(function(_super) {
+				return {
+					name: 'TestClass',
+					staticField: {
+						dup: null
+					},
+					staticMethod: {
+						dup: null
+					},
+					method: {
+						constructor: function TestClass() {
+							_super.constructor.call(this);
+						}
+					}
+				};
+			});
+		}, Error, 'fieldとmethodの重複はエラーとなること。')
+	});
+
+	test('accessorとmethodの重複', function() {
+		throws(function() {
+			h5.cls.RootClass.extend(function(_super) {
+				return {
+					name: 'TestClass',
+					staticAccessor: {
+						dup: null
+					},
+					staticMethod: {
+						dup: null
+					},
+					method: {
+						constructor: function TestClass() {
+							_super.constructor.call(this);
+						}
+					}
+				};
+			});
+		}, Error, 'accessorとmethodの重複はエラーとなること。')
+	});
 
 });

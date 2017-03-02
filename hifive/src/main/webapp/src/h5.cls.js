@@ -32,8 +32,24 @@
 	var ERR_CANNOT_DEFINE_ACCESSOR_OF_SAME_NAME = '指定されたアクセサと同名のフィールドやメソッドは定義できません。';
 	var ERR_ROOT_CLASS_IS_ALREADY_DEFINED = 'このマネージャのルートクラスは既に定義済みです。ルートクラスを取得したい場合はgetRootClass()を、ルートクラスを継承した子クラスを定義したい場合はクラスのextend()メソッドを呼び出してください。';
 	var ERR_DUPLICATE_MEMBER = 'メンバーの名前 "{0}" が重複しています。';
+	var ERR_STATIC_PRESERVED_MEMBER = '静的メンバーの名前 "{0}" は使用できません。';
+	var ERR_STATIC_DUPLICATE_MEMBER = '静的メンバーの名前 "{0}" が重複しています。';
+	var ERR_STATIC_METHOD_MUST_BE_FUNCTION = 'クラスディスクリプタのmethodには、関数以外は指定できません。';
 
 	var PROPERTY_BACKING_STORE_PREFIX = '_p_';
+
+	/**
+	 * JavaScriptのFunction上の予約語
+	 */
+	var JS_PRESERVED_NAMES = ['length', 'name', 'displayName', 'arguments', 'prototype', 'caller'];
+	/**
+	 * h5clsのクラスオブジェクトの予約語
+	 */
+	var H5_PRESERVED_NAMES = ['_super', 'extend', 'create', 'getParentClass', 'isClassOf', '_ctor',
+			'_descriptor', '_isCtorChained', '_manager', '_parentClass', '_superObject',
+			'constructor', 'getDescriptor', 'getFullName', 'getManager'];
+	var STATIC_PRESERVED_NAMES = JS_PRESERVED_NAMES.concat(H5_PRESERVED_NAMES);
+
 
 	function setupProperty(instance, klass) {
 		var parentClass = klass.getParentClass();
@@ -80,6 +96,20 @@
 				}
 			}
 		}
+	}
+
+	/**
+	 * 静的メンバーの名前が使用可能かどうかをチェックします。NG名だった場合は例外を投げます。
+	 *
+	 * @param {String} name メンバー名
+	 * @throws Error
+	 */
+	function validateStaticMemberName(name) {
+		STATIC_PRESERVED_NAMES.forEach(function(n) {
+			if (name === n) {
+				throw new Error(h5.u.str.format(ERR_STATIC_PRESERVED_MEMBER, name));
+			}
+		});
 	}
 
 	function defineClass(classManager, parentClass, classDescriptor) {
@@ -295,10 +325,108 @@
 		});
 		Object.freeze(superObject);
 
+		// static
+		defineStaticMembers(newClass, classDescriptor);
+
 		//全てが完了したら、このクラスのマネージャにクラスを登録する(getClass()でこのクラスオブジェクトを取得できるようになる)
 		classManager._classMap[classDescriptor.name] = newClass;
 
 		return newClass;
+	}
+
+	/**
+	 * 静的メンバーを定義します。
+	 */
+	function defineStaticMembers(cls, descriptor) {
+		var fieldDescriptor = descriptor.staticField || {};
+		var accessorDescriptor = descriptor.staticAccessor || {};
+		var methodDescriptor = descriptor.staticMethod || {};
+		var names = Object.keys(fieldDescriptor).concat(Object.keys(accessorDescriptor)).concat(
+				Object.keys(methodDescriptor));
+
+		// 名前チェック
+		names.forEach(function(name) {
+			validateStaticMemberName(name);
+		});
+
+		// 重複チェック
+		var length = names.length;
+		for (var i = 0; i < length - 1; i++) {
+			for (var j = i + 1; j < length; j++) {
+				if (names[i] === names[j]) {
+					throw new Error(h5.u.str.format(ERR_STATIC_DUPLICATE_MEMBER, names[i]));
+				}
+			}
+		}
+
+		// 定義
+		defineStaticFields(cls, fieldDescriptor);
+		defineStaticAccessors(cls, accessorDescriptor);
+		defineStaticMethods(cls, methodDescriptor);
+	}
+
+	/**
+	 * 静的フィールドを定義します。
+	 */
+	function defineStaticFields(cls, fieldDescriptor) {
+		Object.keys(fieldDescriptor).forEach(function(name) {
+			var field = fieldDescriptor[name];
+			var defaultValue = field && 'defaultValue' in field ? field.defaultValue : null;
+			Object.defineProperty(cls, name, {
+				enumerable: true,
+				configurable: false,
+				value: defaultValue,
+				writable: true
+			});
+		});
+	}
+
+	/**
+	 * 静的アクセサを定義します。
+	 */
+	function defineStaticAccessors(cls, accessorDescriptor) {
+		Object.keys(accessorDescriptor).forEach(function(name) {
+			var accessor = accessorDescriptor[name];
+			var descriptor = {
+				enumerable: true,
+				configurable: false
+			};
+			if (!accessor) {
+				var backing = null;
+				descriptor.get = function() {
+					return backing;
+				};
+				descriptor.set = function(val) {
+					backing = val;
+				};
+			} else {
+				descriptor.get = accessor.get;
+				descriptor.set = accessor.set;
+			}
+
+			Object.defineProperty(cls, name, descriptor);
+		});
+	}
+
+	/**
+	 * 静的メソッドを定義します。
+	 */
+	function defineStaticMethods(cls, methodDescriptor) {
+		Object.keys(methodDescriptor).forEach(
+				function(name) {
+					var method = methodDescriptor[name];
+					if (typeof method !== 'function') {
+						throw new Error(ERR_STATIC_METHOD_MUST_BE_FUNCTION + 'メソッド=' + cls.getFullName()
+								+ '.' + name);
+					}
+
+					Object.defineProperty(cls, name, {
+						enumerable: false,
+						configurable: false,
+						value: method,
+						writable: false
+					});
+				});
 	}
 
 
