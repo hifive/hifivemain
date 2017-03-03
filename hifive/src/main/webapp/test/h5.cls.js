@@ -26,9 +26,7 @@ $(function() {
 	// =========================================================================
 
 	var JS_PRESERVED_NAMES = ['length', 'name', 'displayName', 'arguments', 'prototype', 'caller'];
-	var H5_PRESERVED_NAMES = ['_super', 'extend', 'create', 'getParentClass', 'isClassOf', '_ctor',
-			'_descriptor', '_isCtorChained', '_manager', '_parentClass', '_superObject',
-			'constructor', 'getDescriptor', 'getFullName', 'getManager'];
+	var H5_PRESERVED_NAMES = ['extend', 'getClass'];
 
 	// =========================================================================
 	//
@@ -705,6 +703,24 @@ $(function() {
 				};
 			});
 		}, /.*method.*/, 'メソッドにfunction以外を定義するとエラーが発生すること。');
+	});
+
+	test('Objectのメソッドをオーバーライド', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					},
+					toString: function() {
+						return 'TestClass!!';
+					}
+				}
+			};
+		});
+		var obj = cls.create();
+		equal(obj.toString(), 'TestClass!!', 'エラーとならないこと。');
 	});
 
 	//=============================
@@ -1684,6 +1700,35 @@ $(function() {
 	// Definition
 	//=============================
 
+	module('statics');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('staticsオブジェクト', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+		ok('statics' in cls, 'staticメンバーを定義していなくてもstaticsオブジェクトが存在すること。');
+		ok(Object.isSealed(cls.statics), 'staticsはシールされていること。');
+		throws(function() {
+			cls.statics = {};
+		}, TypeError, 'staticsは上書きできないこと。');
+	});
+
+
+	//=============================
+	// Definition
+	//=============================
+
 	module('StaticFieldDescriptor');
 
 	//=============================
@@ -1745,12 +1790,19 @@ $(function() {
 			};
 		});
 
-		ok('sf1' in cls, '静的フィールドが定義されていること。');
-		ok(Object.keys(cls).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
-		strictEqual(cls.sf1, null, 'デフォルト値はnullであること。');
+		ok('sf1' in cls._ctor, '静的フィールドが定義されていること。');
+		ok('sf1' in cls.statics, '静的フィールドが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		strictEqual(cls._ctor.sf1, null, 'デフォルト値はnullであること。');
+		strictEqual(cls.statics.sf1, null, 'デフォルト値はnullであること。');
 
-		cls.sf1 = 1;
-		strictEqual(cls.sf1, 1, '静的フィールドの読み書きができること。');
+		cls._ctor.sf1 = 1;
+		strictEqual(cls._ctor.sf1, 1, '静的フィールドの読み書きができること。');
+		strictEqual(cls.statics.sf1, 1, '静的フィールドの読み書きができること。');
+		cls.statics.sf1 = 2;
+		strictEqual(cls._ctor.sf1, 2, '静的フィールドの読み書きができること。');
+		strictEqual(cls.statics.sf1, 2, '静的フィールドの読み書きができること。');
 
 		var obj = cls.create();
 		strictEqual(obj.sf1, undefined, 'インスタンスからはアクセスできないこと。');
@@ -1771,12 +1823,19 @@ $(function() {
 			};
 		});
 
-		ok('sf1' in cls, '静的フィールドが定義されていること。');
-		ok(Object.keys(cls).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
-		strictEqual(cls.sf1, null, 'デフォルト値はnullであること。');
+		ok('sf1' in cls._ctor, '静的フィールドが定義されていること。');
+		ok('sf1' in cls.statics, '静的フィールドが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		strictEqual(cls._ctor.sf1, null, 'デフォルト値はnullであること。');
+		strictEqual(cls.statics.sf1, null, 'デフォルト値はnullであること。');
 
-		cls.sf1 = 1;
-		strictEqual(cls.sf1, 1, '静的フィールドの読み書きができること。');
+		cls._ctor.sf1 = 1;
+		strictEqual(cls._ctor.sf1, 1, '静的フィールドの読み書きができること。');
+		strictEqual(cls.statics.sf1, 1, '静的フィールドの読み書きができること。');
+		cls.statics.sf1 = 2;
+		strictEqual(cls._ctor.sf1, 2, '静的フィールドの読み書きができること。');
+		strictEqual(cls.statics.sf1, 2, '静的フィールドの読み書きができること。');
 
 		var obj = cls.create();
 		strictEqual(obj.sf1, undefined, 'インスタンスからはアクセスできないこと。');
@@ -1788,7 +1847,7 @@ $(function() {
 				name: 'TestClass',
 				staticField: {
 					sf1: {
-						defaultValue: 2
+						defaultValue: 1
 					}
 				},
 				method: {
@@ -1799,15 +1858,85 @@ $(function() {
 			};
 		});
 
-		ok('sf1' in cls, '静的フィールドが定義されていること。');
-		ok(Object.keys(cls).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
-		strictEqual(cls.sf1, 2, 'デフォルト値が設定されていること。');
+		ok('sf1' in cls._ctor, '静的フィールドが定義されていること。');
+		ok('sf1' in cls.statics, '静的フィールドが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		strictEqual(cls._ctor.sf1, 1, 'デフォルト値が設定されていること。');
+		strictEqual(cls.statics.sf1, 1, 'デフォルト値が設定されていること。');
 
-		cls.sf1 = 3;
-		strictEqual(cls.sf1, 3, '静的フィールドの読み書きができること。');
+		cls._ctor.sf1 = 2;
+		strictEqual(cls._ctor.sf1, 2, '静的フィールドの読み書きができること。');
+		strictEqual(cls.statics.sf1, 2, '静的フィールドの読み書きができること。');
+		cls.statics.sf1 = 3;
+		strictEqual(cls._ctor.sf1, 3, '静的フィールドの読み書きができること。');
+		strictEqual(cls.statics.sf1, 3, '静的フィールドの読み書きができること。');
 
 		var obj = cls.create();
 		strictEqual(obj.sf1, undefined, 'インスタンスからはアクセスできないこと。');
+	});
+
+	test('ReadOnlyのみ', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticField: {
+					sf1: {
+						isReadOnly: true
+					}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sf1' in cls._ctor, '静的フィールドが定義されていること。');
+		ok('sf1' in cls.statics, '静的フィールドが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		strictEqual(cls._ctor.sf1, null, 'nullで定義されていること。');
+		strictEqual(cls.statics.sf1, null, 'nullで定義されていること。');
+		throws(function() {
+			cls._ctor.sf1 = '';
+		}, TypeError, '書込みできないこと。');
+		throws(function() {
+			cls.statics.sf1 = '';
+		}, TypeError, '書込みできないこと。');
+	});
+
+	test('ReadOnlyとdefaultValue', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				staticField: {
+					sf1: {
+						defaultValue: 1,
+						isReadOnly: true
+					}
+				},
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		ok('sf1' in cls._ctor, '静的フィールドが定義されていること。');
+		ok('sf1' in cls.statics, '静的フィールドが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sf1') !== -1, '静的フィールドが列挙可能なこと。');
+		strictEqual(cls._ctor.sf1, 1, 'デフォルト値が設定されていること。');
+		strictEqual(cls.statics.sf1, 1, 'デフォルト値が設定されていること。');
+		throws(function() {
+			cls._ctor.sf1 = '';
+		}, TypeError, '書込みできないこと。');
+		throws(function() {
+			cls.statics.sf1 = '';
+		}, TypeError, '書込みできないこと。');
 	});
 
 
@@ -1876,12 +2005,19 @@ $(function() {
 			};
 		});
 
-		ok('sp1' in cls, '静的プロパティが定義されていること。');
-		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
-		strictEqual(cls.sp1, null, 'デフォルト値はnullであること。');
+		ok('sp1' in cls._ctor, '静的プロパティが定義されていること。');
+		ok('sp1' in cls.statics, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls._ctor.sp1, null, 'デフォルト値はnullであること。');
+		strictEqual(cls.statics.sp1, null, 'デフォルト値はnullであること。');
 
-		cls.sp1 = 1;
-		strictEqual(cls.sp1, 1, '静的プロパティの読み書きができること。');
+		cls._ctor.sp1 = 1;
+		strictEqual(cls._ctor.sp1, 1, '静的プロパティの読み書きができること。');
+		strictEqual(cls.statics.sp1, 1, '静的プロパティの読み書きができること。');
+		cls.statics.sp1 = 2;
+		strictEqual(cls._ctor.sp1, 2, '静的プロパティの読み書きができること。');
+		strictEqual(cls.statics.sp1, 2, '静的プロパティの読み書きができること。');
 
 		var obj = cls.create();
 		strictEqual(obj.sp1, undefined, 'インスタンスからはアクセスできないこと。');
@@ -1902,12 +2038,18 @@ $(function() {
 			};
 		});
 
-		ok('sp1' in cls, '静的プロパティが定義されていること。');
-		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
-		strictEqual(cls.sp1, undefined, '値が読み取れないこと。');
+		ok('sp1' in cls._ctor, '静的プロパティが定義されていること。');
+		ok('sp1' in cls.statics, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls._ctor.sp1, undefined, '値が読み取れないこと。');
+		strictEqual(cls.statics.sp1, undefined, '値が読み取れないこと。');
 
 		throws(function() {
-			cls.sp1 = 1;
+			cls._ctor.sp1 = 1;
+		}, TypeError, '静的プロパティに値が設定できないこと。');
+		throws(function() {
+			cls.statics.sp1 = 1;
 		}, TypeError, '静的プロパティに値が設定できないこと。');
 	});
 
@@ -1931,15 +2073,22 @@ $(function() {
 			};
 		});
 
-		ok('sp1' in cls, '静的プロパティが定義されていること。');
-		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
-		strictEqual(cls.sp1, 1, '値が取得できること。');
+		ok('sp1' in cls._ctor, '静的プロパティが定義されていること。');
+		ok('sp1' in cls.statics, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls._ctor.sp1, 1, '値が取得できること。');
+		strictEqual(cls.statics.sp1, 1, '値が取得できること。');
 
 		backing = 2;
-		strictEqual(cls.sp1, 2, '値が取得できること。');
+		strictEqual(cls._ctor.sp1, 2, '値が取得できること。');
+		strictEqual(cls.statics.sp1, 2, '値が取得できること。');
 
 		throws(function() {
-			cls.sp1 = 1;
+			cls._ctor.sp1 = 1;
+		}, TypeError, '静的プロパティに値が設定できないこと。');
+		throws(function() {
+			cls.statics.sp1 = 1;
 		}, TypeError, '静的プロパティに値が設定できないこと。');
 	});
 
@@ -1963,12 +2112,17 @@ $(function() {
 			};
 		});
 
-		ok('sp1' in cls, '静的プロパティが定義されていること。');
-		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
-		strictEqual(cls.sp1, undefined, '値が取得できないこと。');
+		ok('sp1' in cls._ctor, '静的プロパティが定義されていること。');
+		ok('sp1' in cls.statics, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls._ctor.sp1, undefined, '値が取得できないこと。');
+		strictEqual(cls.statics.sp1, undefined, '値が取得できないこと。');
 
-		cls.sp1 = 2;
+		cls._ctor.sp1 = 2;
 		strictEqual(backing, 2, '値が設定できること。');
+		cls.statics.sp1 = 3;
+		strictEqual(backing, 3, '値が設定できること。');
 	});
 
 	test('getter/setter', function() {
@@ -1994,13 +2148,20 @@ $(function() {
 			};
 		});
 
-		ok('sp1' in cls, '静的プロパティが定義されていること。');
-		ok(Object.keys(cls).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
-		strictEqual(cls.sp1, 1, '値が取得できること。');
+		ok('sp1' in cls._ctor, '静的プロパティが定義されていること。');
+		ok('sp1' in cls.statics, '静的プロパティが定義されていること。');
+		ok(Object.keys(cls._ctor).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		ok(Object.keys(cls.statics).indexOf('sp1') !== -1, '静的プロパティが列挙可能なこと。');
+		strictEqual(cls._ctor.sp1, 1, '値が取得できること。');
+		strictEqual(cls.statics.sp1, 1, '値が取得できること。');
 
-		cls.sp1 = 2;
-		strictEqual(cls.sp1, 2, '値の読み書きができること。');
+		cls._ctor.sp1 = 2;
+		strictEqual(cls._ctor.sp1, 2, '値の読み書きができること。');
+		strictEqual(cls.statics.sp1, 2, '値の読み書きができること。');
 		strictEqual(backing, 2, '値の読み書きができること。');
+		cls.statics.sp1 = 3;
+		strictEqual(cls._ctor.sp1, 3, '値の読み書きができること。');
+		strictEqual(cls.statics.sp1, 3, '値の読み書きができること。');
 	});
 
 
@@ -2075,7 +2236,8 @@ $(function() {
 			};
 		});
 
-		strictEqual(cls.sm1(), 1, '静的メソッドが呼び出せること。');
+		strictEqual(cls._ctor.sm1(), 1, '静的メソッドが呼び出せること。');
+		strictEqual(cls.statics.sm1(), 1, '静的メソッドが呼び出せること。');
 		throws(function() {
 			var obj = cls.create();
 			obj.sm1();
@@ -2111,7 +2273,7 @@ $(function() {
 					}
 				};
 			});
-		}, Error, 'fieldとaccessorの重複はエラーとなること。')
+		}, Error, 'fieldとaccessorの重複はエラーとなること。');
 	});
 
 	test('fieldとmethodの重複', function() {
@@ -2132,7 +2294,7 @@ $(function() {
 					}
 				};
 			});
-		}, Error, 'fieldとmethodの重複はエラーとなること。')
+		}, Error, 'fieldとmethodの重複はエラーとなること。');
 	});
 
 	test('accessorとmethodの重複', function() {
@@ -2153,7 +2315,7 @@ $(function() {
 					}
 				};
 			});
-		}, Error, 'accessorとmethodの重複はエラーとなること。')
+		}, Error, 'accessorとmethodの重複はエラーとなること。');
 	});
 
 });
