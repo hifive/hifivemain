@@ -211,7 +211,7 @@
 						+ m); //TODO throwFwError()
 			}
 			// 重複チェック
-			if ((m in members && members[m] !== 'method') ||
+			if ((typeof members[m] === 'string' && members[m] !== 'method') ||
 				(fieldDesc && m in fieldDesc) ||
 				(accessorDesc && m in accessorDesc)) {
 				throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, m));
@@ -221,7 +221,7 @@
 
 		if (fieldDesc) {
 			for ( var f in fieldDesc) {
-				if ((f in members && members[f] !== 'field') ||
+				if ((typeof members[f] === 'string' && members[f] !== 'field') ||
 					(accessorDesc && f in accessorDesc) ||
 					(f in methodDesc)) {
 					throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, f));
@@ -236,30 +236,14 @@
 			}
 
 			for ( var propName in accessorDesc) {
-				if ((propName in members && members[propName] !== 'accessor') ||
+				if ((typeof members[propName] === 'string' && members[propName] !== 'accessor') ||
 					(fieldDesc && propName in fieldDesc) ||
 					(propName in methodDesc)) {
 					throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, propName));
 				}
 
 				var ad = accessorDesc[propName];
-				if (ad && ad.isReadOnly === true) {
-					//isReadOnlyが書かれていた場合
-					//TODO isReadOnlyとget, setの関数は同時には書けないようにエラーチェック
-					(function(p) {
-						Object.defineProperty(ctor.prototype, propName, {
-							configurable: false,
-							enumerable: true,
-							get: function() {
-								return this[PROPERTY_BACKING_STORE_PREFIX + p];
-							},
-							set: function(value) {
-								throw new Error('このプロパティは読み取り専用です。property=' + p + ', value='
-										+ value);
-							}
-						});
-					})(propName);
-				} else if (ad) {
+				if (ad) {
 					//アクセサとしてgetter, setter関数が書いてある場合
 					//TODO この即時関数を関数化
 					(function(p) {
