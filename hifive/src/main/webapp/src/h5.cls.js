@@ -29,7 +29,6 @@
 	var ERR_CANNOT_DEFINE_ROOT_CLASS_PROPERTY = '親クラスで定義されているプロパティは再定義できません。';
 	var ERR_CLASS_IS_ABSTRACT = 'このクラスは抽象クラスです。インスタンスを生成することはできません。';
 	var ERR_METHOD_MUST_BE_FUNCTION = 'クラスディスクリプタのmethodには、関数以外は指定できません。';
-	var ERR_CANNOT_DEFINE_ACCESSOR_OF_SAME_NAME = '指定されたアクセサと同名のフィールドやメソッドは定義できません。';
 	var ERR_ROOT_CLASS_IS_ALREADY_DEFINED = 'このマネージャのルートクラスは既に定義済みです。ルートクラスを取得したい場合はgetRootClass()を、ルートクラスを継承した子クラスを定義したい場合はクラスのextend()メソッドを呼び出してください。';
 	var ERR_DUPLICATE_MEMBER = 'メンバーの名前 "{0}" が重複しています。';
 	var ERR_STATIC_PRESERVED_MEMBER = '静的メンバーの名前 "{0}" は使用できません。';
@@ -45,9 +44,7 @@
 	/**
 	 * h5clsのクラスオブジェクトの予約語
 	 */
-	var H5_PRESERVED_NAMES = ['_super', 'extend', 'create', 'getParentClass', 'isClassOf', '_ctor',
-			'_descriptor', '_isCtorChained', '_manager', '_parentClass', '_superObject',
-			'constructor', 'getDescriptor', 'getFullName', 'getManager'];
+	var H5_PRESERVED_NAMES = ['extend', 'getClass'];
 	var STATIC_PRESERVED_NAMES = JS_PRESERVED_NAMES.concat(H5_PRESERVED_NAMES);
 
 
@@ -363,6 +360,8 @@
 		defineStaticFields(cls, fieldDescriptor);
 		defineStaticAccessors(cls, accessorDescriptor);
 		defineStaticMethods(cls, methodDescriptor);
+
+		Object.seal(cls.statics);
 	}
 
 	/**
@@ -372,12 +371,27 @@
 		Object.keys(fieldDescriptor).forEach(function(name) {
 			var field = fieldDescriptor[name];
 			var defaultValue = field && 'defaultValue' in field ? field.defaultValue : null;
-			Object.defineProperty(cls, name, {
+			var readOnly = field && field.isReadOnly === true;
+			Object.defineProperty(cls._ctor, name, {
 				enumerable: true,
 				configurable: false,
 				value: defaultValue,
-				writable: true
+				writable: !readOnly
 			});
+
+			var compatDescriptor = {
+				enumerable: true,
+				configurable: false,
+				get: function() {
+					return cls._ctor[name];
+				}
+			};
+			if (!readOnly) {
+				compatDescriptor.set = function(val) {
+					cls._ctor[name] = val;
+				}
+			}
+			Object.defineProperty(cls.statics, name, compatDescriptor);
 		});
 	}
 
@@ -404,7 +418,8 @@
 				descriptor.set = accessor.set;
 			}
 
-			Object.defineProperty(cls, name, descriptor);
+			Object.defineProperty(cls._ctor, name, descriptor);
+			Object.defineProperty(cls.statics, name, descriptor);
 		});
 	}
 
@@ -420,12 +435,14 @@
 								+ '.' + name);
 					}
 
-					Object.defineProperty(cls, name, {
+					var descriptor = {
 						enumerable: false,
 						configurable: false,
 						value: method,
 						writable: false
-					});
+					};
+					Object.defineProperty(cls._ctor, name, descriptor);
+					Object.defineProperty(cls.statics, name, descriptor);
 				});
 	}
 
@@ -437,6 +454,11 @@
 		this._isCtorChained = false;
 		this._manager = classManager;
 		this._superObject = superObject;
+
+		Object.defineProperty(this, 'statics', {
+			value: {},
+			writable: false
+		});
 	}
 	$.extend(HifiveClass.prototype, {
 		extend: function(classDescriptor) {
