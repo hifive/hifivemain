@@ -545,57 +545,57 @@
 
 		this._rootClass = defineClass(this, null, ROOT_CLASS_DESC);
 	}
-	$.extend(HifiveClassManager.prototype,
-			{
-				/**
-				 * このマネージャで管理されているルートクラスを取得します。
-				 *
-				 * @memberOf h5.cls.HifiveClassManager
-				 */
-				getRootClass: function() {
-					return this._rootClass;
-				},
+	$.extend(HifiveClassManager.prototype, {
+		/**
+		 * このマネージャで管理されているルートクラスを取得します。
+		 *
+		 * @memberOf h5.cls.HifiveClassManager
+		 */
+		getRootClass: function() {
+			return this._rootClass;
+		},
 
-				/**
-				 * 指定された名前のクラスオブジェクトを取得します。戻り値のクラスのインスタンスを生成する場合は ret.create() のようにします。
-				 *
-				 * @param fqcn 完全修飾クラス名
-				 * @returns {HifiveClass} クラスオブジェクト
-				 */
-				getClass: function(fqcn) {
-					var cls = this._classMap[fqcn];
-					//undefinedではなくnullを返す(設計ポリシー)
-					cls = cls === undefined ? null : cls;
-					return cls;
-				},
+		/**
+		 * 指定された名前のクラスオブジェクトを取得します。戻り値のクラスのインスタンスを生成する場合は ret.create() のようにします。
+		 *
+		 * @param fqcn 完全修飾クラス名
+		 * @returns {HifiveClass} クラスオブジェクト
+		 */
+		getClass: function(fqcn) {
+			var cls = this._classMap[fqcn];
+			//undefinedではなくnullを返す(設計ポリシー)
+			cls = cls === undefined ? null : cls;
+			return cls;
+		},
 
-				/**
-				 * 指定された名前空間に属するクラスをそのクラス名をキーとして保持するオブジェクトを返します。
-				 *
-				 * @param {String} namespace 名前空間
-				 * @returns 名前空間オブジェクト
-				 */
-				getNamespaceObject: function(namespace) {
-					if (!namespace) {
-						throw new Error('namespaceが指定されていません。');
-					}
+		/**
+		 * 指定された名前空間に属するクラスをそのクラス名をキーとして保持するオブジェクトを返します。
+		 *
+		 * @param {String} namespace 名前空間
+		 * @returns 名前空間オブジェクト
+		 */
+		getNamespaceObject: function(namespace) {
+			if (!namespace) {
+				throw new Error('namespaceが指定されていません。');
+			}
 
-					var ret = {};
+			var ns = namespace + '.';
 
-					var classMap = this._classMap;
-					var namespaceLen = namespace.length;
+			var ret = {};
 
-					for ( var fqcn in classMap) {
-						if (fqcn.lastIndexOf(namespace, 0) === 0
-								&& fqcn.indexOf('.', namespaceLen) === -1) {
-							var simpleName = fqcn.substr(namespaceLen);
-							ret[simpleName] = classMap[fqcn];
-						}
-					}
+			var classMap = this._classMap;
+			var namespaceLen = ns.length;
 
-					return ret;
+			for ( var fqcn in classMap) {
+				if (fqcn.lastIndexOf(ns, 0) === 0 && fqcn.indexOf('.', namespaceLen) === -1) {
+					var simpleName = fqcn.substr(namespaceLen);
+					ret[simpleName] = classMap[fqcn];
 				}
-			});
+			}
+
+			return ret;
+		}
+	});
 
 
 	var defaultClassManager = new HifiveClassManager();
