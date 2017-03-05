@@ -194,8 +194,7 @@
 						members[m] = 'method';
 					}
 				}
-			}
-			while (p = p._parentClass);
+			} while (p = p._parentClass);
 		}
 
 		var fieldDesc = classDescriptor.field;
@@ -211,9 +210,8 @@
 						+ m); //TODO throwFwError()
 			}
 			// 重複チェック
-			if ((typeof members[m] === 'string' && members[m] !== 'method') ||
-				(fieldDesc && m in fieldDesc) ||
-				(accessorDesc && m in accessorDesc)) {
+			if ((typeof members[m] === 'string' && members[m] !== 'method')
+					|| (fieldDesc && m in fieldDesc) || (accessorDesc && m in accessorDesc)) {
 				throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, m));
 			}
 			ctor.prototype[m] = method;
@@ -221,9 +219,8 @@
 
 		if (fieldDesc) {
 			for ( var f in fieldDesc) {
-				if ((typeof members[f] === 'string' && members[f] !== 'field') ||
-					(accessorDesc && f in accessorDesc) ||
-					(f in methodDesc)) {
+				if ((typeof members[f] === 'string' && members[f] !== 'field')
+						|| (accessorDesc && f in accessorDesc) || (f in methodDesc)) {
 					throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, f));
 				}
 			}
@@ -236,9 +233,8 @@
 			}
 
 			for ( var propName in accessorDesc) {
-				if ((typeof members[propName] === 'string' && members[propName] !== 'accessor') ||
-					(fieldDesc && propName in fieldDesc) ||
-					(propName in methodDesc)) {
+				if ((typeof members[propName] === 'string' && members[propName] !== 'accessor')
+						|| (fieldDesc && propName in fieldDesc) || (propName in methodDesc)) {
 					throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, propName));
 				}
 
@@ -246,8 +242,8 @@
 				if (ad) {
 					//アクセサとしてgetter, setter関数が書いてある場合
 					//TODO この即時関数を関数化
-					(function(p) {
-						Object.defineProperty(ctor.prototype, p, {
+					(function(pName) {
+						Object.defineProperty(ctor.prototype, pName, {
 							configurable: false,
 							enumerable: true,
 							get: ad.get,
@@ -257,15 +253,15 @@
 				} else {
 					//アクセサだけ定義がある場合
 					//TODO propertyChangeイベントをあげるアクセサをデフォルトでセットする
-					(function(p) {
-						Object.defineProperty(ctor.prototype, p, {
+					(function(pName) {
+						Object.defineProperty(ctor.prototype, pName, {
 							configurable: false,
 							enumerable: true,
 							get: function() {
-								return this[PROPERTY_BACKING_STORE_PREFIX + p];
+								return this[PROPERTY_BACKING_STORE_PREFIX + pName];
 							},
 							set: function(value) {
-								this[PROPERTY_BACKING_STORE_PREFIX + p] = value;
+								this[PROPERTY_BACKING_STORE_PREFIX + pName] = value;
 							}
 						});
 					})(propName);
@@ -274,36 +270,38 @@
 		}
 
 		// SuperObjectにメソッドとアクセサをコピー
-		classes.forEach(function(cls) {
-			// メソッド
-			if (cls.descriptor.method) {
-				var methodDesc = cls.descriptor.method;
-				for ( var m in methodDesc) {
-					if (m !== 'constructor') {
-						superObject[m] = methodDesc[m];
+		classes
+				.forEach(function(cls) {
+					// メソッド
+					if (cls.descriptor.method) {
+						var methodDesc = cls.descriptor.method;
+						for ( var m in methodDesc) {
+							if (m !== 'constructor') {
+								superObject[m] = methodDesc[m];
+							}
+						}
 					}
-				}
-			}
 
-			// アクセサ
-			if (cls.descriptor.accessor) {
-				var accessorDesc = cls.descriptor.accessor;
-				for ( var propName in accessorDesc) {
-					(function(propName) {
-						var wrapper = {};
-						var descriptor = Object.getOwnPropertyDescriptor(cls.ctor.prototype, propName);
-						if (descriptor.get) {
-							wrapper.get = descriptor.get;
+					// アクセサ
+					if (cls.descriptor.accessor) {
+						var accessorDesc = cls.descriptor.accessor;
+						for ( var propName in accessorDesc) {
+							(function(pName) {
+								var wrapper = {};
+								var descriptor = Object.getOwnPropertyDescriptor(
+										cls.ctor.prototype, pName);
+								if (descriptor.get) {
+									wrapper.get = descriptor.get;
+								}
+								if (descriptor.set) {
+									wrapper.set = descriptor.set;
+								}
+								Object.freeze(wrapper);
+								superObject[pName] = wrapper;
+							})(propName);
 						}
-						if (descriptor.set) {
-							wrapper.set = descriptor.set;
-						}
-						Object.freeze(wrapper);
-						superObject[propName] = wrapper;
-					})(propName);
-				}
-			}
-		});
+					}
+				});
 		Object.freeze(superObject);
 
 		// static
@@ -317,6 +315,10 @@
 
 	/**
 	 * 静的メンバーを定義します。
+	 *
+	 * @private
+	 * @param cls HifiveClassクラスオブジェクト
+	 * @param descriptor クラスディスクリプタ
 	 */
 	function defineStaticMembers(cls, descriptor) {
 		var fieldDescriptor = descriptor.staticField || {};
@@ -350,6 +352,10 @@
 
 	/**
 	 * 静的フィールドを定義します。
+	 *
+	 * @private
+	 * @param cls HifveClassクラスオブジェクト
+	 * @param fieldDescriptor フィールドディスクリプタ
 	 */
 	function defineStaticFields(cls, fieldDescriptor) {
 		Object.keys(fieldDescriptor).forEach(function(name) {
@@ -373,7 +379,7 @@
 			if (!readOnly) {
 				compatDescriptor.set = function(val) {
 					cls._ctor[name] = val;
-				}
+				};
 			}
 			Object.defineProperty(cls.statics, name, compatDescriptor);
 		});
@@ -381,6 +387,10 @@
 
 	/**
 	 * 静的アクセサを定義します。
+	 *
+	 * @private
+	 * @param cls HifiveClassクラスオブジェクト
+	 * @param accessorDescriptor アクセサディスクリプタ
 	 */
 	function defineStaticAccessors(cls, accessorDescriptor) {
 		Object.keys(accessorDescriptor).forEach(function(name) {
@@ -409,14 +419,18 @@
 
 	/**
 	 * 静的メソッドを定義します。
+	 *
+	 * @private
+	 * @param cls HifiveClassクラスオブジェクト
+	 * @param methodDescriptor メソッドディスクリプタ
 	 */
 	function defineStaticMethods(cls, methodDescriptor) {
 		Object.keys(methodDescriptor).forEach(
 				function(name) {
 					var method = methodDescriptor[name];
 					if (typeof method !== 'function') {
-						throw new Error(ERR_STATIC_METHOD_MUST_BE_FUNCTION + 'メソッド=' + cls.getFullName()
-								+ '.' + name);
+						throw new Error(ERR_STATIC_METHOD_MUST_BE_FUNCTION + 'メソッド='
+								+ cls.getFullName() + '.' + name);
 					}
 
 					var descriptor = {
@@ -506,44 +520,12 @@
 		}
 	});
 
-	function HifiveClassManager() {
-		this._rootClass = null;
-		// クラス名(FQCN) -> クラスオブジェクト　のマップ
-		this._classMap = {};
-	}
-	$.extend(HifiveClassManager.prototype, {
-		/**
-		 * @memberOf h5.cls.HifiveClassManager
-		 */
-		defineRootClass: function(classDescriptor) {
-			if (this._rootClass) {
-				throw new Error(ERR_ROOT_CLASS_IS_ALREADY_DEFINED);
-			}
-
-			this._rootClass = defineClass(this, null, classDescriptor);
-			return this._rootClass;
-		},
-		getRootClass: function() {
-			return this._rootClass;
-		},
-		getClass: function(name) {
-			var cls = this._classMap[name];
-			//undefinedではなくnullを返す(設計ポリシー)
-			cls = cls === undefined ? null : cls;
-			return cls;
-		},
-
-		/**
-		 * 指定された名前空間に属するクラスをそのクラス名をキーとして保持するオブジェクトを返します。
-		 *
-		 * @param namespace
-		 */
-		getNamespaceObject: function(namespace) {
-		// TODO namespace objectを返す
-		}
-	});
-
-	var rootClassDesc = {
+	/**
+	 * ルートクラス定義。
+	 *
+	 * @private
+	 */
+	var ROOT_CLASS_DESC = {
 		name: 'h5.cls.RootClass',
 		method: {
 			constructor: function HifiveRootObject() {
@@ -556,9 +538,67 @@
 		}
 	};
 
-	var defaultClassManager = new HifiveClassManager();
-	defaultClassManager.defineRootClass(rootClassDesc);
+	function HifiveClassManager() {
+		this._rootClass = null;
+		// クラス名(FQCN) -> クラスオブジェクト　のマップ
+		this._classMap = {};
 
+		this._rootClass = defineClass(this, null, ROOT_CLASS_DESC);
+	}
+	$.extend(HifiveClassManager.prototype,
+			{
+				/**
+				 * このマネージャで管理されているルートクラスを取得します。
+				 *
+				 * @memberOf h5.cls.HifiveClassManager
+				 */
+				getRootClass: function() {
+					return this._rootClass;
+				},
+
+				/**
+				 * 指定された名前のクラスオブジェクトを取得します。戻り値のクラスのインスタンスを生成する場合は ret.create() のようにします。
+				 *
+				 * @param fqcn 完全修飾クラス名
+				 * @returns {HifiveClass} クラスオブジェクト
+				 */
+				getClass: function(fqcn) {
+					var cls = this._classMap[fqcn];
+					//undefinedではなくnullを返す(設計ポリシー)
+					cls = cls === undefined ? null : cls;
+					return cls;
+				},
+
+				/**
+				 * 指定された名前空間に属するクラスをそのクラス名をキーとして保持するオブジェクトを返します。
+				 *
+				 * @param {String} namespace 名前空間
+				 * @returns 名前空間オブジェクト
+				 */
+				getNamespaceObject: function(namespace) {
+					if (!namespace) {
+						throw new Error('namespaceが指定されていません。');
+					}
+
+					var ret = {};
+
+					var classMap = this._classMap;
+					var namespaceLen = namespace.length;
+
+					for ( var fqcn in classMap) {
+						if (fqcn.lastIndexOf(namespace, 0) === 0
+								&& fqcn.indexOf('.', namespaceLen) === -1) {
+							var simpleName = fqcn.substr(namespaceLen);
+							ret[simpleName] = classMap[fqcn];
+						}
+					}
+
+					return ret;
+				}
+			});
+
+
+	var defaultClassManager = new HifiveClassManager();
 	var RootClass = defaultClassManager.getRootClass();
 
 	h5.u.obj.expose('h5.cls', {
