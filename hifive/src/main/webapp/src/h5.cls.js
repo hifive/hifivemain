@@ -47,7 +47,6 @@
 	var H5_PRESERVED_NAMES = ['extend', 'getClass'];
 	var STATIC_PRESERVED_NAMES = JS_PRESERVED_NAMES.concat(H5_PRESERVED_NAMES);
 
-
 	function setupProperty(instance, klass) {
 		var parentClass = klass.getParentClass();
 		if (parentClass) {
@@ -135,7 +134,19 @@
 
 		var superObject = {
 			constructor: function() {
-				var argsArray = Array.prototype.slice.call(arguments, 0);
+				//Chrome(V8)では、Array.prototype.slice.call(arguments)でargumentsを配列化して
+				//func.apply()の引数に使うと、プロファイラで"Not Optimized: Bad value context ..."という警告が出る。
+				//このようにループでコピーして呼ぶと、警告は出なくなる。
+				//ただし、この処理全体を別の関数にして呼び出すと再び警告が出てしまうので、
+				//このループは都度書く必要がある。
+				//また、ES2015では Array.from() が追加されたが、現時点（Chrome56）ではslice()よりも遅かった。
+				//またNot Optimizedの警告も出るので、採用しない。
+				var argsLen = arguments.length;
+				var argsArray = new Array(argsLen);
+				for (var i = 0; i < argsLen; i++) {
+					argsArray[i] = arguments[i];
+				}
+
 				return ctor.apply(this, argsArray);
 			}
 		};
@@ -475,7 +486,6 @@
 				throw new Error(ERR_CLASS_IS_ABSTRACT);
 			}
 
-			var argsArray = Array.prototype.slice.call(arguments, 0);
 			var instance = Object.create(this._ctor.prototype);
 
 			//プロパティの初期化（追加）
@@ -485,6 +495,14 @@
 			//TODO いずれかの親クラスでisDynamicが明示的にfalseに指定されたら、再度trueにはできないようにすべきか？
 			if (this._descriptor.isDynamic !== true) {
 				Object.seal(instance);
+			}
+
+			//argumentsを配列化する処理はこのforループでこの場所で行うこと。
+			//詳細はsuperObjectのconstructor参照。
+			var argsLen = arguments.length;
+			var argsArray = new Array(argsLen);
+			for (var i = 0; i < argsLen; i++) {
+				argsArray[i] = arguments[i];
 			}
 
 			//コンストラクタ実行
@@ -527,9 +545,10 @@
 	 */
 	var ROOT_CLASS_DESC = {
 		name: 'h5.cls.RootClass',
+
 		method: {
 			constructor: function HifiveRootObject() {
-				HifiveRootObject._super.call(this);
+				//ルートクラスなので、"super.constructor.call()"は不要
 				this._class._isCtorChained = true;
 			},
 			getClass: function() {
