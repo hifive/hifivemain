@@ -124,12 +124,12 @@
 			//Class._ctorは必ず存在する(constructorが必須だから)
 			ctor.prototype = Object.create(parentClass._ctor.prototype);
 			ctor.prototype.constructor = ctor;
-			ctor._super = parentClass._ctor;
+			//ctor._super = parentClass._ctor;
 		} else {
 			//親クラスがない場合、何もしないコンストラクタをセット
-			ctor._super = function() {
+			//ctor._super = function() {
 			//do nothing
-			};
+			//};
 		}
 
 		var superObject = {
@@ -165,6 +165,7 @@
 		var newClass = new HifiveClass(classManager, classDescriptor, ctor, parentClass,
 				superObject);
 
+		//TODO 下記コメントは古い(2017/3/9) 現在は引数でsuper_を受け取る。コメント削除予定
 		//クラスディスクリプタ記述時、constructor: function() MyClass {} のように
 		//名前付き関数で書くことが推奨であり、この場合
 		// var MyClass = Class.extend({ constructor: function MyClass(){ MyClass._super.call(this) } });
@@ -175,7 +176,9 @@
 		//その時にコンストラクタ内で参照されるのは変数のMyClassになる。
 		//そのような場合にも正しくスーパークラスのコンストラクタを呼び出せるよう
 		//Classインスタンスの_super変数にも親クラスのコンストラクタをセットしておく。
-		newClass._super = ctor._super;
+
+		//後方互換コード廃止（2017/3/9）
+		//newClass._super = ctor._super;
 
 		ctor.prototype.__name = classDescriptor.name;
 		ctor.prototype._class = newClass;

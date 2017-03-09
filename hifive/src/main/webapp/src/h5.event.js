@@ -52,8 +52,10 @@
 	 *
 	 * @mixin
 	 * @name EventDispatcher
+	 * @param super_ スーパーオブジェクト
+	 * @returns {EventDispatcherClass} イベントディスパッチャクラス
 	 */
-	var EventDispatcher = RootClass.extend(function() {
+	RootClass.extend(function(super_) {
 		/**
 		 * 受け取ったオブジェクトをイベントオブジェクトにする
 		 *
@@ -83,7 +85,7 @@
 				 * @mebmerOf h5.event.EventDispatcher
 				 */
 				constructor: function EventDispatcher() {
-					EventDispatcher._super.call(this);
+					super_.constructor.call(this);
 
 					this._eventListeners = {};
 				},
@@ -234,7 +236,7 @@
 		return desc;
 	});
 
-	var Event = RootClass.extend(function() {
+	var Event = RootClass.extend(function(super_) {
 		var desc = {
 			name: 'h5.event.Event',
 			field: {
@@ -261,7 +263,7 @@
 				 * @memberOf h5.event.Event
 				 */
 				constructor: function Event(type) {
-					Event._super.call(this);
+					super_.constructor.call(this);
 
 					this._type = type;
 					this._defaultPrevented = false;
@@ -284,8 +286,7 @@
 		return desc;
 	});
 
-	var PropertyChangeEvent = Event.extend(function() {
-
+	Event.extend(function(super_) {
 		var EVENT_NAME_PROPERTY_CHANGE = 'propertyChange';
 
 		var desc = {
@@ -314,7 +315,7 @@
 			},
 			method: {
 				constructor: function PropertyChangeEvent(propertyName, oldValue, newValue) {
-					PropertyChangeEvent._super.call(this, EVENT_NAME_PROPERTY_CHANGE);
+					super_.constructor.call(this, EVENT_NAME_PROPERTY_CHANGE);
 
 					if (propertyName == null) {
 						throwFwError(ERR_CODE_PROPERTY_NAME_IS_REQUIRED);
