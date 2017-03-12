@@ -349,13 +349,18 @@
 		 * @returns Any 指定されたプロパティの値。引数なしの場合はプロパティキーと値を持つオブジェクト。
 		 */
 		get: function(key) {
-			if (arguments.length === 0) {
-				return $.extend({}, this._values);
-			}
-
 			// DataItemの場合はモデルから、ObsItemの場合はObsItemのインスタンスからschemaを取得
 			var model = this._model;
 			var schema = model ? model.schema : this.schema;
+
+			if (arguments.length === 0) {
+				var ret = {};
+				for ( var p in schema) {
+					ret[p] = this._values[p];
+				}
+				return ret;
+			}
+
 			if (!schema.hasOwnProperty(key)) {
 				//スキーマに存在しないプロパティはgetできない（プログラムのミスがすぐわかるように例外を送出）
 				throwFwError(ERR_CODE_CANNOT_GET_NOT_DEFINED_PROPERTY, [
