@@ -18,28 +18,6 @@
 (function() {
 	'use strict';
 
-	//TODO 当座、このファイルを単体で読み込んでも使えるようにする
-	//最終的にはh5scolpedglobals.jsに入っているのでなくす
-	function isString(target) {
-		return typeof target === 'string';
-	}
-
-	//TODO 最終的に削除（h5scolpedglobals.jsにはいっている）
-	var isFunction = (function() {
-		// Android3以下、iOS4以下は正規表現をtypeofで判定すると"function"を返す
-		// それらのブラウザでは、toStringを使って判定する
-		if (typeof new RegExp() === 'function') {
-			var toStringObj = Object.prototype.toString;
-			return function(obj) {
-				return toStringObj.call(obj) === '[object Function]';
-			};
-		}
-		// 正規表現のtypeofが"function"にならないブラウザなら、typeofがfunctionなら関数と判定する
-		return function(obj) {
-			return typeof obj === 'function';
-		};
-	})();
-
 	var ERR_CODE_PROPERTY_NAME_IS_REQUIRED = 90001; //TODO 要エラーコード採番
 
 	var RootClass = h5.cls.RootClass;

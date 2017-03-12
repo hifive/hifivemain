@@ -66,7 +66,7 @@
 				templateEngineFile="${ejsTempFile}"
 				constructionFileName="${constructionFile}"
 				templateEngineSrcFileName= "ejs-1.0.js"
-				modules="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
+				modules="util,async,cls,event,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
@@ -86,9 +86,9 @@
 				cssReleaseFileName="h5.css"
 				jsReleaseFileName="h5.js"
 				jsDevFileName="h5.dev.js"
-				jsSrcDir="/src/main/webapp/src"
-				cssSrcDir="/src/main/webapp/srcCss"
-				templateEngineSrcDir="/src/main/webapp/src/ejs"
+				jsSrcDir="src/main/webapp/src"
+				cssSrcDir="src/main/webapp/srcCss"
+				templateEngineSrcDir="src/main/webapp/src/ejs"
 				destDir="${releaseDir}"
 				version="Nightly_${nightly.version}"
 				templateEngineVersion="1.0"
@@ -96,8 +96,10 @@
 				jsTemplateFileName="${jsTempFile}"
 				cssTemplateFileName="${cssTempFile}"
 				minHeaderFileName="${minHeaderFile}"
+				templateEngineFile="${ejsTempFile}"
 				constructionFileName="${constructionFile}"
-				modules="util,async,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
+				templateEngineSrcFileName= "ejs-1.0.js"
+				modules="util,async,cls,event,resource,controller,dataModel,modelWithBinding,view,ui,api.geo,api.sqldb,api.storage,scene,validation" />
 			<velocityParameter name="gitCommitId" value="${gitCommitId}" />
 		</buildService>
 	</target>
