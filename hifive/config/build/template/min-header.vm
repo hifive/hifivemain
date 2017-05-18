@@ -1,6 +1,6 @@
 #if (${gitCommitId})
-/* Copyright (C) 2012-2016 NS Solutions Corporation. Licensed under the Apache License, Version 2.0. hifive version ${version} gitCommitId ${gitCommitId} (${moduleNames}) */
+/* Copyright (C) 2012-2017 NS Solutions Corporation. Licensed under the Apache License, Version 2.0. hifive version ${version} gitCommitId ${gitCommitId} (${moduleNames}) */
 #else
-/* Copyright (C) 2012-2016 NS Solutions Corporation. Licensed under the Apache License, Version 2.0. hifive version ${version} (${moduleNames}) */
+/* Copyright (C) 2012-2017 NS Solutions Corporation. Licensed under the Apache License, Version 2.0. hifive version ${version} (${moduleNames}) */
 #end
 ${content}
