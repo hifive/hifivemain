@@ -4692,6 +4692,31 @@ $(function() {
 		strictEqual(message, null, '第2引数で指定したプロパティがエラーではない場合はnullを返すこと');
 	});
 
+	test('全てのプロパティがエラーではない場合はnullを返すこと', function() {
+		var msgOutputCtrl = this.messageOutputCtrl;
+		var logic = this.validateLogic;
+		msgOutputCtrl.addMessageSetting({
+			a: {
+				displayName: '入力要素A',
+				message: '{displayName}が違反しています'
+			}
+		});
+		logic.addRule({
+			a: {
+				required: true
+			},
+			b: {
+				required: true
+			}
+		});
+		var result = logic.validate({
+			a: 'valueA',
+			b: 'valueB'
+		});
+		var message = msgOutputCtrl.getMessageByValidationResult(result, 'b');
+		strictEqual(message, null, '全てのプロパティがエラーではない場合はnullを返すこと');
+	});
+
 	//=============================
 	// Definition
 	//=============================
