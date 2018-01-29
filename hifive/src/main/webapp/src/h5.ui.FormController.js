@@ -846,7 +846,7 @@
 					|| (element !== document.activeElement && !$(document.activeElement).closest(
 							element).length)) {
 				// フォーカスが外れた時、該当要素または該当要素内の要素にフォーカスが当たっていない場合は非表示にする
-				this._hideBalloon(element);
+				this._hideBalloon(target);
 				return;
 			}
 			var placement = propSetting.placement || DEFAULT_PLACEMENT;
@@ -861,7 +861,7 @@
 					}
 					if (ev.isValid) {
 						// validならバルーンを隠す
-						this._hideBalloon(element);
+						this._hideBalloon(target);
 						return;
 					}
 					// invalidならバルーン表示
@@ -874,7 +874,7 @@
 					&& validationResult.invalidReason[name];
 			if (!invalidReason) {
 				// validateエラーがないときはhideして終了
-				this._hideBalloon(element);
+				this._hideBalloon(target);
 				return;
 			}
 
