@@ -795,7 +795,7 @@
 		_setChildSetting: function() {
 			var setting = this._setting;
 
-			if (!setting.updateOn) {
+			if (setting.updateOn == null) {
 				this._updateOn = ['validate'];
 			} else {
 				var updateOn = setting.updateOn;
@@ -2120,9 +2120,9 @@
 					}
 				}
 
-				var attributes = element.getAttributeNames();
+				var attributes = element.attributes;
 				for (var i = 0, len = attributes.length; i < len; i++) {
-					var attributeName = attributes[i];
+					var attributeName = attributes[i].name;
 					if (!this._startsWith(attributeName, 'data-h5-v-')) {
 						continue;
 					}
