@@ -1139,11 +1139,11 @@
 			}
 		},
 
-		setValidatorEnabledWhenEmpty: function(validatorName, isEnabled) {
+		setRuleEnabledWhenEmpty: function(validatorName, isEnabled) {
 			this._isEnabledWhenEmptyMap[validatorName] = isEnabled;
 		},
 
-		setAllValidatorsEnabledWhenEmpty: function(isEnabled) {
+		setAllRulesEnabledWhenEmpty: function(isEnabled) {
 			this._isEnabledAllWhenEmpty = isEnabled;
 		},
 
@@ -1454,7 +1454,8 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.validation', {
-		defineValidator: defineRule
+		defineValidator: defineRule,
+		defineRule: defineRule
 	});
 	h5.core.expose(FormValidationLogic);
 })();

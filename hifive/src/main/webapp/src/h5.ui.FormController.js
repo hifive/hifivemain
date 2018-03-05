@@ -1979,21 +1979,21 @@
 		setSetting: function(setting) {
 			this._setting = setting;
 
-			if ('customValidator' in setting) {
-				this._addValidator(setting.customValidator);
+			if ('customRule' in setting) {
+				this._addCustomRule(setting.customRule);
 			}
 
-			if ('isAllValidatorsEnabledWhenEmpty' in setting) {
+			if ('isAllRulesEnabledWhenEmpty' in setting) {
 				this._validationLogic
-						.setAllValidatorsEnabledWhenEmpty(setting.isAllValidatorsEnabledWhenEmpty === true);
+						.setAllRulesEnabledWhenEmpty(setting.isAllRulesEnabledWhenEmpty === true);
 			}
 
-			if ('validatorDefault' in setting) {
-				for ( var validatorName in setting.validatorDefault) {
-					var validatorDefaultSetting = setting.validatorDefault[validatorName];
-					if ('isEnabledWhenEmpty' in validatorDefaultSetting) {
-						this._validationLogic.setValidatorEnabledWhenEmpty(validatorName,
-								validatorDefaultSetting.isEnabledWhenEmpty === true);
+			if ('ruleDefault' in setting) {
+				for ( var validatorName in setting.ruleDefault) {
+					var ruleDefaultSetting = setting.ruleDefault[validatorName];
+					if ('isEnabledWhenEmpty' in ruleDefaultSetting) {
+						this._validationLogic.setRuleEnabledWhenEmpty(validatorName,
+								ruleDefaultSetting.isEnabledWhenEmpty === true);
 					}
 				}
 			}
@@ -2014,17 +2014,17 @@
 		 * @private
 		 * @param customValidatorObj
 		 */
-		_addValidator: function(customValidatorObj) {
-			for ( var validatorName in customValidatorObj) {
-				var validator = customValidatorObj[validatorName];
+		_addCustomRule: function(customRuleDef) {
+			for ( var ruleName in customRuleDef) {
+				var validator = customRuleDef[ruleName];
 
 				if (!('message' in validator)) {
-					throw new Error('カスタムバリデータの定義にはmessageの指定が必須です。定義しようとしたバリデータ=' + validatorName);
+					throw new Error('カスタムバリデータの定義にはmessageの指定が必須です。定義しようとしたルール=' + ruleName);
 				}
 
 				var isEnabledWhenEmpty = validator.isEnabledWhenEmpty === true;
 
-				h5.validation.defineValidator(validatorName, validator.func, null, 40,
+				h5.validation.defineValidator(ruleName, validator.func, null, 40,
 						isEnabledWhenEmpty, validator.validateOn);
 			}
 		},
@@ -2704,15 +2704,15 @@
 		_setValidatorDefaultMesssages: function(controller) {
 			var setting = this._setting;
 
-			if (!('customValidator' in setting)) {
+			if (!('customRule' in setting)) {
 				return;
 			}
 
-			for ( var validatorName in setting.customValidator) {
-				var message = setting.customValidator[validatorName];
+			for ( var ruleName in setting.customRule) {
+				var message = setting.customRule[ruleName];
 				//TODO Composiiton以外のプラグインでもsetDefaultMessageを使えるようにする
 				if (message != null && ('_setDefaultMessage' in controller)) {
-					controller._setDefaultMessage(validatorName, message);
+					controller._setDefaultMessage(ruleName, message);
 				}
 			}
 

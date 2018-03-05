@@ -45,7 +45,7 @@
 
 			__init: function() {
 				var setting = {
-					validatorDefault: {
+					ruleDefault: {
 						size: {
 							//明示的に指定しない場合、ルールごとのデフォルトが適用される
 							isEnabledWhenEmpty: true
@@ -53,9 +53,9 @@
 					},
 
 					//明示的にtrueを指定した場合のみtrue、それ以外または未指定の場合はfalse
-					isAllValidatorsEnabledWhenEmpty: true,
+					isAllRulesEnabledWhenEmpty: true,
 
-					customValidator: {
+					customRule: {
 						validator1: {
 							//valueにはinput要素の値（生文字列）が渡される。戻り値はboolean。
 							func: function(value) {
