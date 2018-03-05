@@ -863,7 +863,7 @@
 		 *
 		 * @private
 		 */
-		_isEnabledWhenEmptyMap: {},
+		_isForceEnabledWhenEmptyMap: {},
 
 		/**
 		 * @private
@@ -1139,8 +1139,8 @@
 			}
 		},
 
-		setRuleEnabledWhenEmpty: function(validatorName, isEnabled) {
-			this._isEnabledWhenEmptyMap[validatorName] = isEnabled;
+		setRuleForceEnabledWhenEmpty: function(validatorName, isEnabled) {
+			this._isForceEnabledWhenEmptyMap[validatorName] = isEnabled;
 		},
 
 		setAllRulesEnabledWhenEmpty: function(isEnabled) {
@@ -1411,12 +1411,17 @@
 		 * @returns {Boolean}
 		 */
 		_shouldValidateWhenEmpty: function(validator) {
+			if (this._isForceEnabledWhenEmptyMap[validator] != null) {
+				//個別ルールの指定があれば優先する
+				return this._isForceEnabledWhenEmptyMap[validator];
+			}
+
 			if (this._isEnabledAllWhenEmpty) {
+				//個別ルールの指定がなく、全ルールでの有効化がOnになっている場合はOn
 				return true;
 			}
-			if (this._isEnabledWhenEmptyMap[validator] === true) {
-				return true;
-			}
+
+			//最後に、ルールで定義されたデフォルト挙動に基づいて動作する
 			return validator.enableWhenEmpty === true;
 		},
 
@@ -1454,7 +1459,6 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.validation', {
-		defineValidator: defineRule,
 		defineRule: defineRule
 	});
 	h5.core.expose(FormValidationLogic);

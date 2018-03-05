@@ -48,7 +48,7 @@
 					ruleDefault: {
 						size: {
 							//明示的に指定しない場合、ルールごとのデフォルトが適用される
-							isEnabledWhenEmpty: true
+							isForceEnabledWhenEmpty: true
 						}
 					},
 
@@ -68,8 +68,8 @@
 							//エラーメッセージ。必須。「{displayName}」と書くと、表示名に置き換わる。
 							message: '{displayName}はカスタムルール1に違反しています。',
 
-							//このバリデータを、値が空文字の場合でも実行するかどうか。デフォルト値：false。
-							isEnabledWhenEmpty: true,
+							//このバリデータを、値が空文字の場合でも実行するかどうか。デフォルト値：未指定。
+							isForceEnabledWhenEmpty: true,
 
 							//このバリデータを、どのタイミングで実行するかを指定する。"blur", "validate"が指定可能。
 							validateOn: ['validate']
@@ -79,7 +79,7 @@
 								return false;
 							},
 							message: 'とにかくNGです。',
-						//isEnabledWhenEmpty: false  //デフォルトはfalse
+						//isForceEnabledWhenEmpty: false  //デフォルトはfalse
 						}
 					},
 

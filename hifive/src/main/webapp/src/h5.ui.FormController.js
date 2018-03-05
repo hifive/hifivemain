@@ -1991,8 +1991,8 @@
 			if ('ruleDefault' in setting) {
 				for ( var validatorName in setting.ruleDefault) {
 					var ruleDefaultSetting = setting.ruleDefault[validatorName];
-					if ('isEnabledWhenEmpty' in ruleDefaultSetting) {
-						this._validationLogic.setRuleEnabledWhenEmpty(validatorName,
+					if ('isForceEnabledWhenEmpty' in ruleDefaultSetting) {
+						this._validationLogic.setRuleForceEnabledWhenEmpty(validatorName,
 								ruleDefaultSetting.isEnabledWhenEmpty === true);
 					}
 				}
@@ -2022,10 +2022,13 @@
 					throw new Error('カスタムバリデータの定義にはmessageの指定が必須です。定義しようとしたルール=' + ruleName);
 				}
 
-				var isEnabledWhenEmpty = validator.isEnabledWhenEmpty === true;
+				h5.validation.defineRule(ruleName, validator.func, null, 40, false,
+						validator.validateOn);
 
-				h5.validation.defineValidator(ruleName, validator.func, null, 40,
-						isEnabledWhenEmpty, validator.validateOn);
+				if ('isForceEnabledWhenEmpty' in validator) {
+					this._validationLogic
+							.setRuleForceEnabledWhenEmpty(validator.isForceEnabledWhenEmpty);
+				}
 			}
 		},
 
