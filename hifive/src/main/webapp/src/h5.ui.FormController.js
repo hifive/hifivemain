@@ -44,6 +44,8 @@
 	// Cache
 	//
 	// =========================================================================
+	var formatStr = h5.u.str.format;
+
 	// =========================================================================
 	//
 	// Privates
@@ -56,29 +58,29 @@
 	 * デフォルトエラーメッセージ
 	 */
 	var defaultInvalidMessage = {
-		required: '{displayName}は必須項目です',
+		required: '{displayName}は必須項目です。',
 		min: function(param) {
-			return h5.u.str.format('{displayName}は{violation[0].ruleValue.min}{1}数値を入力してください。',
-					param, (param.violation[0].ruleValue.inclusive ? "以上の" : "より大きい"));
+			return formatStr('{displayName}は{targetViolation.ruleValue.min}{1}数値を入力してください。', param,
+					(param.targetViolation.ruleValue.inclusive ? "以上の" : "より大きい"));
 		},
 		max: function(param) {
-			return h5.u.str.format('{displayName}は{violation[0].ruleValue.max}{1}数値を入力してください。',
-					param, (param.violation[0].ruleValue.inclusive ? "以下の" : "未満の"));
+			return formatStr('{displayName}は{targetViolation.ruleValue.max}{1}数値を入力してください。', param,
+					(param.targetViolation.ruleValue.inclusive ? "以下の" : "未満の"));
 		},
-		pattern: '{displayName}は正規表現{violation[0].ruleValue.regexp}を満たす文字列を入力してください。',
-		digits: '{displayName}は整数部分{violation[0].ruleValue.integer}桁、小数部分{fraction}桁以下の数値を入力してください。',
+		pattern: '{displayName}は正規表現{targetViolation.ruleValue.regexp}を満たす文字列を入力してください。',
+		digits: '{displayName}は整数部分{targetViolation.ruleValue.integer}桁、小数部分{fraction}桁以下の数値を入力してください。',
 		size: function(param) {
 			var upperLimitMsg = '';
 			var lowerLimitMsg = '';
-			var min = param.violation[0].ruleValue.min;
-			var max = param.violation[0].ruleValue.max;
+			var min = param.targetViolation.ruleValue.min;
+			var max = param.targetViolation.ruleValue.max;
 			if (min != null) {
-				lowerLimitMsg = h5.u.str.format('{0}以上', min);
+				lowerLimitMsg = formatStr('{0}以上', min);
 			}
 			if (max != null) {
-				upperLimitMsg = h5.u.str.format('{0}以下', max);
+				upperLimitMsg = formatStr('{0}以下', max);
 			}
-			return h5.u.str.format('{displayName}は{1}{2}の長さでなければいけません。', param, lowerLimitMsg,
+			return formatStr('{displayName}は{1}{2}の長さでなければいけません。', param, lowerLimitMsg,
 					upperLimitMsg);
 		},
 		future: '{displayName}は現在時刻より未来の時刻を入力してください。',
@@ -87,7 +89,7 @@
 		assertNotNull: '{displayName}はnullでない値を設定してください。',
 		assertFalse: '{displayName}はfalseとなる値を入力してください。',
 		assertTrue: '{displayName}はtrueとなる値を入力してください。',
-		customFunc: '{displayName}は条件を満たしません'
+		customFunc: '{displayName}は条件を満たしません。'
 	};
 
 	// =============================
@@ -103,12 +105,20 @@
 	 * @param {Object} setting
 	 * @returns {string} メッセージ
 	 */
-	function createValidateErrorMessage(name, reason, setting) {
+	function createValidateErrorMessage(name, reason, setting, violationIndex, defaultMessageMap) {
 		var displayName = (setting && setting.displayName) || name;
 		var msg = setting && setting.message;
+
+		// 違反のインデックスが指定されていない場合は一番最初の違反から作成する
+		if (violationIndex == null) {
+			violationIndex = 0;
+		}
+
 		var param = $.extend({}, reason, {
 			displayName: displayName
 		});
+		param.targetViolation = reason.violation[violationIndex];
+
 		if (isString(msg)) {
 			// messageが指定されていればh5.u.str.formatでメッセージを作成
 			return h5.u.str.format(msg, param);
@@ -116,10 +126,9 @@
 			return msg(param);
 		}
 
-		// 何も設定されていない場合はデフォルトメッセージ
-		// デフォルトメッセージはviolationの一番最初のルールから作成する
-		var ruleName = reason.violation[0].ruleName;
-		var defaultMsg = defaultInvalidMessage[ruleName];
+		var ruleName = reason.violation[violationIndex].ruleName;
+		var defaultMsg = defaultInvalidMessage[ruleName]
+				|| (defaultMessageMap[ruleName] && defaultMessageMap[ruleName].message);
 		if (defaultMsg) {
 			if (isFunction(defaultMsg)) {
 				return defaultMsg(param);
@@ -148,12 +157,23 @@
 	 * @class
 	 * @name h5.ui.validation.MessageOutputController
 	 */
-	var controlelr = {
+	var controller = {
 		__name: 'h5.ui.validation.MessageOutputController',
 		_container: null,
 		_wrapper: null,
 		// validationResultからメッセージを作るための設定
 		_setting: {},
+
+		_validatorDefaultMessageMap: {},
+
+		/**
+		 * @private
+		 * @param validatorName
+		 * @param message
+		 */
+		_setDefaultMessage: function(validatorName, message) {
+			this._validatorDefaultMessageMap[validatorName] = message;
+		},
 
 		/**
 		 * メッセージ出力先要素をコンテナとして設定する
@@ -290,15 +310,38 @@
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string} name 対象のプロパティ名
+		 * @param {boolean} [violationIndex] 違反結果のインデックス（省略時は先頭の違反を対象にする）
 		 * @returns {string} エラーメッセージ
 		 */
-		getMessageByValidationResult: function(validationResult, name) {
+		getMessageByValidationResult: function(validationResult, name, violationIndex) {
 			var invalidReason = validationResult.invalidReason[name];
 			if (!invalidReason) {
 				return null;
 			}
 			return h5internal.validation.createValidateErrorMessage(name, invalidReason,
-					this._setting[name]);
+					this._setting[name], violationIndex, this._validatorDefaultMessageMap);
+		},
+
+		getAllMessagesByValidationResult: function(validationResult, name) {
+			var invalidReason = validationResult.invalidReason[name];
+			return this._getAllMessagesForName(invalidReason, name);
+		},
+
+		_getAllMessagesForName: function(invalidReason, name) {
+			if (!invalidReason) {
+				return [];
+			}
+
+			var ret = [];
+
+			var violations = invalidReason.violation;
+			for (var i = 0, len = violations.length; i < len; i++) {
+				var message = h5internal.validation.createValidateErrorMessage(name, invalidReason,
+						this._setting[name], i, this._validatorDefaultMessageMap);
+				ret.push(message);
+			}
+
+			return ret;
 		},
 
 		/**
@@ -316,8 +359,9 @@
 		 * @memberOf h5.ui.validation.MessageOutputController
 		 * @param {ValidationResult} validationResult
 		 * @param {string|string[]} [names] 出力対象のプロパティ名。指定しない場合は全てが対象
+		 * @param {boolean} [showAllErrors] すべてのエラーを出力するかどうか。省略時はfalse（先頭のエラーのみ出力）。
 		 */
-		appendMessageByValidationResult: function(validationResult, names) {
+		appendMessageByValidationResult: function(validationResult, names, showAllErrors) {
 			var invalidProperties = validationResult.invalidProperties;
 			names = isString(names) ? [names] : names;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
@@ -325,24 +369,43 @@
 				if (names && $.inArray(name, names) === -1) {
 					continue;
 				}
-				var message = this.getMessageByValidationResult(validationResult, name);
-				this.appendMessage(message);
+
+				if (showAllErrors === true) {
+					var allMessages = this.getAllMessagesByValidationResult(validationResult, name);
+					for (var msgIdx = 0, msgLen = allMessages.length; msgIdx < msgLen; msgIdx++) {
+						this.appendMessage(allMessages[msgIdx]);
+					}
+				} else {
+					var message = this.getMessageByValidationResult(validationResult, name);
+					this.appendMessage(message);
+				}
 			}
 			if (validationResult.isAllValid === null) {
 				// 非同期でまだ結果が返ってきていないものがある場合
 				validationResult.addEventListener('validate', this.own(function(ev) {
 					if (!ev.isValid && !names || $.inArray(ev.name, names) !== -1) {
 						var invalidReason = ev.target.invalidReason[ev.name];
-						var message = h5internal.validation.createValidateErrorMessage(ev.name,
-								invalidReason, this._setting[ev.name]);
-						this.appendMessage(message);
+
+						if (showAllErrors === true) {
+							var allMessagesAsync = this._getAllMessagesForName(invalidReason,
+									ev.name);
+							for (var idx2 = 0, len2 = allMessages.length; idx2 < len2; idx2++) {
+								this.appendMessage(allMessagesAsync[idx2]);
+							}
+						} else {
+							var message = h5internal.validation.createValidateErrorMessage(ev.name,
+									invalidReason, this._setting[ev.name], null,
+									this._validatorDefaultMessageMap);
+							this.appendMessage(message);
+						}
+
 					}
 				}));
 				return;
 			}
 		}
 	};
-	h5.core.expose(controlelr);
+	h5.core.expose(controller);
 })();
 
 (function() {
@@ -600,6 +663,11 @@
 	var controller = {
 		__name: 'h5.ui.validation.Composition',
 		_messageOutputController: h5.ui.validation.MessageOutputController,
+
+		_updateOn: null,
+
+		_lastValidationResult: null,
+
 		/**
 		 * プラグイン設定
 		 *
@@ -625,6 +693,56 @@
 			}
 		},
 
+		_shouldUpdateOn: function(eventName) {
+			if (!this._updateOn) {
+				return false;
+			}
+
+			if ($.inArray(eventName, this._updateOn) !== -1) {
+				return true;
+			}
+			return false;
+		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onBlur: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('blur')) {
+				return;
+			}
+
+			if (!this._lastValidationResult) {
+				this._lastValidationResult = {
+					invalidProperties: [],
+					invalidReason: {}
+				};
+			}
+
+			if ($.inArray(name, validationResult.invalidProperties) !== -1) {
+				this._pushIfNotExist(name, this._lastValidationResult.invalidProperties);
+				this._lastValidationResult.invalidReason[name] = validationResult.invalidReason[name];
+			} else if ($.inArray(name, validationResult.validProperties) !== -1) {
+				var idx = this._lastValidationResult.invalidProperties.indexOf(name);
+				if (idx !== -1) {
+					this._lastValidationResult.invalidProperties.splice(idx, 1);
+				}
+			}
+
+			this._messageOutputController.clearMessage();
+			this._messageOutputController.appendMessageByValidationResult(
+					this._lastValidationResult, null, this._showAllErrors);
+		},
+
+		_pushIfNotExist: function(value, array) {
+			if ($.inArray(value, array) === -1) {
+				array.push(value);
+			}
+		},
+
 		/**
 		 * バリデート時に呼ばれる
 		 * <p>
@@ -636,8 +754,24 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onValidate: function(validationResult) {
+			if (!this._shouldUpdateOn('validate')) {
+				return;
+			}
+
+			if (!this._lastValidationResult) {
+				this._lastValidationResult = {
+					invalidProperties: [],
+					invalidReason: {}
+				};
+			}
+
+			this._lastValidationResult.invalidProperties = validationResult.invalidProperties
+					.slice(0);
+			this._lastValidationResult.invalidReason = $.extend({}, validationResult.invalidReason);
+
 			this._messageOutputController.clearMessage();
-			this._messageOutputController.appendMessageByValidationResult(validationResult);
+			this._messageOutputController.appendMessageByValidationResult(validationResult, null,
+					this._showAllErrors);
 		},
 
 		/**
@@ -660,6 +794,22 @@
 		 */
 		_setChildSetting: function() {
 			var setting = this._setting;
+
+			if (!setting.updateOn) {
+				this._updateOn = ['validate'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+
+			//showAllErrorsはデフォルトでtrue（すべてのエラーを表示）。
+			//明示的にfalseが指定された場合のみ、最初に検出されたエラーのみ出力する。
+			this._showAllErrors = setting.showAllErrors !== false;
+
 			// 出力先の設定
 			this._messageOutputController.setContainer(setting.container);
 			this._messageOutputController.setWrapper(setting.wrapper);
@@ -671,10 +821,14 @@
 				messageSetting[p] = {
 					displayName: property[p].displayName || setting.displayName,
 					message: property[p].message || setting.message,
-					formatter: property[p].formatter || setting.formatter,
+					formatter: property[p].formatter || setting.formatter, //TODO formatterは利用していないので削除すべきか。確認の上対応
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
+		},
+
+		_setDefaultMessage: function(validatorName, message) {
+			this._messageOutputController._setDefaultMessage(validatorName, message);
 		}
 	};
 	h5.core.expose(controller);
@@ -1824,11 +1978,54 @@
 		 */
 		setSetting: function(setting) {
 			this._setting = setting;
+
+			if ('customValidator' in setting) {
+				this._addValidator(setting.customValidator);
+			}
+
+			if ('isAllValidatorsEnabledWhenEmpty' in setting) {
+				this._validationLogic
+						.setAllValidatorsEnabledWhenEmpty(setting.isAllValidatorsEnabledWhenEmpty === true);
+			}
+
+			if ('validatorDefault' in setting) {
+				for ( var validatorName in setting.validatorDefault) {
+					var validatorDefaultSetting = setting.validatorDefault[validatorName];
+					if ('isEnabledWhenEmpty' in validatorDefaultSetting) {
+						this._validationLogic.setValidatorEnabledWhenEmpty(validatorName,
+								validatorDefaultSetting.isEnabledWhenEmpty === true);
+					}
+				}
+			}
+
 			// 現在有効なプラグインの設定を取り出して設定する
 			var currentPlugins = this._plugins;
 			for ( var pluginName in currentPlugins) {
 				var plugin = currentPlugins[pluginName];
 				plugin._setSetting && plugin._setSetting(this._margePluginSettings(pluginName));
+			}
+
+			if (this.isInit) {
+				this._updateRuleByElement();
+			}
+		},
+
+		/**
+		 * @private
+		 * @param customValidatorObj
+		 */
+		_addValidator: function(customValidatorObj) {
+			for ( var validatorName in customValidatorObj) {
+				var validator = customValidatorObj[validatorName];
+
+				if (!('message' in validator)) {
+					throw new Error('カスタムバリデータの定義にはmessageの指定が必須です。定義しようとしたバリデータ=' + validatorName);
+				}
+
+				var isEnabledWhenEmpty = validator.isEnabledWhenEmpty === true;
+
+				h5.validation.defineValidator(validatorName, validator.func, null, 40,
+						isEnabledWhenEmpty, validator.validateOn);
 			}
 		},
 
@@ -1890,6 +2087,19 @@
 				// HTML5のformによる標準のバリデーションは行わないようにする
 				$(this._bindedForm).prop('novalidate', true);
 			}
+
+			this._updateRuleByElement();
+
+			// submitイベントを拾ってvalidateが行われるようにする
+			if (this._bindedForm) {
+				this.on(this._bindedForm, 'submit', this._submitHandler);
+			}
+		},
+
+		/**
+		 * @private
+		 */
+		_updateRuleByElement: function() {
 			// フォーム部品からルールを生成
 			var $formControls = $(this._getElements());
 			var validateRule = {};
@@ -1909,13 +2119,29 @@
 						ruleOfProp[key] = ret;
 					}
 				}
+
+				var attributes = element.getAttributeNames();
+				for (var i = 0, len = attributes.length; i < len; i++) {
+					var attributeName = attributes[i];
+					if (!this._startsWith(attributeName, 'data-h5-v-')) {
+						continue;
+					}
+					var validatorName = attributeName.substr(10);
+					ruleOfProp[validatorName] = true;
+				}
+
 			}));
 			this.addRule(validateRule);
+		},
 
-			// submitイベントを拾ってvalidateが行われるようにする
-			if (this._bindedForm) {
-				this.on(this._bindedForm, 'submit', this._submitHandler);
-			}
+		/**
+		 * @private
+		 * @param str
+		 * @param searchStr
+		 * @returns {Boolean}
+		 */
+		_startsWith: function(str, searchStr) {
+			return str.substr(0, searchStr.length) === searchStr;
 		},
 
 		/**
@@ -2302,7 +2528,7 @@
 		 */
 		validate: function(names) {
 			// バリデート実行
-			var result = this._validate(names);
+			var result = this._validate(names, 'validate');
 
 			// _onValidateの呼び出し
 			this._callPluginValidateEvent(PLUGIN_EVENT_VALIDATE, result);
@@ -2467,7 +2693,29 @@
 			var c = h5.core.controller(this._bindedForm || this.rootElement, controller);
 			c._setSetting && c._setSetting(this._margePluginSettings(pluginName));
 			this.manageChild(c);
+			this._setValidatorDefaultMesssages(c);
 			this._plugins[pluginName] = c;
+		},
+
+		/**
+		 * @private
+		 * @param controller 出力プラグインコントローラ
+		 */
+		_setValidatorDefaultMesssages: function(controller) {
+			var setting = this._setting;
+
+			if (!('customValidator' in setting)) {
+				return;
+			}
+
+			for ( var validatorName in setting.customValidator) {
+				var message = setting.customValidator[validatorName];
+				//TODO Composiiton以外のプラグインでもsetDefaultMessageを使えるようにする
+				if (message != null && ('_setDefaultMessage' in controller)) {
+					controller._setDefaultMessage(validatorName, message);
+				}
+			}
+
 		},
 
 		/**
@@ -2476,9 +2724,10 @@
 		 * @private
 		 * @memberOf h5.ui.FormController
 		 * @param names
+		 * @param timing
 		 * @returns {ValidationResult}
 		 */
-		_validate: function(names) {
+		_validate: function(names, timing) {
 			var formData = this.getValue(names);
 
 			// 待機中のValidationResultをabortする処理
@@ -2503,7 +2752,7 @@
 			//				this._waitingValidationResultMap = {};
 			//			}
 
-			var result = this._validationLogic.validate(formData, names);
+			var result = this._validationLogic.validate(formData, names, timing);
 
 			// TODO 動作確認としてログ出力
 			this.log.debug('-----------------------------------------');
@@ -2560,7 +2809,31 @@
 				groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
 			}
 			var validateTargetName = groupName || name;
-			var validationResult = this._validate(validateTargetName);
+
+			var validationTiming = null;
+			switch (eventType) {
+			case PLUGIN_EVENT_VALIDATE:
+				validationTiming = 'validate';
+				break;
+			case PLUGIN_EVENT_FOCUS:
+				validationTiming = 'focus';
+				break;
+			case PLUGIN_EVENT_BLUR:
+				validationTiming = 'blur';
+				break;
+			case PLUGIN_EVENT_CHANGE:
+				validationTiming = 'change';
+				break;
+			case PLUGIN_EVENT_KEYUP:
+				validationTiming = 'keyup';
+				break;
+			default:
+				validationTiming = 'validate';
+				break;
+			}
+
+			var validationResult = this._validate(validateTargetName, validationTiming);
+
 			this._callPluginElementEvent(eventType, target, name, validationResult);
 			if (groupName) {
 				// グループがあればグループについてのバリデート結果も通知

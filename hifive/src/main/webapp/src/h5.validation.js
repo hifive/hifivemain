@@ -459,7 +459,7 @@
 		this.rulesMap = {};
 	}
 	$.extend(ValidateRuleManager.prototype, {
-		addValidateRule: function(ruleName, func, argNames, priority) {
+		addValidateRule: function(ruleName, func, argNames, priority, enableWhenEmpty, validateOn) {
 			var isExistAlready = this.rulesMap[ruleName];
 			if (isExistAlready) {
 				for (var i = 0, l = this.rules.length; i < l; i++) {
@@ -473,11 +473,18 @@
 				ruleName: ruleName,
 				func: func,
 				priority: priority,
-				argNames: argNames
+				argNames: argNames,
+				enableWhenEmpty: enableWhenEmpty,
+				validateOn: validateOn
 			};
 			this.rules.push(ruleObj);
 			this.rulesMap[ruleName] = ruleObj;
 		},
+
+		getValidator: function(validatorName) {
+			return this.rulesMap[validatorName];
+		},
+
 		getValidateFunction: function(ruleName) {
 			return this.rulesMap[ruleName] && this.rulesMap[ruleName].func;
 		},
@@ -516,10 +523,12 @@
 	 * @param {Function} func バリデート関数
 	 * @param {string[]} [argNames] パラメータ名リスト
 	 * @param {number} [priority=0] 優先度
+	 * @param {boolean} [enableWhenEmpty] 値が空の場合にこのバリデータを動作させるかどうか。デフォルト値：false。
 	 */
-	function defineRule(ruleName, func, argNames, priority) {
+	function defineRule(ruleName, func, argNames, priority, enableWhenEmpty, validateOn) {
 		// TODO 優先度は未実装
-		validateRuleManager.addValidateRule(ruleName, func, argNames, priority);
+		validateRuleManager.addValidateRule(ruleName, func, argNames, priority, enableWhenEmpty,
+				validateOn);
 	}
 
 	// =========================================================================
@@ -850,6 +859,18 @@
 		_disableProperties: [],
 
 		/**
+		 * バリデータ名 -> Empty時に有効かどうかのboolean値、のマップ
+		 *
+		 * @private
+		 */
+		_isEnabledWhenEmptyMap: {},
+
+		/**
+		 * @private
+		 */
+		_isEnabledAllWhenEmpty: false,
+
+		/**
 		 * フォームの値を集約したオブジェクトのvalidateを行う
 		 * <p>
 		 * FormValidationロジックはバリデートルールごとにバリデート対象の値を適切な型に変換してからバリデートを行います。
@@ -907,9 +928,10 @@
 		 * @memberOf h5.validation.FormValidationLogic
 		 * @param {Object} obj バリデート対象となるオブジェクト
 		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
+		 * @param {string} timing バリデーションタイミング。blur, validateなど。省略時は"validate"とみなす。
 		 * @returns {ValidationResult} バリデート結果
 		 */
-		validate: function(obj, names) {
+		validate: function(obj, names, timing) {
 			// グループ対応。値がオブジェクトのものはグループとして扱う
 			var validateTarget = {};
 			var inGroupNames = [];
@@ -928,7 +950,12 @@
 			if (names) {
 				validateNames = ($.isArray(names) ? names.slice(0) : [names]).concat(inGroupNames);
 			}
-			return this._validate(validateTarget, validateNames);
+
+			if (timing == null) {
+				timing = 'validate';
+			}
+
+			return this._validate(validateTarget, validateNames, timing);
 		},
 
 
@@ -1037,9 +1064,19 @@
 		 */
 		addRule: function(ruleObject) {
 			for ( var prop in ruleObject) {
-				var propRule = ruleObject[prop];
-				// 既に適用ルールが定義されているプロパティについては上書き
-				this._rule[prop] = propRule;
+				var rule = ruleObject[prop];
+
+				var rulesObj = this._rule[prop];
+
+				if (rulesObj == null) {
+					rulesObj = {};
+					this._rule[prop] = rulesObj;
+				}
+
+				// すでにルールが定義されている場合、同じバリデータについては定義を上書き。別のバリデータの場合は追記(マージ)する
+				for ( var validatorName in rule) {
+					rulesObj[validatorName] = rule[validatorName];
+				}
 			}
 		},
 
@@ -1102,6 +1139,14 @@
 			}
 		},
 
+		setValidatorEnabledWhenEmpty: function(validatorName, isEnabled) {
+			this._isEnabledWhenEmptyMap[validatorName] = isEnabled;
+		},
+
+		setAllValidatorsEnabledWhenEmpty: function(isEnabled) {
+			this._isEnabledAllWhenEmpty = isEnabled;
+		},
+
 		/**
 		 * パラメータのバリデートを行う
 		 * <p>
@@ -1118,9 +1163,10 @@
 		 * @memberOf h5.validation.FormValidationLogic
 		 * @param {Object} obj バリデート対象となるオブジェクト
 		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
+		 * @param {string} timing バリデーションタイミング。
 		 * @returns {ValidationResult} バリデート結果
 		 */
-		_validate: function(obj, names) {
+		_validate: function(obj, names, timing) {
 			var validProperties = [];
 			var invalidProperties = [];
 			var properties = [];
@@ -1161,6 +1207,17 @@
 						// ただし、required指定がある場合はチェックする
 						continue;
 					}
+
+					var validator = validateRuleManager.getValidator(ruleName);
+					if (orgValue === '' && !this._shouldValidateWhenEmpty(validator)) {
+						//値が空文字で、空文字の場合はチェックしないバリデータの場合は何もしない
+						continue;
+					}
+
+					if (!this._shouldValidateWhen(validator, timing)) {
+						continue;
+					}
+
 					// 値の型変換
 					var value = this._convertBeforeValidate ? this._convertBeforeValidate(orgValue,
 							ruleName) : orgValue;
@@ -1169,6 +1226,7 @@
 					} else {
 						args = [value, args];
 					}
+
 					var validateFunc = validateRuleManager.getValidateFunction(ruleName);
 					if (!validateFunc) {
 						fwLogger.warn(FW_LOG_NOT_DEFINED_RULE_NAME, ruleName);
@@ -1345,23 +1403,47 @@
 				return new Date(value);
 			}
 			return value;
+		},
+
+		/**
+		 * @private
+		 * @param validator
+		 * @returns {Boolean}
+		 */
+		_shouldValidateWhenEmpty: function(validator) {
+			if (this._isEnabledAllWhenEmpty) {
+				return true;
+			}
+			if (this._isEnabledWhenEmptyMap[validator] === true) {
+				return true;
+			}
+			return validator.enableWhenEmpty === true;
+		},
+
+		_shouldValidateWhen: function(validator, timing) {
+			if (validator.validateOn == null) {
+				return true;
+			}
+			var idx = $.inArray(timing, validator.validateOn);
+			var ret = idx !== -1;
+			return ret;
 		}
 	};
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 51);
-	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, rule.assertFalse, null, 50);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, rule.assertTrue, null, 50);
-	defineRule(DEFAULT_RULE_NAME_MAX, rule.max, ['max', 'inclusive'], 50);
-	defineRule(DEFAULT_RULE_NAME_MIN, rule.min, ['min', 'inclusive'], 50);
-	defineRule(DEFAULT_RULE_NAME_FUTURE, rule.future, null, 50);
-	defineRule(DEFAULT_RULE_NAME_PAST, rule.past, null, 50);
-	defineRule(DEFAULT_RULE_NAME_DIGITS, rule.digits, ['integer', 'fraction'], 50);
-	defineRule(DEFAULT_RULE_NAME_PATTERN, rule.pattern, ['regexp'], 50);
-	defineRule(DEFAULT_RULE_NAME_SIZE, rule.size, ['min', 'max'], 50);
+	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 60, true, null);
+	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50, true, null);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50, true, null);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50, true, null);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, rule.assertFalse, null, 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, rule.assertTrue, null, 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_MAX, rule.max, ['max', 'inclusive'], 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_MIN, rule.min, ['min', 'inclusive'], 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_FUTURE, rule.future, null, 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_PAST, rule.past, null, 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_DIGITS, rule.digits, ['integer', 'fraction'], 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_PATTERN, rule.pattern, ['regexp'], 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_SIZE, rule.size, ['min', 'max'], 50, false, null);
 
 	// =============================
 	// Expose to window
@@ -1372,7 +1454,7 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.validation', {
-		defineRule: defineRule
+		defineValidator: defineRule
 	});
 	h5.core.expose(FormValidationLogic);
 })();
