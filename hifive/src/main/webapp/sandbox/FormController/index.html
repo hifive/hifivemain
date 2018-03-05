@@ -42,6 +42,79 @@
 					rootElement: '#form1'
 				}
 			},
+
+			__init: function() {
+				var setting = {
+					validatorDefault: {
+						size: {
+							//明示的に指定しない場合、ルールごとのデフォルトが適用される
+							isEnabledWhenEmpty: true
+						}
+					},
+
+					//明示的にtrueを指定した場合のみtrue、それ以外または未指定の場合はfalse
+					isAllValidatorsEnabledWhenEmpty: true,
+
+					customValidator: {
+						validator1: {
+							//valueにはinput要素の値（生文字列）が渡される。戻り値はboolean。
+							func: function(value) {
+								if (value === '1') {
+									return true;
+								}
+								return false;
+							},
+
+							//エラーメッセージ。必須。「{displayName}」と書くと、表示名に置き換わる。
+							message: '{displayName}はカスタムルール1に違反しています。',
+
+							//このバリデータを、値が空文字の場合でも実行するかどうか。デフォルト値：false。
+							isEnabledWhenEmpty: true,
+
+							//このバリデータを、どのタイミングで実行するかを指定する。"blur", "validate"が指定可能。
+							validateOn: ['validate']
+						},
+						novalid: {
+							func: function(value) {
+								return false;
+							},
+							message: 'とにかくNGです。',
+						//isEnabledWhenEmpty: false  //デフォルトはfalse
+						}
+					},
+
+					output: { // 各プラグイン毎の設定
+						baloon: { // キー名にプラグイン名
+							placement: 'right' // 設定プロパティと値を記述
+						},
+
+						composition: {
+							container: '#compositionErrors',
+							wrapper: '<li></li>',
+
+							//どのタイミングの表示を更新するか。"validate"はvalidate()メソッド呼び出し時、"blur"はフォーカスが外れたとき。
+							updateOn: ['validate', 'blur'],
+
+							//項目に対するすべてのエラーを出力するかどうか。デフォルト値：true。
+							showAllErrors: true
+						}
+					},
+				};
+
+				this.formController.setSetting(setting);
+
+				this.formController.addOutput('composition');
+
+				var rules = {
+					textarea1: {
+						required: true
+					}
+				};
+				this.formController.addRule(rules);
+
+				//var composition = this.formController.getOutput('composition');
+			},
+
 			formController: h5.ui.FormController,
 			'.getValue click': function(ctx, $el) {
 				var ret = this.formController.getValue();
@@ -56,7 +129,7 @@
 			'.validate click': function(ctx) {
 				this._removeValidateError();
 				var result = this.formController.validate();
-				this.$find('.validateResult').text(QUnit.jsDump.parse(result));
+				//				this.$find('.validateResult').text(QUnit.jsDump.parse(result));
 			},
 			'.clear click': function(ctx) {
 				ctx.event.preventDefault();
@@ -75,8 +148,8 @@
 				$msg.text(reason.message);
 				$(element).after($msg);
 			}
-		})
-	})
+		});
+	});
 </script>
 <style>
 form {
@@ -100,32 +173,32 @@ form {
 		</div>
 		<ul class="globalError"></ul>
 	</div>
+
+	<ul id="compositionErrors"></ul>
+
 	<form id="form1">
 		<p>FormControllerのバインド先(form1)</p>
 		<p>
-			<input class="form-controls" type="text" name="user" value=""
-				placeholder="必須" data-required />
+			<input class="form-controls" type="text" name="user" value="" placeholder="必須" data-h5-v-validator1 data-required
+				data-size="[1,3]" />
 		</p>
 		<p>
-			<input class="form-controls" type="text" name="mail" value="no-name"
-				data-pattern=".+@.+" />
+			<input class="form-controls" type="text" name="mail" value="no-name" data-pattern=".+@.+" data-size="[1,3]" />
 		</p>
 		<p>
-			同じ名前 <label><input class="form-controls" type="text"
-				name="text2" value="a" /> </label><input type="text" name="text2" value="b"
-				data-required />
+			同じ名前 <label><input class="form-controls" type="text" name="text2" value="a" /> </label><input type="text"
+				name="text2" value="b" data-required />
 		</p>
 		<p>
-			別のフォーム(form2)に属するinput<input class="form-controls" type="text"
-				form="form2" name="text3" value="form=form2のinput" data-required>
+			別のフォーム(form2)に属するinput<input class="form-controls" type="text" form="form2" name="text3" value="form=form2のinput"
+				data-required>
 		</p>
 		<p>
-			<input type="file" class="form-controls" name="file1" value="" /> <input
-				class="form-controls" type="file" name="file2" value="" multiple />
-			<input type="file" name="file2" value="" multiple />
+			<input type="file" class="form-controls" name="file1" value="" /> <input class="form-controls" type="file"
+				name="file2" value="" multiple /> <input type="file" name="file2" value="" multiple />
 		</p>
 		<p>
-			<textarea class="form-controls" name="textarea1" data-required>fuga</textarea>
+			<textarea class="form-controls" name="textarea1" data-size="[1, 10]">fuga</textarea>
 		</p>
 		<p>
 			<select class="form-controls" name="select1" data-required>
@@ -134,42 +207,36 @@ form {
 			</select>
 		</p>
 		<p>
-			<select class="form-controls" name="select2" multiple size="3"
-				style="width: 120px" data-required>
+			<select class="form-controls" name="select2" multiple size="3" style="width: 120px" data-required>
 				<option value="1" selected>1</option>
 				<option value="2">2</option>
 				<option value="3" selected>3</option>
 			</select>
 		</p>
 		<div>
-			<label><input class="form-controls" type="radio"
-				name="radio1" value="ok" checked data-required>ok</label> <label><input
-				type="radio" name="radio1" value="ng" data-required>ng </label> <label><input
-				type="checkbox" name="check1" value="c1" checked data-required>c1</label>
-			<label><input class="form-controls" type="checkbox"
+			<label><input class="form-controls" type="radio" name="radio1" value="ok" checked data-required>ok</label> <label><input
+				type="radio" name="radio1" value="ng" data-required>ng </label> <label><input type="checkbox" name="check1"
+				value="c1" checked data-required>c1</label> <label><input class="form-controls" type="checkbox"
 				name="check1" value="c2" data-required>c2 </label>
 		</div>
 
 		<p>
-			同じ名前 <select class="form-controls" name="select3" multiple size="3"
-				style="width: 120px" data-required>
+			同じ名前 <select class="form-controls" name="select3" multiple size="3" style="width: 120px" data-required>
 				<option value="1">1</option>
 				<option value="2" selected>2</option>
 				<option value="3" selected>3</option>
-			</select> <select class="form-controls" name="select3" multiple size="3"
-				style="width: 120px" data-required>
+			</select> <select class="form-controls" name="select3" multiple size="3" style="width: 120px" data-required>
 				<option value="3" selected>3</option>
 				<option value="4" selected>4</option>
 				<option value="5">5</option>
 			</select>
 		</p>
 		<p>
-			0以上10未満<input class="form-controls" type="text" form="form1"
-				name="num0to10" value="0" data-min="[0,true]" data-max="10">
+			0以上10未満<input class="form-controls" type="text" form="form1" name="num0to10" value="0" data-min="[0,true]"
+				data-max="10">
 		</p>
 		<p>
-			8文字以上10文字以下<input class="form-controls" type="text" form="form1"
-				name="size8to10" data-size="[8,10]" value="12345678">
+			8文字以上10文字以下<input class="form-controls" type="text" form="form1" name="size8to10" data-size="[8,10]" value="12345678">
 		</p>
 		<input type="submit" value="送信" /> <input type="reset" value="リセット" />
 		<button class="clear">クリア</button>
@@ -177,12 +244,11 @@ form {
 
 	<form id="form2">
 		<p>
-			別のフォーム(form2)内のinput<input class="form-controls" type="text"
-				name="text8" value="form2の中のinput">
+			別のフォーム(form2)内のinput<input class="form-controls" type="text" name="text8" value="form2の中のinput">
 		</p>
 		<p>
-			form1に属するinput<input class="form-controls" type="text" form="form1"
-				name="text6" value="" placeholder="必須" data-required>
+			form1に属するinput<input class="form-controls" type="text" form="form1" name="text6" value="" placeholder="必須"
+				data-required>
 		</p>
 	</form>
 </body>
