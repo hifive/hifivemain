@@ -282,6 +282,7 @@
 			}
 
 			var wrapper = this._wrapper;
+			var msgElement = null;
 			if (wrapper) {
 				if (h5.u.str.startsWith($.trim(wrapper), '<')) {
 					// '<span class="hoge">'のような指定ならその文字列でDOM生成
