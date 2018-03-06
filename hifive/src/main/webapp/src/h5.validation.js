@@ -80,9 +80,7 @@
 	// =============================
 	// Functions
 	// =============================
-	// =============================
-	// FIXME h5.core.dataからコピペ
-	// =============================
+
 	/**
 	 * 引数がNaNかどうか判定する。isNaNとは違い、例えば文字列はNaNではないのでfalseとする
 	 *
@@ -498,6 +496,36 @@
 			});
 		}
 	});
+
+	/**
+	 * preValidationHookに渡すコンテキストオブジェクト
+	 *
+	 * @param name プロパティ名
+	 * @param value 値
+	 * @param rule ルールオブジェクト(name, argを持つ)
+	 * @param timing タイミング
+	 */
+	function ValidationContext(name, value, rule, timing) {
+		this._isSkipped = false;
+		this.name = name;
+		this.value = value;
+		this.rule = rule;
+		this.timing = timing;
+	}
+	ValidationContext.prototype.skip = function() {
+		this._isSkipped = true;
+	};
+
+	/**
+	 * バリデーションタイミングのEnum
+	 */
+	var ValidationTiming = {
+		VALIDATE: 'validate',
+		CHANGE: 'change',
+		BLUR: 'blur',
+		FOCUS: 'focus',
+		KEYUP: 'keyup'
+	};
 
 	/**
 	 * ルール定義の追加
@@ -958,6 +986,19 @@
 			return this._validate(validateTarget, validateNames, timing);
 		},
 
+		_preValidationHook: null,
+
+		/**
+		 * バリデーション実行前フック関数をセットします。 このフック関数は、validateメソッドが呼ばれたとき、各項目のバリデーション実行前に項目1つごとに呼ばれます。
+		 * この関数に渡されるコンテキストオブジェクトでvalidationContext.skip();を呼び出すと、その項目のバリデーションを行わず処理を続けます。
+		 * 関数のシグネチャ：function(validationContext):void。引数にnullを指定して呼び出すと、フックを解除します。
+		 * validationContextオブジェクトは、skip(), rule(nameとargプロパティを持つオブジェクト), name, value, timingを持ちます。
+		 *
+		 * @param preValidationHookFunction フック関数
+		 */
+		setPreValidationHook: function(preValidationHookFunction) {
+			this._preValidationHook = preValidationHookFunction;
+		},
 
 		/**
 		 * バリデートルールを追加する
@@ -1218,6 +1259,42 @@
 						continue;
 					}
 
+					// validate関数呼び出し時の引数をオブジェクト形式に変換
+					var ruleValue = {};
+					var argNames = validateRuleManager.getValidateArgNames(ruleName);
+					if (argNames) {
+						for (var j = 0, len = argNames.length; j < len; j++) {
+							ruleValue[argNames[j]] = args[j];
+						}
+					}
+
+					//preValidationフック
+					if (this._preValidationHook) {
+						var ruleArg = {};
+
+						//フック関数内でもし書き換えられてもバリデーション処理に影響を与えないようシャローコピーする
+						for ( var ruleArgName in ruleValue) {
+							ruleArg[ruleArgName] = ruleValue[ruleArgName];
+						}
+
+						var ruleObj = {
+							name: ruleName,
+							arg: ruleArg
+						};
+						var validationContext = new ValidationContext(prop, orgValue, ruleObj,
+								timing);
+
+						//フック関数を呼び出す
+						this._preValidationHook(validationContext);
+
+						if (validationContext._isSkipped) {
+							//フック関数でskip()が呼び出されいたら、この項目のバリデーションはスキップ
+							continue;
+						}
+					}
+
+					/* 以降実際のバリデーション処理を行う */
+
 					// 値の型変換
 					var value = this._convertBeforeValidate ? this._convertBeforeValidate(orgValue,
 							ruleName) : orgValue;
@@ -1234,15 +1311,6 @@
 					}
 
 					var ret = validateFunc.apply(this, args);
-
-					// validate関数呼び出し時の引数を格納しておく
-					var ruleValue = {};
-					var argNames = validateRuleManager.getValidateArgNames(ruleName);
-					if (argNames) {
-						for (var j = 0, len = argNames.length; j < len; j++) {
-							ruleValue[argNames[j]] = args[j + 1];
-						}
-					}
 
 					// 非同期の場合
 					if (isPromise(ret) && !isRejected(ret) && !isResolved(ret)) {
@@ -1459,7 +1527,8 @@
 	 * @memberOf h5
 	 */
 	h5.u.obj.expose('h5.validation', {
-		defineRule: defineRule
+		defineRule: defineRule,
+		ValidationTiming: ValidationTiming
 	});
 	h5.core.expose(FormValidationLogic);
 })();

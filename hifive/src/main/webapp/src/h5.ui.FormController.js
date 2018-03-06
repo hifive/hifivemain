@@ -1659,7 +1659,6 @@
 	var PLUGIN_EVENT_BLUR = '_onBlur';
 	var PLUGIN_EVENT_CHANGE = '_onChange';
 	var PLUGIN_EVENT_KEYUP = '_onKeyup';
-	var PLUGIN_EVENT_CLICK = '_onClick';
 
 	// デフォルトで用意しているプラグイン名とプラグイン(コントローラ定義)のマップ
 	var DEFAULT_PLUGINS = {
@@ -2581,6 +2580,15 @@
 			return this._plugins[pluginName];
 		},
 
+		/**
+		 * 各項目のバリデーションを行う前に呼び出すフック関数をセットします。
+		 *
+		 * @param preValidationHookFunction フック関数
+		 */
+		setPreValidationHook: function(preValidationHookFunction) {
+			this._validationLogic.setPreValidationHook(preValidationHookFunction);
+		},
+
 		/*
 		 * フォーム部品でのイベント発生時にプラグインを呼び出すイベントハンドラ設定
 		 */
@@ -2598,10 +2606,6 @@
 
 		'{rootElement} change': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_CHANGE);
-		},
-
-		'{rootElement} click': function(ctx) {
-			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_CLICK);
 		},
 
 		/**

@@ -84,8 +84,10 @@
 					},
 
 					output: { // 各プラグイン毎の設定
-						baloon: { // キー名にプラグイン名
+						balloon: { // キー名にプラグイン名
 							placement: 'right' // 設定プロパティと値を記述
+
+
 						},
 
 						composition: {
@@ -106,6 +108,17 @@
 				this.formController.setSetting(setting);
 
 				this.formController.addOutput('composition');
+				this.formController.addOutput('balloon');
+
+				var preValidationHookFunction = function(context) {
+					console.log(context);
+					if (context.timing === h5.validation.ValidationTiming.VALIDATE) {
+						context.skip();
+					}
+					//context = {skip(), rule(nameとargを持つオブジェクト), name, value, timing }
+				};
+
+				this.formController.setPreValidationHook(preValidationHookFunction);
 
 				var rules = {
 					textarea1: {
@@ -164,7 +177,6 @@ form {
 #compositionErrors {
 	border: 1px solid red;
 }
-
 </style>
 
 <title>FormController</title>
