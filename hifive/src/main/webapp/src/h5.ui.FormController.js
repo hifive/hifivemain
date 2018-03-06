@@ -2357,10 +2357,11 @@
 				var name = this.name;
 				elementNames.push(name);
 				var currentGroup = ret;
+				var groupName = null;
 				// グループに属していればグループ名を取得
 				if ($groups.find(this).length) {
 					var $group = $(this).closest('[data-' + DATA_INPUTGROUP_CONTAINER + ']');
-					var groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
+					groupName = $group.data(DATA_INPUTGROUP_CONTAINER);
 				}
 				if (groupName) {
 					elementNames.push(groupName);
