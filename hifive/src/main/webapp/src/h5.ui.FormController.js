@@ -669,6 +669,10 @@
 
 		_lastValidationResult: null,
 
+		_hideWhenEmpty: null,
+
+		_container: null,
+
 		/**
 		 * プラグイン設定
 		 *
@@ -676,6 +680,10 @@
 		 * @memberOf h5.ui.validation.Composition
 		 */
 		_setting: {},
+
+		__construct: function() {
+			this._hideWhenEmpty = false;
+		},
 
 		/**
 		 * プラグイン設定を行う
@@ -736,6 +744,18 @@
 			this._messageOutputController.clearMessage();
 			this._messageOutputController.appendMessageByValidationResult(
 					this._lastValidationResult, null, this._showAllErrors);
+
+			this._toggleVisible();
+		},
+
+		_toggleVisible: function() {
+			var shouldHide = !this._lastValidationResult
+					|| (this._lastValidationResult.invalidProperties.length === 0);
+			if (shouldHide) {
+				$(this._container).css('display', 'none');
+			} else {
+				$(this._container).css('display', '');
+			}
 		},
 
 		_pushIfNotExist: function(value, array) {
@@ -773,6 +793,8 @@
 			this._messageOutputController.clearMessage();
 			this._messageOutputController.appendMessageByValidationResult(validationResult, null,
 					this._showAllErrors);
+
+			this._toggleVisible();
 		},
 
 		/**
@@ -812,8 +834,16 @@
 			this._showAllErrors = setting.showAllErrors !== false;
 
 			// 出力先の設定
+			this._container = setting.container;
 			this._messageOutputController.setContainer(setting.container);
 			this._messageOutputController.setWrapper(setting.wrapper);
+
+			//hideWhenEmpty(エラーがない場合はコンテナ要素を非表示にする)の設定
+			if (('hideWhenEmpty' in setting) && (setting.hideWhenEmpty === true)) {
+				//trueの場合、初期状態では（エラーがないので）非表示にする
+				this._hideWhenEmpty = true;
+				this._toggleVisible();
+			}
 
 			// 各プロパティ毎のメッセージ設定をする
 			var property = setting.property;

@@ -96,7 +96,9 @@
 							updateOn: ['validate', 'blur'],
 
 							//項目に対するすべてのエラーを出力するかどうか。デフォルト値：true。
-							showAllErrors: true
+							showAllErrors: true,
+
+							hideWhenEmpty: true
 						}
 					},
 				};
@@ -158,6 +160,11 @@ form {
 	border: 1px solid #ccc;
 	padding: 3px;
 }
+
+#compositionErrors {
+	border: 1px solid red;
+}
+
 </style>
 
 <title>FormController</title>
