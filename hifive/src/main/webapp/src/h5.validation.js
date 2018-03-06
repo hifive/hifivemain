@@ -1212,7 +1212,7 @@
 			var invalidProperties = [];
 			var properties = [];
 			var validatingProperties = [];
-			var invalidReason = null;
+			var invalidReason = {};
 			var targetNames = names && (isArray(names) ? names : [names]);
 			var isAsync = false;
 			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
@@ -1236,6 +1236,11 @@
 					sortedRuleNames.push(ruleName);
 				}
 				validateRuleManager.sortRuleByPriority(sortedRuleNames);
+
+				//フック関数がセットされている場合、ルールが一つも実行されない可能性があり、
+				//その場合はValidationResultに含めないようにする必要がある。
+				//そのため、一度以上実行されたかどうかのフラグを用意する。
+				var isValidatedAtLeastOnce = false;
 
 				// ルールについてチェックする。あるルールでバリデートエラーが起きても、他のルールもチェックする。
 				for (var i = 0, l = sortedRuleNames.length; i < l; i++) {
@@ -1295,6 +1300,8 @@
 
 					/* 以降実際のバリデーション処理を行う */
 
+					isValidatedAtLeastOnce = true;
+
 					// 値の型変換
 					var value = this._convertBeforeValidate ? this._convertBeforeValidate(orgValue,
 							ruleName) : orgValue;
@@ -1343,13 +1350,19 @@
 						isInvalidProp = true;
 					}
 				}
-				if (isAsyncProp) {
-					isAsync = true;
-					validatingProperties.push(prop);
-				} else {
-					(isInvalidProp ? invalidProperties : validProperties).push(prop);
+
+				//実際に一つ以上のルールが適用された場合のみプロパティに追加
+				if (isValidatedAtLeastOnce) {
+					if (isAsyncProp) {
+						isAsync = true;
+						validatingProperties.push(prop);
+					} else {
+						(isInvalidProp ? invalidProperties : validProperties).push(prop);
+					}
+					//バリデーションを行ったプロパティとして追加
+					properties.push(prop);
 				}
-				properties.push(prop);
+
 			}
 			var isValid = !invalidProperties.length;
 			var validationResult = new ValidationResult({
