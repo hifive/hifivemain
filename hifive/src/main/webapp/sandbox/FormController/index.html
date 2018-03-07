@@ -49,6 +49,7 @@
 						size: {
 							//明示的に指定しない場合、ルールごとのデフォルトが適用される
 							isForceEnabledWhenEmpty: true
+						//message: 'sizeのデフォルトメッセージを上書きする'
 						}
 					},
 
@@ -118,7 +119,7 @@
 					//context = {skip(), rule(nameとargを持つオブジェクト), name, value, timing }
 				};
 
-				this.formController.setPreValidationHook(preValidationHookFunction);
+				//this.formController.setPreValidationHook(preValidationHookFunction);
 
 				var rules = {
 					textarea1: {

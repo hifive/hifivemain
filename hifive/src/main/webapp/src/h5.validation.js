@@ -460,6 +460,8 @@
 		addValidateRule: function(ruleName, func, argNames, priority, enableWhenEmpty, validateOn) {
 			var isExistAlready = this.rulesMap[ruleName];
 			if (isExistAlready) {
+				fwLogger.warn('定義済みのルールが上書きされました。異なるルール名で定義することを推奨します。ルール名=' + ruleName);
+
 				for (var i = 0, l = this.rules.length; i < l; i++) {
 					if (this.rules[i].ruleName === ruleName) {
 						this.rules.splice(i, 1);

@@ -127,14 +127,21 @@
 		}
 
 		var ruleName = reason.violation[violationIndex].ruleName;
-		var defaultMsg = defaultInvalidMessage[ruleName]
-				|| (defaultMessageMap[ruleName] && defaultMessageMap[ruleName].message);
-		if (defaultMsg) {
+
+		//バリデータでデフォルトメッセージをオーバーライドしている場合はそちらを優先する
+		var defaultMsg = defaultMessageMap[ruleName];
+		if (defaultMsg == null) {
+			//オーバーライドされていない場合はルールのデフォルトメッセージを使用
+			defaultMsg = defaultInvalidMessage[ruleName];
+		}
+
+		if (defaultMsg != null) {
 			if (isFunction(defaultMsg)) {
 				return defaultMsg(param);
 			}
 			return h5.u.str.format(defaultMsg, param);
 		}
+
 		// デフォルトにないルールの場合
 		return h5.u.str.format(MSG_DEFAULT_INVALIDATE, name, reason.value, ruleName);
 	}
@@ -621,6 +628,15 @@
 			var className = propSetting[state + 'ClassName'];
 			$(element).addClass(className);
 			this._styleAppliedElements[name] = element;
+		},
+
+		/**
+		 * @private
+		 * @param validatorName
+		 * @param message
+		 */
+		_setDefaultMessage: function(validatorName, message) {
+			this._messageOutputController._setDefaultMessage(validatorName, message);
 		}
 	};
 	h5.core.expose(controller);
@@ -858,6 +874,11 @@
 			this._messageOutputController.addMessageSetting(messageSetting);
 		},
 
+		/**
+		 * @private
+		 * @param validatorName
+		 * @param message
+		 */
 		_setDefaultMessage: function(validatorName, message) {
 			this._messageOutputController._setDefaultMessage(validatorName, message);
 		}
@@ -1171,6 +1192,15 @@
 			}
 
 			this._balloonTargets.splice(index, 1);
+		},
+
+		/**
+		 * @private
+		 * @param validatorName
+		 * @param message
+		 */
+		_setDefaultMessage: function(validatorName, message) {
+			this._messageOutputController._setDefaultMessage(validatorName, message);
 		}
 	};
 	h5.core.expose(controller);
@@ -1376,6 +1406,13 @@
 			this._executedOnValidate = false;
 		},
 
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 * @param type
+		 */
 		_setMessage: function(element, name, validationResult, type) {
 			if (!this._executedOnValidate) {
 				// _onValidateが１度も呼ばれていなければ何もしない
@@ -1457,6 +1494,15 @@
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
+		},
+
+		/**
+		 * @private
+		 * @param validatorName
+		 * @param message
+		 */
+		_setDefaultMessage: function(validatorName, message) {
+			this._messageOutputController._setDefaultMessage(validatorName, message);
 		}
 	};
 	h5.core.expose(controller);
@@ -1627,6 +1673,15 @@
 			if (this._indicators[name]) {
 				this._indicators[name].hide();
 			}
+		},
+
+		/**
+		 * @private
+		 * @param validatorName
+		 * @param message
+		 */
+		_setDefaultMessage: function(validatorName, message) {
+			this._messageOutputController._setDefaultMessage(validatorName, message);
 		}
 	};
 	h5.core.expose(controller);
@@ -2019,11 +2074,25 @@
 			}
 
 			if ('ruleDefault' in setting) {
-				for ( var validatorName in setting.ruleDefault) {
-					var ruleDefaultSetting = setting.ruleDefault[validatorName];
+				for ( var ruleName in setting.ruleDefault) {
+					var ruleDefaultSetting = setting.ruleDefault[ruleName];
 					if ('isForceEnabledWhenEmpty' in ruleDefaultSetting) {
-						this._validationLogic.setRuleForceEnabledWhenEmpty(validatorName,
+						this._validationLogic.setRuleForceEnabledWhenEmpty(ruleName,
 								ruleDefaultSetting.isEnabledWhenEmpty === true);
+					}
+					if ('message' in ruleDefaultSetting) {
+						//既存ルールのデフォルトメッセージを上書き
+						this.setDefaultMessage(ruleName, ruleDefaultSetting.message);
+					}
+				}
+			}
+
+			if (('customRule' in setting)) {
+				for ( var ruleName in setting.customRule) {
+					var ruleDef = setting.customRule[ruleName];
+					if ('message' in ruleDef) {
+						//今回追加するカスタムルールのデフォルトメッセージを定義
+						this.setDefaultMessage(ruleName, ruleDef.message);
 					}
 				}
 			}
@@ -2033,6 +2102,7 @@
 			for ( var pluginName in currentPlugins) {
 				var plugin = currentPlugins[pluginName];
 				plugin._setSetting && plugin._setSetting(this._margePluginSettings(pluginName));
+				this._setDefaultMessages(plugin);
 			}
 
 			if (this.isInit) {
@@ -2732,29 +2802,31 @@
 			var c = h5.core.controller(this._bindedForm || this.rootElement, controller);
 			c._setSetting && c._setSetting(this._margePluginSettings(pluginName));
 			this.manageChild(c);
-			this._setValidatorDefaultMesssages(c);
+			this._setDefaultMessages(c);
 			this._plugins[pluginName] = c;
 		},
 
+		_ruleDefaultMessageMap: {},
+
 		/**
+		 * 出力プラグインコントローラにデフォルトメッセージを定義します。
+		 *
 		 * @private
+		 * @param controller
+		 */
+		_setDefaultMessages: function(controller) {
+			for ( var ruleName in this._ruleDefaultMessageMap) {
+				controller._setDefaultMessage(ruleName, this._ruleDefaultMessageMap[ruleName]);
+			}
+		},
+
+		/**
+		 * このコントローラを介して適用するバリデーションルールについて、ルールに違反した場合のデフォルトのエラーメッセージを変更します。
+		 *
 		 * @param controller 出力プラグインコントローラ
 		 */
-		_setValidatorDefaultMesssages: function(controller) {
-			var setting = this._setting;
-
-			if (!('customRule' in setting)) {
-				return;
-			}
-
-			for ( var ruleName in setting.customRule) {
-				var message = setting.customRule[ruleName];
-				//TODO Composiiton以外のプラグインでもsetDefaultMessageを使えるようにする
-				if (message != null && ('_setDefaultMessage' in controller)) {
-					controller._setDefaultMessage(ruleName, message);
-				}
-			}
-
+		setDefaultMessage: function(ruleName, message) {
+			this._ruleDefaultMessageMap[ruleName] = message;
 		},
 
 		/**
