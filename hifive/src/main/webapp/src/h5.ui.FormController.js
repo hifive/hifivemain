@@ -2823,7 +2823,8 @@
 		/**
 		 * このコントローラを介して適用するバリデーションルールについて、ルールに違反した場合のデフォルトのエラーメッセージを変更します。
 		 *
-		 * @param controller 出力プラグインコントローラ
+		 * @param {string} ruleName ルール名
+		 * @param {string|function} message デフォルトメッセージ、またはメッセージフォーマット関数
 		 */
 		setDefaultMessage: function(ruleName, message) {
 			this._ruleDefaultMessageMap[ruleName] = message;
