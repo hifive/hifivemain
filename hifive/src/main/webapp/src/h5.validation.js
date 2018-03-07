@@ -1182,8 +1182,8 @@
 			}
 		},
 
-		setRuleForceEnabledWhenEmpty: function(validatorName, isEnabled) {
-			this._isForceEnabledWhenEmptyMap[validatorName] = isEnabled;
+		setRuleForceEnabledWhenEmpty: function(ruleName, isEnabled) {
+			this._isForceEnabledWhenEmptyMap[ruleName] = isEnabled;
 		},
 
 		setAllRulesEnabledWhenEmpty: function(isEnabled) {
@@ -1490,13 +1490,13 @@
 
 		/**
 		 * @private
-		 * @param validator
+		 * @param rule
 		 * @returns {Boolean}
 		 */
-		_shouldValidateWhenEmpty: function(validator) {
-			if (this._isForceEnabledWhenEmptyMap[validator] != null) {
+		_shouldValidateWhenEmpty: function(rule) {
+			if (this._isForceEnabledWhenEmptyMap[rule.ruleName] != null) {
 				//個別ルールの指定があれば優先する
-				return this._isForceEnabledWhenEmptyMap[validator];
+				return this._isForceEnabledWhenEmptyMap[rule.ruleName];
 			}
 
 			if (this._isEnabledAllWhenEmpty) {
@@ -1505,7 +1505,7 @@
 			}
 
 			//最後に、ルールで定義されたデフォルト挙動に基づいて動作する
-			return validator.enableWhenEmpty === true;
+			return rule.enableWhenEmpty === true;
 		},
 
 		_shouldValidateWhen: function(validator, timing) {

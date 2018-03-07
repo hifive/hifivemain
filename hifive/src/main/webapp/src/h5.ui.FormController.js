@@ -2061,7 +2061,7 @@
 					var ruleDefaultSetting = setting.ruleDefault[ruleName];
 					if ('isForceEnabledWhenEmpty' in ruleDefaultSetting) {
 						this._validationLogic.setRuleForceEnabledWhenEmpty(ruleName,
-								ruleDefaultSetting.isEnabledWhenEmpty === true);
+								ruleDefaultSetting.isForceEnabledWhenEmpty === true);
 					}
 					if ('message' in ruleDefaultSetting) {
 						//既存ルールのデフォルトメッセージを上書き
@@ -2097,20 +2097,20 @@
 		 * @private
 		 * @param customValidatorObj
 		 */
-		_addCustomRule: function(customRuleDef) {
-			for ( var ruleName in customRuleDef) {
-				var validator = customRuleDef[ruleName];
+		_addCustomRule: function(customRuleDefMap) {
+			for ( var ruleName in customRuleDefMap) {
+				var ruleDef = customRuleDefMap[ruleName];
 
-				if (!('message' in validator)) {
+				if (!('message' in ruleDef)) {
 					throw new Error('カスタムバリデータの定義にはmessageの指定が必須です。定義しようとしたルール=' + ruleName);
 				}
 
-				h5.validation.defineRule(ruleName, validator.func, null, 40, false,
-						validator.validateOn);
+				h5.validation.defineRule(ruleName, ruleDef.func, null, 40, false,
+						ruleDef.validateOn);
 
-				if ('isForceEnabledWhenEmpty' in validator) {
-					this._validationLogic
-							.setRuleForceEnabledWhenEmpty(validator.isForceEnabledWhenEmpty);
+				if ('isForceEnabledWhenEmpty' in ruleDef) {
+					this._validationLogic.setRuleForceEnabledWhenEmpty(ruleName,
+							ruleDef.isForceEnabledWhenEmpty);
 				}
 			}
 		},
