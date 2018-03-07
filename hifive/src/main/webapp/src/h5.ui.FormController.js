@@ -952,7 +952,9 @@
 		 * @param {ValidationResult} result
 		 */
 		_onValidate: function(result) {
-			this._setErrorBalloon(element, name, validationResult, 'validate');
+		//TODO バルーンは基本的にはfocus,blurのタイミングでOn/Offされるが、
+		//項目にフォーカスが当たり、バルーンが表示された状態でコード的にvalidate()が呼ばれる可能性は
+		//ないわけではないので、そのような場合に表示を更新するようにする。
 		},
 
 		/**
