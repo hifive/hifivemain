@@ -636,7 +636,7 @@
 		 * @param message
 		 */
 		_setDefaultMessage: function(validatorName, message) {
-			this._messageOutputController._setDefaultMessage(validatorName, message);
+		//このプラグインではメッセージは表示しないのでデフォルトメッセージのオーバーライドは意味がない
 		}
 	};
 	h5.core.expose(controller);
@@ -867,8 +867,7 @@
 			for ( var p in property) {
 				messageSetting[p] = {
 					displayName: property[p].displayName || setting.displayName,
-					message: property[p].message || setting.message,
-					formatter: property[p].formatter || setting.formatter, //TODO formatterは利用していないので削除すべきか。確認の上対応
+					message: property[p].message || setting.message
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
@@ -922,7 +921,6 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.ErrorBalloon',
-		_executedOnValidate: false,
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 		_setting: {},
 		_balloonTargets: [],
@@ -954,7 +952,7 @@
 		 * @param {ValidationResult} result
 		 */
 		_onValidate: function(result) {
-			this._executedOnValidate = true;
+			this._setErrorBalloon(element, name, validationResult, 'validate');
 		},
 
 		/**
@@ -1017,7 +1015,6 @@
 			$(this._balloonTargets).each(this.own(function(el) {
 				this._hideBalloon(el);
 			}));
-			this._executedOnValidate = false;
 		},
 
 		/**
@@ -1031,10 +1028,6 @@
 		 * @param {string} type 要素で発生したイベントタイプ
 		 */
 		_setErrorBalloon: function(element, name, validationResult, type) {
-			if (!this._executedOnValidate) {
-				// _onValidateが１度も呼ばれていなければ何もしない
-				return;
-			}
 			// 共通設定とプロパティ毎の設定をマージ
 			var propSetting = $.extend({}, this._setting, this._setting.property
 					&& this._setting.property[name]);
@@ -1157,8 +1150,7 @@
 			for ( var p in property) {
 				messageSetting[p] = {
 					displayName: property[p].displayName || setting.displayName,
-					message: property[p].message || setting.message,
-					formatter: property[p].formatter || setting.formatter,
+					message: property[p].message || setting.message
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
@@ -1308,7 +1300,6 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.Message',
-		_executedOnValidate: false,
 		_messageElementMap: {},
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 
@@ -1340,7 +1331,6 @@
 		 * @param {ValidationResult} result
 		 */
 		_onValidate: function(result) {
-			this._executedOnValidate = true;
 			var validProperties = result.validProperties;
 			for (var i = 0, l = validProperties.length; i < l; i++) {
 				var name = validProperties[i];
@@ -1403,7 +1393,6 @@
 				var $target = this._messageElementMap[name];
 				$target && $target.remove();
 			}
-			this._executedOnValidate = false;
 		},
 
 		/**
@@ -1414,10 +1403,6 @@
 		 * @param type
 		 */
 		_setMessage: function(element, name, validationResult, type) {
-			if (!this._executedOnValidate) {
-				// _onValidateが１度も呼ばれていなければ何もしない
-				return;
-			}
 			// 共通設定とプロパティ毎の設定をマージ
 			var propSetting = $.extend({}, this._setting, this._setting.property
 					&& this._setting.property[name]);
@@ -1489,8 +1474,7 @@
 			for ( var p in property) {
 				messageSetting[p] = {
 					displayName: property[p].displayName || setting.displayName,
-					message: property[p].message || setting.message,
-					formatter: property[p].formatter || setting.formatter,
+					message: property[p].message || setting.message
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
@@ -1620,7 +1604,6 @@
 			for ( var name in this._indicators) {
 				this._hideIndicator(name);
 			}
-			this._executedOnValidate = false;
 		},
 
 		/**
@@ -1681,7 +1664,7 @@
 		 * @param message
 		 */
 		_setDefaultMessage: function(validatorName, message) {
-			this._messageOutputController._setDefaultMessage(validatorName, message);
+		//このプラグインではメッセージは表示しないのでデフォルトメッセージのオーバーライドは意味がない
 		}
 	};
 	h5.core.expose(controller);
