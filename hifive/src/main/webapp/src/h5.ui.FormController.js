@@ -481,6 +481,8 @@
 		 */
 		_styleAppliedElements: {},
 
+		_updateOn: null,
+
 		/**
 		 * プラグイン設定を行う
 		 *
@@ -490,6 +492,26 @@
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['validate', 'change'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+		},
+
+		/**
+		 * @private
+		 * @param timing
+		 * @returns {Boolean}
+		 */
+		_shouldUpdateOn: function(timing) {
+			return $.inArray(timing, this._updateOn) !== -1;
 		},
 
 		/**
@@ -503,6 +525,10 @@
 		 * @param {ValidationResult} result
 		 */
 		_onValidate: function(validationResult) {
+			if (!this._shouldUpdateOn('validate')) {
+				return;
+			}
+
 			// validだったものにクラスを適用
 			var properties = validationResult.properties;
 			for (var i = 0, l = properties.length; i < l; i++) {
@@ -525,6 +551,42 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onFocus: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('focus')) {
+				return;
+			}
+
+			this._setStyle(element, name, validationResult);
+		},
+
+		/**
+		 * フォーカスが外れたときに呼ばれる
+		 *
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onBlur: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('blur')) {
+				return;
+			}
+
+			this._setStyle(element, name, validationResult);
+		},
+
+		/**
+		 * 内容が変更されたときに呼ばれる
+		 *
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onChange: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('change')) {
+				return;
+			}
+
 			this._setStyle(element, name, validationResult);
 		},
 
@@ -541,6 +603,10 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onKeyup: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('keyup')) {
+				return;
+			}
+
 			this._setStyle(element, name, validationResult);
 		},
 
@@ -718,6 +784,11 @@
 			}
 		},
 
+		/**
+		 * @private
+		 * @param eventName
+		 * @returns {Boolean}
+		 */
 		_shouldUpdateOn: function(eventName) {
 			if (!this._updateOn) {
 				return false;
@@ -730,16 +801,12 @@
 		},
 
 		/**
-		 * @private
+		 * @privates
 		 * @param element
 		 * @param name
 		 * @param validationResult
 		 */
-		_onBlur: function(element, name, validationResult) {
-			if (!this._shouldUpdateOn('blur')) {
-				return;
-			}
-
+		_update: function(element, name, validationResult) {
 			if (!this._lastValidationResult) {
 				this._lastValidationResult = {
 					invalidProperties: [],
@@ -761,19 +828,90 @@
 			this._messageOutputController.appendMessageByValidationResult(
 					this._lastValidationResult, null, this._showAllErrors);
 
-			this._toggleVisible();
+			this._updateVisible();
 		},
 
-		_toggleVisible: function() {
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onChange: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('change')) {
+				return;
+			}
+			this._update(element, name, validationResult);
+		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onBlur: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('blur')) {
+				return;
+			}
+			this._update(element, name, validationResult);
+		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onFocus: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('focus')) {
+				return;
+			}
+			this._update(element, name, validationResult);
+		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onKeyup: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('keyup')) {
+				return;
+			}
+			this._update(element, name, validationResult);
+		},
+
+		/**
+		 * @private
+		 */
+		_updateVisible: function() {
+			if (this._hideWhenEmpty !== true) {
+				//hideWhenEmptyがtrueでない場合は非表示制御を行わない
+				return;
+			}
+
 			var shouldHide = !this._lastValidationResult
 					|| (this._lastValidationResult.invalidProperties.length === 0);
+
+			//単純にdisplay属性をnone/空文字にする方法だと、
+			//style属性でなくCSSクラスで非表示に設定されている場合などに正しく制御できない。
+			//jQueryのshow/hideは、カスケーディングの状態や、要素の
+			//デフォルトスタイル(block,inline-block等)を考慮して制御しているので、
+			//ここではjQueryのメソッドを使用する。
 			if (shouldHide) {
-				$(this._container).css('display', 'none');
+				$(this._container).hide();
 			} else {
-				$(this._container).css('display', '');
+				$(this._container).show();
 			}
 		},
 
+		/**
+		 * @private
+		 * @param value
+		 * @param array
+		 */
 		_pushIfNotExist: function(value, array) {
 			if ($.inArray(value, array) === -1) {
 				array.push(value);
@@ -810,7 +948,7 @@
 			this._messageOutputController.appendMessageByValidationResult(validationResult, null,
 					this._showAllErrors);
 
-			this._toggleVisible();
+			this._updateVisible();
 		},
 
 		/**
@@ -858,7 +996,7 @@
 			if (('hideWhenEmpty' in setting) && (setting.hideWhenEmpty === true)) {
 				//trueの場合、初期状態では（エラーがないので）非表示にする
 				this._hideWhenEmpty = true;
-				this._toggleVisible();
+				this._updateVisible();
 			}
 
 			// 各プロパティ毎のメッセージ設定をする
@@ -924,6 +1062,9 @@
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 		_setting: {},
 		_balloonTargets: [],
+
+		_updateOn: null,
+
 		/**
 		 * プラグイン設定を行う
 		 *
@@ -958,6 +1099,26 @@
 		},
 
 		/**
+		 * 要素の内容が変更された時に呼ばれる
+		 * <p>
+		 * バリデート結果からバルーンの表示・非表示を行う
+		 * </p>
+		 *
+		 * @private
+		 * @memberOf h5.ui.validation.ErrorBalloon
+		 * @param element
+		 * @param name
+		 * @param {ValidationResult} validationResult
+		 */
+		_onChange: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('change')) {
+				return;
+			}
+
+			this._setErrorBalloon(element, name, validationResult, 'change');
+		},
+
+		/**
 		 * 要素にフォーカスした時に呼ばれる
 		 * <p>
 		 * バリデート結果からバルーンの表示・非表示を行う
@@ -970,6 +1131,10 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onFocus: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('focus')) {
+				return;
+			}
+
 			this._setErrorBalloon(element, name, validationResult, 'focus');
 		},
 
@@ -986,6 +1151,10 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onBlur: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('blur')) {
+				return;
+			}
+
 			this._setErrorBalloon(element, name, validationResult, 'blur');
 		},
 
@@ -1002,6 +1171,10 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onKeyup: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('keyup')) {
+				return;
+			}
+
 			this._setErrorBalloon(element, name, validationResult, 'keyup');
 		},
 
@@ -1146,6 +1319,17 @@
 		_setChildSetting: function() {
 			var setting = this._setting;
 
+			if (setting.updateOn == null) {
+				this._updateOn = ['focus', 'blur'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+
 			// 各プロパティ毎のメッセージ設定をする
 			var property = setting.property;
 			var messageSetting = {};
@@ -1195,6 +1379,22 @@
 		 */
 		_setDefaultMessage: function(validatorName, message) {
 			this._messageOutputController._setDefaultMessage(validatorName, message);
+		},
+
+		/**
+		 * @private
+		 * @param eventName
+		 * @returns {Boolean}
+		 */
+		_shouldUpdateOn: function(eventName) {
+			if (!this._updateOn) {
+				return false;
+			}
+
+			if ($.inArray(eventName, this._updateOn) !== -1) {
+				return true;
+			}
+			return false;
 		}
 	};
 	h5.core.expose(controller);
@@ -1305,6 +1505,8 @@
 		_messageElementMap: {},
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 
+		_updateOn: null,
+
 		/**
 		 * プラグイン設定を行う
 		 *
@@ -1336,7 +1538,8 @@
 			var validProperties = result.validProperties;
 			for (var i = 0, l = validProperties.length; i < l; i++) {
 				var name = validProperties[i];
-				this._setMessage(this.parentController._getElementByName(name), name, result);
+				this._setMessage(this.parentController._getElementByName(name), name, result,
+						'validate');
 			}
 		},
 
@@ -1371,16 +1574,26 @@
 		_onBlur: function(element, name, validationResult) {
 			this._setMessage(element, name, validationResult, 'blur');
 		},
-		// FIXME どのタイミングで実行するかは設定で決める？
-		//		_onChange: function(element, name, validationResult) {
-		//			this._setMessage(element, name, validationResult);
-		//		},
-		//		_onKeyup: function(element, name, validationResult) {
-		//			this._setMessage(element, name, validationResult);
-		//		},
-		//		_onClick: function(element, name, validationResult) {
-		//			this._setMessage(element, name, validationResult);
-		//		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onChange: function(element, name, validationResult) {
+			this._setMessage(element, name, validationResult, 'change');
+		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onKeyup: function(element, name, validationResult) {
+			this._setMessage(element, name, validationResult, 'keyup');
+		},
 
 		/**
 		 * プラグインのリセット
@@ -1457,6 +1670,10 @@
 			}
 		},
 
+		/**
+		 * @private
+		 * @param name
+		 */
 		_removeMessage: function(name) {
 			this._messageElementMap[name] && this._messageElementMap[name].remove();
 		},
@@ -1469,6 +1686,17 @@
 		 */
 		_setChildSetting: function() {
 			var setting = this._setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['focus', 'blur', 'validate'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
 
 			// 各プロパティ毎のメッセージ設定をする
 			var property = setting.property;
@@ -1508,6 +1736,8 @@
 		__name: 'h5.ui.validation.AsyncIndicator',
 		_indicators: {},
 
+		_updateOn: null,
+
 		/**
 		 * プラグイン設定を行う
 		 *
@@ -1517,6 +1747,26 @@
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['validate', 'change'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+		},
+
+		/**
+		 * @private
+		 * @param timing
+		 * @returns {Boolean}
+		 */
+		_shouldUpdateOn: function(timing) {
+			return $.inArray(timing, this._updateOn) !== -1;
 		},
 
 		/**
@@ -1530,6 +1780,10 @@
 		 * @param {ValidationResult}
 		 */
 		_onValidate: function(result) {
+			if (!this._shouldUpdateOn('validate')) {
+				return;
+			}
+
 			var validatingProperties = result.validatingProperties;
 			var properties = result.properties;
 			for (var i = 0, l = properties.length; i < l; i++) {
@@ -1556,6 +1810,10 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onFocus: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('focus')) {
+				return;
+			}
+
 			var validatingProperties = validationResult.validatingProperties;
 			if ($.inArray(name, validatingProperties) !== -1) {
 				var element = this.parentController._getElementByName(name);
@@ -1564,13 +1822,34 @@
 				this._hideIndicator(name);
 			}
 		},
-		//		_onBlur: function(element, name, validationResult) {
-		//			this._showIndicator(element, name, validationResult);
-		//		},
-		// FIXME どのタイミングで実行するかは設定で決める？
-		//		_onChange: function(element, name, validationResult) {
-		//			this._showIndicator(element, name, validationResult);
-		//		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onBlur: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('blur')) {
+				return;
+			}
+
+			this._showIndicator(element, name, validationResult);
+		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onChange: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('change')) {
+				return;
+			}
+
+			this._showIndicator(element, name, validationResult);
+		},
 
 		/**
 		 * 要素でキーアップされた時に呼ばれる
@@ -1585,14 +1864,15 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onKeyup: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('keyup')) {
+				return;
+			}
+
 			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
 				// バリデート中ならインジケータ表示
 				this._showIndicator(element, name, validationResult);
 			}
 		},
-		//		_onClick: function(element, name, validationResult) {
-		//			this._setMessage(element, name, validationResult);
-		//		},
 
 		/**
 		 * プラグインのリセット
@@ -2618,6 +2898,8 @@
 		validate: function(names) {
 			// バリデート実行
 			var result = this._validate(names, 'validate');
+
+			this.trigger('validationUpdate');
 
 			// _onValidateの呼び出し
 			this._callPluginValidateEvent(PLUGIN_EVENT_VALIDATE, result);
