@@ -544,13 +544,12 @@
 											var validRuleNames = result._validPropertyToRulesMap[prop];
 											var violations = this.invalidReason[prop].violation;
 											if (validRuleNames) {
-												for (var rIdx = 0, rLen = validRuleNames.length; rIdx < rLen; rIdx++) {
-													//前回バイオレーションに含まれていたが今回はValidだったルールはviolationの配列から取り除く
-													var validRuleName = validRuleNames[rIdx];
-													var vrIdx = $
-															.inArray(validRuleName, violations);
-													if (vrIdx !== -1) {
-														violations.splice(vrIdx, 1);
+												//前回バイオレーションに含まれていたルールが今回Validだった場合はviolationの配列から取り除く
+												for (var vi = violations.length - 1; vi >= 0; vi--) {
+													var violation = violations[vi];
+													if ($.inArray(violation.ruleName,
+															validRuleNames) !== -1) {
+														violations.splice(vi, 1);
 													}
 												}
 											}
@@ -1481,10 +1480,6 @@
 					}
 
 					var validator = validateRuleManager.getValidator(ruleName);
-					if (orgValue === '' && !this._shouldValidateWhenEmpty(validator)) {
-						//値が空文字で、空文字の場合はチェックしないバリデータの場合は何もしない
-						continue;
-					}
 
 					if (!this._shouldValidateWhen(prop, validator, timing, lastResult)) {
 						continue;
@@ -1526,8 +1521,6 @@
 
 					/* 以降実際のバリデーション処理を行う */
 
-					isValidatedAtLeastOnce = true;
-
 					// 値の型変換
 					var value = this._convertBeforeValidate ? this._convertBeforeValidate(orgValue,
 							ruleName) : orgValue;
@@ -1543,7 +1536,34 @@
 						break;
 					}
 
-					var ret = validateFunc.apply(this, args);
+					var ret = null;
+					if (orgValue === '' && !this._shouldValidateWhenEmpty(validator)) {
+						if (lastResult && lastResult.invalidReason[prop]) {
+							//値が空文字で、空文字の場合チェックしないバリデータの場合、
+							//前回の結果でこのルールがInvalidだったときは強制的にvalid扱いにする
+							var hasLastError = false;
+							var lastViolations = lastResult.invalidReason[prop].violation;
+							for (var lvidx = 0, lvlen = lastViolations.length; lvidx < lvlen; lvidx++) {
+								var lastViolation = lastViolations[lvidx];
+								if (lastViolation.ruleName === ruleName) {
+									ret = true;
+									hasLastError = true;
+									break;
+								}
+							}
+
+							if (!hasLastError) {
+								continue;
+							}
+						} else {
+							//前回の結果がない場合、空の場合チェックしないバリデータの結果は含めない
+							continue;
+						}
+					} else {
+						ret = validateFunc.apply(this, args);
+					}
+
+					isValidatedAtLeastOnce = true;
 
 					// 非同期の場合
 					if (isPromise(ret) && !isRejected(ret) && !isResolved(ret)) {
