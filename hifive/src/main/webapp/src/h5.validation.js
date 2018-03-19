@@ -683,11 +683,17 @@
 					}
 				}
 			}
+
+			var actualArgNames = null;
+			if (argNames != null) {
+				actualArgNames = Array.isArray(argNames) ? argNames : [argNames];
+			}
+
 			var ruleObj = {
 				ruleName: ruleName,
 				func: func,
 				priority: priority,
-				argNames: argNames,
+				argNames: actualArgNames,
 				enableWhenEmpty: enableWhenEmpty,
 				validateOn: validateOn,
 				resolveOn: resolveOn
@@ -1488,9 +1494,11 @@
 					// validate関数呼び出し時の引数をオブジェクト形式に変換
 					var ruleValue = {};
 					var argNames = validateRuleManager.getValidateArgNames(ruleName);
-					if (argNames) {
+					if (argNames && args != null) {
+						var ruleArgs = Array.isArray(args) ? args : [args];
+
 						for (var j = 0, len = argNames.length; j < len; j++) {
-							ruleValue[argNames[j]] = args[j];
+							ruleValue[argNames[j]] = ruleArgs[j];
 						}
 					}
 
