@@ -807,23 +807,6 @@
 		 * @param validationResult
 		 */
 		_update: function(element, name, validationResult) {
-			//			if (!this._lastValidationResult) {
-			//				this._lastValidationResult = {
-			//					invalidProperties: [],
-			//					invalidReason: {}
-			//				};
-			//			}
-			//
-			//			if ($.inArray(name, validationResult.invalidProperties) !== -1) {
-			//				this._pushIfNotExist(name, this._lastValidationResult.invalidProperties);
-			//				this._lastValidationResult.invalidReason[name] = validationResult.invalidReason[name];
-			//			} else if ($.inArray(name, validationResult.validProperties) !== -1) {
-			//				var idx = this._lastValidationResult.invalidProperties.indexOf(name);
-			//				if (idx !== -1) {
-			//					this._lastValidationResult.invalidProperties.splice(idx, 1);
-			//				}
-			//			}
-
 			var lastResult = validationResult;
 			if (this._showAllErrors) {
 				lastResult = this._formController.getLastValidationResult();
@@ -899,8 +882,8 @@
 				return;
 			}
 
-			var shouldHide = !this._lastValidationResult
-					|| (this._lastValidationResult.invalidProperties.length === 0);
+			//TODO 非同期バリデーションが更新されたらアップデートする必要がある
+			var shouldHide = !this._lastValidationResult || this._lastValidationResult.isAllValid;
 
 			//単純にdisplay属性をnone/空文字にする方法だと、
 			//style属性でなくCSSクラスで非表示に設定されている場合などに正しく制御できない。
@@ -940,21 +923,12 @@
 				return;
 			}
 
-			//			if (!this._lastValidationResult) {
-			//				this._lastValidationResult = {
-			//					invalidProperties: [],
-			//					invalidReason: {}
-			//				};
-			//			}
-			//
-			//			this._lastValidationResult.invalidProperties = validationResult.invalidProperties
-			//					.slice(0);
-			//			this._lastValidationResult.invalidReason = $.extend({}, validationResult.invalidReason);
-
 			var result = validationResult;
 			if (this._showAllErrors) {
 				result = this._formController.getLastValidationResult();
 			}
+
+			this._lastValidationResult = result;
 
 			this._messageOutputController.clearMessage();
 			this._messageOutputController.appendMessageByValidationResult(result, null,
