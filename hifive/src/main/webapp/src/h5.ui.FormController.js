@@ -2364,7 +2364,7 @@
 						this.setDefaultMessage(ruleName, ruleDefaultSetting.message);
 					}
 
-					if('validateOn' in ruleDefaultSetting) {
+					if ('validateOn' in ruleDefaultSetting) {
 						this._validationLogic._setRuleValidateTiming(ruleName,
 								ruleDefaultSetting.validateOn);
 					}
@@ -3241,6 +3241,8 @@
 				var groupTarget = this._getElementByName(groupName);
 				this._callPluginElementEvent(eventType, groupTarget, groupName, validationResult);
 			}
+
+			this.trigger('validationUpdate');
 		},
 
 		/**
