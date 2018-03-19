@@ -218,7 +218,7 @@
 			this.invalidReason = this.invalidReason || {};
 
 			if (!this.invalidReason[name]) {
-				invalidReason[name] = {
+				this.invalidReason[name] = {
 					name: name,
 					value: ev.value,
 					violation: []
