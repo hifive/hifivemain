@@ -2928,19 +2928,19 @@
 		/*
 		 * フォーム部品でのイベント発生時にプラグインを呼び出すイベントハンドラ設定
 		 */
-		'{rootElement} focusin': function(ctx) {
+		'{document} focusin': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_FOCUS);
 		},
 
-		'{rootElement} focusout': function(ctx) {
+		'{document} focusout': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_BLUR);
 		},
 
-		'{rootElement} keyup': function(ctx) {
+		'{document} keyup': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_KEYUP);
 		},
 
-		'{rootElement} change': function(ctx) {
+		'{document} change': function(ctx) {
 			this._pluginElementEventHandler(ctx, PLUGIN_EVENT_CHANGE);
 		},
 
