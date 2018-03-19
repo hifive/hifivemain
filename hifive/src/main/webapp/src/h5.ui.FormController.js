@@ -801,32 +801,39 @@
 		},
 
 		/**
-		 * @privates
+		 * @private
 		 * @param element
 		 * @param name
 		 * @param validationResult
 		 */
 		_update: function(element, name, validationResult) {
-			if (!this._lastValidationResult) {
-				this._lastValidationResult = {
-					invalidProperties: [],
-					invalidReason: {}
-				};
+			//			if (!this._lastValidationResult) {
+			//				this._lastValidationResult = {
+			//					invalidProperties: [],
+			//					invalidReason: {}
+			//				};
+			//			}
+			//
+			//			if ($.inArray(name, validationResult.invalidProperties) !== -1) {
+			//				this._pushIfNotExist(name, this._lastValidationResult.invalidProperties);
+			//				this._lastValidationResult.invalidReason[name] = validationResult.invalidReason[name];
+			//			} else if ($.inArray(name, validationResult.validProperties) !== -1) {
+			//				var idx = this._lastValidationResult.invalidProperties.indexOf(name);
+			//				if (idx !== -1) {
+			//					this._lastValidationResult.invalidProperties.splice(idx, 1);
+			//				}
+			//			}
+
+			var lastResult = validationResult;
+			if (this._showAllErrors) {
+				lastResult = this._formController.getLastValidationResult();
 			}
 
-			if ($.inArray(name, validationResult.invalidProperties) !== -1) {
-				this._pushIfNotExist(name, this._lastValidationResult.invalidProperties);
-				this._lastValidationResult.invalidReason[name] = validationResult.invalidReason[name];
-			} else if ($.inArray(name, validationResult.validProperties) !== -1) {
-				var idx = this._lastValidationResult.invalidProperties.indexOf(name);
-				if (idx !== -1) {
-					this._lastValidationResult.invalidProperties.splice(idx, 1);
-				}
-			}
+			this._lastValidationResult = lastResult;
 
 			this._messageOutputController.clearMessage();
-			this._messageOutputController.appendMessageByValidationResult(
-					this._lastValidationResult, null, this._showAllErrors);
+			this._messageOutputController.appendMessageByValidationResult(lastResult, null,
+					this._showAllErrors);
 
 			this._updateVisible();
 		},
@@ -933,19 +940,24 @@
 				return;
 			}
 
-			if (!this._lastValidationResult) {
-				this._lastValidationResult = {
-					invalidProperties: [],
-					invalidReason: {}
-				};
+			//			if (!this._lastValidationResult) {
+			//				this._lastValidationResult = {
+			//					invalidProperties: [],
+			//					invalidReason: {}
+			//				};
+			//			}
+			//
+			//			this._lastValidationResult.invalidProperties = validationResult.invalidProperties
+			//					.slice(0);
+			//			this._lastValidationResult.invalidReason = $.extend({}, validationResult.invalidReason);
+
+			var result = validationResult;
+			if (this._showAllErrors) {
+				result = this._formController.getLastValidationResult();
 			}
 
-			this._lastValidationResult.invalidProperties = validationResult.invalidProperties
-					.slice(0);
-			this._lastValidationResult.invalidReason = $.extend({}, validationResult.invalidReason);
-
 			this._messageOutputController.clearMessage();
-			this._messageOutputController.appendMessageByValidationResult(validationResult, null,
+			this._messageOutputController.appendMessageByValidationResult(result, null,
 					this._showAllErrors);
 
 			this._updateVisible();
@@ -1018,7 +1030,9 @@
 		 */
 		_setDefaultMessage: function(validatorName, message) {
 			this._messageOutputController._setDefaultMessage(validatorName, message);
-		}
+		},
+
+		_formController: null
 	};
 	h5.core.expose(controller);
 })();
@@ -2349,6 +2363,17 @@
 						//既存ルールのデフォルトメッセージを上書き
 						this.setDefaultMessage(ruleName, ruleDefaultSetting.message);
 					}
+
+					if('validateOn' in ruleDefaultSetting) {
+						this._validationLogic._setRuleValidateTiming(ruleName,
+								ruleDefaultSetting.validateOn);
+					}
+
+					if ('resolveOn' in ruleDefaultSetting) {
+						//ルールのデフォルトのResolveタイミングを上書き
+						this._validationLogic._setRuleResolveTiming(ruleName,
+								ruleDefaultSetting.resolveOn);
+					}
 				}
 			}
 
@@ -2388,7 +2413,7 @@
 				}
 
 				h5.validation.defineRule(ruleName, ruleDef.func, null, 40, false,
-						ruleDef.validateOn);
+						ruleDef.validateOn, ruleDef.resolveOn);
 
 				if ('isForceEnabledWhenEmpty' in ruleDef) {
 					this._validationLogic.setRuleForceEnabledWhenEmpty(ruleName,
@@ -3068,6 +3093,9 @@
 			}
 			var c = h5.core.controller(this._bindedForm || this.rootElement, controller);
 			c._setSetting && c._setSetting(this._margePluginSettings(pluginName));
+
+			c._formController = this;
+
 			this.manageChild(c);
 			this._setDefaultMessages(c);
 			this._plugins[pluginName] = c;
@@ -3096,6 +3124,8 @@
 		setDefaultMessage: function(ruleName, message) {
 			this._ruleDefaultMessageMap[ruleName] = message;
 		},
+
+		_lastResult: null,
 
 		/**
 		 * フォームのバリデートを行う
@@ -3131,17 +3161,13 @@
 			//				this._waitingValidationResultMap = {};
 			//			}
 
-			var result = this._validationLogic.validate(formData, names, timing);
+			var result = this._validationLogic.validate(formData, names, timing, this._lastResult);
 
-			// TODO 動作確認としてログ出力
-			this.log.debug('-----------------------------------------');
-			this.log.debug('・validateするデータ');
-			this.log.debug(formData);
-			this.log.debug('・validate対象のプロパティ:' + names);
-			this.log.debug('・validate結果');
-			this.log.debug(result);
-			this.log.debug(result.isAsync ? '非同期' : '同期');
-			this.log.debug('-----------------------------------------');
+			if (this._lastResult) {
+				this._lastResult._merge(result);
+			} else {
+				this._lastResult = result;
+			}
 
 			if (result.isAsync) {
 				var properties = result.validatingProperties;
@@ -3157,12 +3183,8 @@
 			return result;
 		},
 
-		/**
-		 * @private
-		 * @memberOf h5.ui.FormController
-		 */
-		_createPluginElementEventArgs: function(element, validationResult) {
-			var name = element.name;
+		getLastValidationResult: function() {
+			return this._lastResult;
 		},
 
 		/**

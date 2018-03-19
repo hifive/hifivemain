@@ -81,6 +81,27 @@
 	// Functions
 	// =============================
 
+	function pushIfNotExist(value, array) {
+		if ($.inArray(value, array) === -1) {
+			array.push(value);
+		}
+	}
+
+	function uniqMerge(array1, array2) {
+		var ret = [];
+
+		var tmp = array1.concat(array2);
+
+		for (var i = 0, len = tmp.length; i < len; i++) {
+			var value = tmp[i];
+			if ($.inArray(value, ret) === -1) {
+				ret.push(value);
+			}
+		}
+
+		return ret;
+	}
+
 	/**
 	 * 引数がNaNかどうか判定する。isNaNとは違い、例えば文字列はNaNではないのでfalseとする
 	 *
@@ -412,6 +433,8 @@
 		 */
 		this.properties = result.properties;
 
+		this._validPropertyToRulesMap = result.validPropertyToRulesMap;
+
 		this.addEventListener(EVENT_VALIDATE, validateEventListener);
 
 		// abort()が呼ばれていたらdispatchEventを動作させない
@@ -424,25 +447,199 @@
 	}
 	// イベントディスパッチャ
 	h5.mixin.eventDispatcher.mix(ValidationResult.prototype);
-	$.extend(ValidationResult.prototype, {
-		/**
-		 * 非同期バリデートを中止する
-		 * <p>
-		 * ValidationResultが非同期バリデート結果を待機している場合、このメソッドを呼ぶとバリデートを中止し、以降validate及びvalidateCompleteイベントをあげなくなります。
-		 * </p>
-		 *
-		 * @memberOf ValidationResult
-		 * @name abort
-		 * @function
-		 */
-		abort: function() {
-			this.removeEventListener(EVENT_VALIDATE, validateEventListener);
-			this.dispatchEvent({
-				type: EVENT_VALIDATE_ABORT
-			});
-			this._aborted = true;
-		}
-	});
+	$
+			.extend(
+					ValidationResult.prototype,
+					{
+						/**
+						 * 非同期バリデートを中止する
+						 * <p>
+						 * ValidationResultが非同期バリデート結果を待機している場合、このメソッドを呼ぶとバリデートを中止し、以降validate及びvalidateCompleteイベントをあげなくなります。
+						 * </p>
+						 *
+						 * @memberOf ValidationResult
+						 * @name abort
+						 * @function
+						 */
+						abort: function() {
+							this.removeEventListener(EVENT_VALIDATE, validateEventListener);
+							this.dispatchEvent({
+								type: EVENT_VALIDATE_ABORT
+							});
+							this._aborted = true;
+						},
+
+						/**
+						 * @private
+						 */
+						_merge: function(result) {
+							//			this.isAllValid = result.isAllValid;
+							//			this.isValid = result.isValid;
+							//			this.isAsync = result.isAsync;
+
+							var newInvalidProperties = [];
+							var newValidProperties = [];
+
+							//前回バリデーション対象だったプロパティについて、
+							for (var i = 0, len = this.properties.length; i < len; i++) {
+								var prop = this.properties[i];
+								if (!this._has(prop, result.properties)) {
+									//今回バリデーション対象にならなかったプロパティの結果はそのまま引き継ぐ
+
+									if (this._has(prop, this.validProperties)) {
+										newValidProperties.push(prop);
+									}
+
+									if (this._has(prop, this.invalidProperties)) {
+										newInvalidProperties.push(prop);
+										//invalidReasonは保持してあるMapをそのまま保持しているのでコピー不要
+									}
+								} else {
+									//今回もバリデーション対象だった場合
+
+									if (this._has(prop, this.validProperties)) {
+										//前回違反なしで
+
+										if (this._has(prop, result.invalidProperties)) {
+											//今回違反ありになったプロパティは、invalid側に含めて
+											pushIfNotExist(prop, newInvalidProperties);
+											//reasonもコピーする
+											this.invalidReason[prop] = result.invalidReason[prop];
+										} else if (this._has(prop, result.validProperties)) {
+											//今回も違反なしのプロパティはvalid側に含める
+											pushIfNotExist(prop, newValidProperties);
+										}
+									} else if (this._has(prop, this.invalidProperties)) {
+										//前回違反ありの場合
+
+										if (this._has(prop, result.validProperties)) {
+											//前回は違反ありだったが、今回違反なしになったプロパティについて、ルールごとに
+											var validRuleNames = result._validPropertyToRulesMap[prop];
+											var violations = this.invalidReason[prop].violation;
+											if (validRuleNames) {
+												//前回バイオレーションに含まれていたルールが今回Validだった場合はviolationの配列から取り除く
+												for (var vi = violations.length - 1; vi >= 0; vi--) {
+													var violation = violations[vi];
+													if ($.inArray(violation.ruleName,
+															validRuleNames) !== -1) {
+														violations.splice(vi, 1);
+													}
+												}
+											}
+
+											if (violations.length === 0) {
+												//すべての違反が解消されたら、Reasonから取り除き、Validなプロパティに含める
+												delete this.invalidReason[prop];
+												pushIfNotExist(prop, newValidProperties);
+											} else {
+												//まだ他のルールの違反が残っている場合はInvalidなプロパティに含める
+												pushIfNotExist(prop, newInvalidProperties);
+											}
+
+											//最新のValidなルールのマップをコピー
+											this._validPropertyToRulesMap[prop] = result._validPropertyToRulesMap[prop];
+										} else if (this._has(prop, result.invalidProperties)) {
+											//前回も今回も違反ありのプロパティについて、
+
+											var validRuleNames = result._validPropertyToRulesMap[prop];
+											var violations = this.invalidReason[prop].violation;
+											if (validRuleNames) {
+												for (var rIdx = 0, rLen = validRuleNames.length; rIdx < rLen; rIdx++) {
+													//前回バイオレーションに含まれていたが今回はValidだったルールはviolationの配列から取り除く
+													var validRuleName = validRuleNames[rIdx];
+													var vrIdx = $
+															.inArray(validRuleName, violations);
+													if (vrIdx !== -1) {
+														violations.splice(vrIdx, 1);
+													}
+												}
+											}
+
+											//今回のバリデーションの違反について、
+											for (var vidx = 0, vlen = result.invalidReason[prop].violation.length; vidx < vlen; vidx++) {
+												var newViolation = result.invalidReason[prop].violation[vidx];
+
+												var hasAlready = false;
+
+												//前回のバリデーションで同じルールの違反がある場合、reasonを上書きする
+												for (var oldvidx = 0, oldvlen = violations.length; oldvidx < oldvlen; oldvidx++) {
+													var oldViolation = violations[oldvidx];
+													if (newViolation.ruleName === oldViolation.ruleName) {
+														hasAlready = true;
+														violations[oldvidx] = newViolation;
+														break;
+													}
+												}
+
+												//前回のバリデーションにはないルール違反の場合は、violationに追加する
+												if (!hasAlready) {
+													violations.push(newViolation);
+												}
+											}
+
+											//いずれにしても、Invalidなプロパティなので、invalid側に含める
+											pushIfNotExist(prop, newInvalidProperties);
+										}
+									}
+								}
+							}
+
+							//今回のバリデーションでバリデーション対象、かつ前回は対象外だったプロパティについて、
+							for (var i = 0, len = result.properties.length; i < len; i++) {
+								var prop = result.properties[i];
+								if (!this._has(prop, this.properties)) {
+									//今回新たに対象になったプロパティのvalid,invalidはコピーする
+									if (this._has(prop, result.validProperties)) {
+										pushIfNotExist(prop, newValidProperties);
+									} else if (this._has(prop, result.invalidProperties)) {
+										pushIfNotExist(prop, newInvalidProperties);
+										//Reasonもコピーする
+										this.invalidReason[prop] = result.invalidReason[prop];
+									}
+								}
+							}
+
+							//最終的にチェックしたプロパティリストは単純にユニークマージすればよい
+							this.properties = uniqMerge(this.properties, result.properties);
+
+							//バリデート中のプロパティリストは単純にユニークマージすればよい
+							this.validatingProperties = uniqMerge(this.validatingProperties,
+									result.validatingProperties);
+
+							//Asyncかどうかは、マージ後のバリデート中プロパティがあるかどうかで判定
+							this.isAsync = (this.validatingProperties.length === 0);
+
+							this.validProperties = newValidProperties;
+							this.validCount = newValidProperties.length;
+
+							this.invalidProperties = newInvalidProperties;
+							this.invalidCount = newInvalidProperties.length;
+
+							//Violationの数を新たにカウント
+							var newViolationCount = 0;
+							for ( var violatedPropName in this.invalidReason) {
+								var reason = this.invalidReason[violatedPropName];
+								newViolationCount += reason.violation.length;
+							}
+							this.violationCount = newViolationCount;
+
+							//マージ後、invalidなプロパティがなければvalidである
+							this.isValid = this.invalidCount === 0;
+
+							this.isAllValid = false;
+							if (!this.isAsync && this.isValid) {
+								//Asyncでなく、かつvalidならAll-valid
+								this.isAllVaid = true;
+							}
+						},
+
+						/**
+						 * @private
+						 */
+						_has: function(value, array) {
+							return $.inArray(value, array) !== -1;
+						}
+					});
 
 	/**
 	 * priority順に並べるための比較関数
@@ -474,7 +671,8 @@
 		this.rulesMap = {};
 	}
 	$.extend(ValidateRuleManager.prototype, {
-		addValidateRule: function(ruleName, func, argNames, priority, enableWhenEmpty, validateOn) {
+		addValidateRule: function(ruleName, func, argNames, priority, enableWhenEmpty, validateOn,
+				resolveOn) {
 			var isExistAlready = this.rulesMap[ruleName];
 			if (isExistAlready) {
 				fwLogger.warn('定義済みのルールが上書きされました。異なるルール名で定義することを推奨します。ルール名=' + ruleName);
@@ -492,7 +690,8 @@
 				priority: priority,
 				argNames: argNames,
 				enableWhenEmpty: enableWhenEmpty,
-				validateOn: validateOn
+				validateOn: validateOn,
+				resolveOn: resolveOn
 			};
 			this.rules.push(ruleObj);
 			this.rulesMap[ruleName] = ruleObj;
@@ -519,10 +718,10 @@
 	/**
 	 * preValidationHookに渡されるコンテキストオブジェクト
 	 *
-	 * @param name プロパティ名
-	 * @param value 値
-	 * @param rule ルールオブジェクト(name, argを持つ)
-	 * @param timing タイミング
+	 * @param {String} name プロパティ名
+	 * @param {any} value 値
+	 * @param {ValidationRule} rule ルールオブジェクト(name, argを持つ)
+	 * @param {String} timing タイミング
 	 */
 	function ValidationContext(name, value, rule, timing) {
 		this._isSkipped = false;
@@ -577,10 +776,10 @@
 	 * @param {number} [priority=0] 優先度
 	 * @param {boolean} [enableWhenEmpty] 値が空の場合にこのバリデータを動作させるかどうか。デフォルト値：false。
 	 */
-	function defineRule(ruleName, func, argNames, priority, enableWhenEmpty, validateOn) {
+	function defineRule(ruleName, func, argNames, priority, enableWhenEmpty, validateOn, resolveOn) {
 		// TODO 優先度は未実装
 		validateRuleManager.addValidateRule(ruleName, func, argNames, priority, enableWhenEmpty,
-				validateOn);
+				validateOn, resolveOn);
 	}
 
 	// =========================================================================
@@ -983,7 +1182,7 @@
 		 * @param {string} timing バリデーションタイミング。blur, validateなど。省略時は"validate"とみなす。
 		 * @returns {ValidationResult} バリデート結果
 		 */
-		validate: function(obj, names, timing) {
+		validate: function(obj, names, timing, lastResult) {
 			// グループ対応。値がオブジェクトのものはグループとして扱う
 			var validateTarget = {};
 			var inGroupNames = [];
@@ -1007,7 +1206,7 @@
 				timing = 'validate';
 			}
 
-			return this._validate(validateTarget, validateNames, timing);
+			return this._validate(validateTarget, validateNames, timing, lastResult);
 		},
 
 		_preValidationHook: null,
@@ -1231,7 +1430,7 @@
 		 * @param {string} timing バリデーションタイミング。
 		 * @returns {ValidationResult} バリデート結果
 		 */
-		_validate: function(obj, names, timing) {
+		_validate: function(obj, names, timing, lastResult) {
 			var validProperties = [];
 			var invalidProperties = [];
 			var properties = [];
@@ -1242,6 +1441,8 @@
 			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
 			var propertyWaitingPromsies = {};
 			var violationCount = 0;
+			//バリデーション結果OKだったルールの、プロパティ名 -> rule名配列のマップ
+			var validPropertyToRulesMap = {};
 
 			for ( var prop in this._rule) {
 				if (names && $.inArray(prop, targetNames) === -1
@@ -1285,7 +1486,7 @@
 						continue;
 					}
 
-					if (!this._shouldValidateWhen(validator, timing)) {
+					if (!this._shouldValidateWhen(prop, validator, timing, lastResult)) {
 						continue;
 					}
 
@@ -1373,6 +1574,14 @@
 								ruleValue));
 						isInvalidProp = true;
 						violationCount++;
+					} else {
+						//あるプロパティについて、Validだったルールを保持しておく
+						var validRuleNames = validPropertyToRulesMap[prop];
+						if (!validRuleNames) {
+							validRuleNames = [];
+							validPropertyToRulesMap[prop] = validRuleNames;
+						}
+						pushIfNotExist(ruleName, validRuleNames);
 					}
 				}
 
@@ -1401,7 +1610,8 @@
 				isValid: isValid,
 				// 非同期でvalidateしているものがあって現時点でisValid=falseでない(=全部OKかどうか決まっていない)時はisAllValidはnull
 				isAllValid: isValid ? (isAsync ? null : true) : false,
-				violationCount: violationCount
+				violationCount: violationCount,
+				validPropertyToRulesMap: validPropertyToRulesMap
 			});
 
 			if (isAsync) {
@@ -1533,30 +1743,64 @@
 			return rule.enableWhenEmpty === true;
 		},
 
-		_shouldValidateWhen: function(validator, timing) {
-			if (validator.validateOn == null) {
+		/**
+		 * @private
+		 * @param {String} prop プロパティ名
+		 * @param {ValidationRule} rule
+		 * @param timing
+		 * @returns {Boolean}
+		 */
+		_shouldValidateWhen: function(prop, rule, timing, lastResult) {
+			if (rule.validateOn == null) {
 				return true;
 			}
-			var idx = $.inArray(timing, validator.validateOn);
-			var ret = idx !== -1;
-			return ret;
+
+			var idx = $.inArray(timing, rule.validateOn);
+			var shouldValidate = idx !== -1;
+
+			//もしvalidateOnのタイミングに含まれていないタイミングでも、
+			//前回のバリデーションでこのルールに違反しており、かつ
+			//このルールのresolveOnで指定されていたタイミングの場合はバリデーションを行う
+			if (!shouldValidate && lastResult && lastResult.invalidReason[prop] && rule.resolveOn) {
+				var violations = lastResult.invalidReason[prop].violation;
+				for (var i = 0, len = violations.length; i < len; i++) {
+					var v = violations[i];
+					if (v.ruleName === rule.ruleName && $.inArray(timing, rule.resolveOn) !== -1) {
+						shouldValidate = true;
+						break;
+					}
+				}
+			}
+
+			return shouldValidate;
+		},
+
+		_setRuleResolveTiming: function(ruleName, timings) {
+			var resolveOn = Array.isArray(timings) ? timings : [timings];
+			validateRuleManager.getValidator(ruleName).resolveOn = resolveOn;
+		},
+
+		_setRuleValidateTiming: function(ruleName, timings) {
+			var validateOn = Array.isArray(timings) ? timings : [timings];
+			validateRuleManager.getValidator(ruleName).validateOn = validateOn;
 		}
 	};
 
 	// デフォルトルールの追加
-	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 60, true, null);
-	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50, true, null);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50, true, null);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50, true, null);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, rule.assertFalse, null, 50, false, null);
-	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, rule.assertTrue, null, 50, false, null);
-	defineRule(DEFAULT_RULE_NAME_MAX, rule.max, ['max', 'inclusive'], 50, false, null);
-	defineRule(DEFAULT_RULE_NAME_MIN, rule.min, ['min', 'inclusive'], 50, false, null);
-	defineRule(DEFAULT_RULE_NAME_FUTURE, rule.future, null, 50, false, null);
-	defineRule(DEFAULT_RULE_NAME_PAST, rule.past, null, 50, false, null);
-	defineRule(DEFAULT_RULE_NAME_DIGITS, rule.digits, ['integer', 'fraction'], 50, false, null);
-	defineRule(DEFAULT_RULE_NAME_PATTERN, rule.pattern, ['regexp'], 50, false, null);
-	defineRule(DEFAULT_RULE_NAME_SIZE, rule.size, ['min', 'max'], 50, false, null);
+	defineRule(DEFAULT_RULE_NAME_REQUIRED, rule.required, null, 60, true, null, null);
+	defineRule(DEFAULT_RULE_NAME_CUSTOM_FUNC, rule.customFunc, ['func'], 50, true, null, null);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_NULL, rule.assertNull, null, 50, true, null, null);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_NOT_NULL, rule.assertNotNull, null, 50, true, null, null);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_FALSE, rule.assertFalse, null, 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, rule.assertTrue, null, 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_MAX, rule.max, ['max', 'inclusive'], 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_MIN, rule.min, ['min', 'inclusive'], 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_FUTURE, rule.future, null, 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_PAST, rule.past, null, 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_DIGITS, rule.digits, ['integer', 'fraction'], 50, false, null,
+			null);
+	defineRule(DEFAULT_RULE_NAME_PATTERN, rule.pattern, ['regexp'], 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_SIZE, rule.size, ['min', 'max'], 50, false, null, null);
 
 	// =============================
 	// Expose to window
