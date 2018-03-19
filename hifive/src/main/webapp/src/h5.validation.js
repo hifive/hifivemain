@@ -179,6 +179,7 @@
 	 * ValidationResultにデフォルトで登録するvalidateイベントリスナ
 	 *
 	 * @private
+	 * @param ev イベントオブジェクト
 	 */
 	function validateEventListener(ev) {
 		// thisはvalidationResult
@@ -194,11 +195,16 @@
 			this.invalidProperties.push(name);
 			this.invalidCount++;
 			this.invalidReason = this.invalidReason || {};
-			this.invalidReason[name] = {
-				name: name,
-				value: ev.value,
-				violation: [ev.violation]
-			};
+
+			if (!this.invalidReason[name]) {
+				invalidReason[name] = {
+					name: name,
+					value: ev.value,
+					violation: []
+				};
+			}
+			this.invalidReason[name].violation.push(ev.violation);
+			this.violationCount++;
 		}
 		this.validatingProperties.splice($.inArray(name, this.validatingProperties), 1);
 		if (!this.isValid || !this.validatingProperties.length) {
@@ -368,6 +374,15 @@
 		this.invalidCount = result.invalidProperties.length;
 
 		/**
+		 * 違反したルールの総数。「プロパティの数」ではなく「違反したルールの数」です。
+		 *
+		 * @memberOf ValidationResult
+		 * @name violationCount
+		 * @type {integer}
+		 */
+		this.violationCount = result.violationCount;
+
+		/**
 		 * 非同期バリデートがあるかどうか
 		 *
 		 * @memberOf ValidationResult
@@ -409,23 +424,25 @@
 	}
 	// イベントディスパッチャ
 	h5.mixin.eventDispatcher.mix(ValidationResult.prototype);
-	/**
-	 * 非同期バリデートを中止する
-	 * <p>
-	 * ValidationResultが非同期バリデート結果を待機している場合、このメソッドを呼ぶとバリデートを中止し、以降validate及びvalidateCompleteイベントをあげなくなります。
-	 * </p>
-	 *
-	 * @memberOf ValidationResult
-	 * @name abort
-	 * @function
-	 */
-	ValidationResult.prototype.abort = function() {
-		this.removeEventListener(EVENT_VALIDATE, validateEventListener);
-		this.dispatchEvent({
-			type: EVENT_VALIDATE_ABORT
-		});
-		this._aborted = true;
-	};
+	$.extend(ValidationResult.prototype, {
+		/**
+		 * 非同期バリデートを中止する
+		 * <p>
+		 * ValidationResultが非同期バリデート結果を待機している場合、このメソッドを呼ぶとバリデートを中止し、以降validate及びvalidateCompleteイベントをあげなくなります。
+		 * </p>
+		 *
+		 * @memberOf ValidationResult
+		 * @name abort
+		 * @function
+		 */
+		abort: function() {
+			this.removeEventListener(EVENT_VALIDATE, validateEventListener);
+			this.dispatchEvent({
+				type: EVENT_VALIDATE_ABORT
+			});
+			this._aborted = true;
+		}
+	});
 
 	/**
 	 * priority順に並べるための比較関数
@@ -500,7 +517,7 @@
 	});
 
 	/**
-	 * preValidationHookに渡すコンテキストオブジェクト
+	 * preValidationHookに渡されるコンテキストオブジェクト
 	 *
 	 * @param name プロパティ名
 	 * @param value 値
@@ -514,9 +531,14 @@
 		this.rule = rule;
 		this.timing = timing;
 	}
-	ValidationContext.prototype.skip = function() {
-		this._isSkipped = true;
-	};
+	$.extend(ValidationContext.prototype, {
+		/**
+		 * このプロパティのバリデーションをスキップします。
+		 */
+		skip: function() {
+			this._isSkipped = true;
+		}
+	});
 
 	/**
 	 * バリデーションタイミングのEnum
@@ -526,7 +548,7 @@
 		CHANGE: 'change',
 		BLUR: 'blur',
 		FOCUS: 'focus',
-		KEYUP: 'keyup'
+		KEY_UP: 'keyup'
 	};
 
 	/**
@@ -1219,6 +1241,7 @@
 			var isAsync = false;
 			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
 			var propertyWaitingPromsies = {};
+			var violationCount = 0;
 
 			for ( var prop in this._rule) {
 				if (names && $.inArray(prop, targetNames) === -1
@@ -1330,7 +1353,7 @@
 						// プロミス自体にルール名と値と引数を覚えさせておく
 						propertyWaitingPromsies[prop].push(ret.promise({
 							ruleName: ruleName,
-							value: value,
+							value: orgValue,
 							ruleValue: ruleValue
 						}));
 					}
@@ -1339,7 +1362,6 @@
 					if (!ret || isPromise(ret) && isRejected(ret)) {
 						// validate関数がfalseを返したまたは、promiseを返したけどすでにreject済みの場合はvalidate失敗
 						// invalidReasonの作成
-						invalidReason = invalidReason || {};
 						if (!invalidReason[prop]) {
 							invalidReason[prop] = {
 								name: prop,
@@ -1350,6 +1372,7 @@
 						invalidReason[prop].violation.push(this._createViolation(ruleName,
 								ruleValue));
 						isInvalidProp = true;
+						violationCount++;
 					}
 				}
 
@@ -1377,7 +1400,8 @@
 				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
 				isValid: isValid,
 				// 非同期でvalidateしているものがあって現時点でisValid=falseでない(=全部OKかどうか決まっていない)時はisAllValidはnull
-				isAllValid: isValid ? (isAsync ? null : true) : false
+				isAllValid: isValid ? (isAsync ? null : true) : false,
+				violationCount: violationCount
 			});
 
 			if (isAsync) {
@@ -1393,7 +1417,7 @@
 					}
 				}
 				var that = this;
-				// 非同期の場合、結果が返って気次第イベントをあげる
+				// 非同期の場合、結果が返って来次第イベントをあげる
 				for ( var prop in propertyWaitingPromsies) {
 					var promises = propertyWaitingPromsies[prop];
 					var doneHandler = (function(_prop) {
@@ -1456,7 +1480,8 @@
 		_createViolation: function(ruleName, ruleValue, failHandlerArgs) {
 			var ret = {
 				ruleName: ruleName,
-				ruleValue: ruleValue
+				ruleValue: ruleValue,
+				reason: null
 			};
 			if (failHandlerArgs) {
 				ret.reason = h5.u.obj.argsToArray(failHandlerArgs);
