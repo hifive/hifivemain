@@ -876,6 +876,30 @@ $(function() {
 		strictEqual(violation.reason[1], reason2, 'reasonにrejectで渡した第2引数が入っている');
 	});
 
+	test('エラーが0件の場合はinvalidReasonが空オブジェクトになること', function() {
+		var validator = this.validator;
+		var maxRule = {
+			max: 1
+		};
+		validator.addRule({
+			p1: maxRule,
+			p2: maxRule,
+			p3: maxRule,
+			p4: maxRule,
+			p5: maxRule
+		});
+		var result = validator.validate({
+			p1: 0,
+			p2: 0,
+			p3: 0,
+			p4: 0,
+			p5: 0
+		});
+		var invalidReason = result.invalidReason;
+
+		strictEqual(Object.keys(invalidReason).length, 0, 'invalidReasonが空オブジェクトになること');
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -1356,5 +1380,95 @@ $(function() {
 			});
 		}
 		validateTests[0]();
+	});
+
+	//=============================
+	// Definition
+	//=============================
+	module('ValidationResult violationCount', {
+		setup: function() {
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+	test('エラーが0件の場合はviolationCountが0になること', function() {
+		var validator = this.validator;
+		var maxRule = {
+			max: 1
+		};
+		validator.addRule({
+			p1: maxRule,
+			p2: maxRule,
+			p3: maxRule,
+			p4: maxRule,
+			p5: maxRule
+		});
+		var result = validator.validate({
+			p1: 0,
+			p2: 0,
+			p3: 0,
+			p4: 0,
+			p5: 0
+		});
+		var violationCount = result.violationCount;
+		var invalidReason = result.invalidReason;
+
+		strictEqual(violationCount, 0, 'violationCountが0になること');
+		strictEqual(Object.keys(invalidReason).length, 0, 'invalidReasonが空オブジェクトになること');
+	});
+
+	test('エラーが1件の場合はviolationCountが1になること', function() {
+		var validator = this.validator;
+		var maxRule = {
+			max: 1
+		};
+		validator.addRule({
+			p1: maxRule,
+			p2: maxRule,
+			p3: maxRule,
+			p4: maxRule,
+			p5: maxRule
+		});
+		var result = validator.validate({
+			p1: 0,
+			p2: 0,
+			p3: 1,
+			p4: 0,
+			p5: 0
+		});
+		var violationCount = result.violationCount;
+		var invalidReason = result.invalidReason;
+
+		strictEqual(violationCount, 1, 'violationCountが1になること');
+		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonがプロパティを1つ持つこと');
+	});
+
+	test('エラーが2件の場合はviolationCountが2になること', function() {
+		var validator = this.validator;
+		var maxRule = {
+			max: 1
+		};
+		validator.addRule({
+			p1: maxRule,
+			p2: maxRule,
+			p3: maxRule,
+			p4: maxRule,
+			p5: maxRule
+		});
+		var result = validator.validate({
+			p1: 0,
+			p2: 1,
+			p3: 0,
+			p4: 1,
+			p5: 0
+		});
+		var violationCount = result.violationCount;
+		var invalidReason = result.invalidReason;
+
+		strictEqual(violationCount, 2, 'violationCountが2になること');
+		strictEqual(Object.keys(invalidReason).length, 2, 'invalidReasonがプロパティを2つ持つこと');
 	});
 });
