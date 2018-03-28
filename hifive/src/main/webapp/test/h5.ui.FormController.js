@@ -7708,7 +7708,7 @@ $(function() {
 			formCtrl.validate('a');
 			validationResult = formCtrl.getLastValidationResult();
 			strictEqual(validationResult.invalidCount, 1, 'バリデートエラーがないこと');
-			
+
 			$input.change();
 			validationResult = formCtrl.getLastValidationResult();
 			strictEqual(validationResult.invalidCount, 1, 'バリデートエラーがないこと');
@@ -8047,120 +8047,152 @@ $(function() {
 	});
 
 	module('addOutputPlugin', {
+		isChangeCalled: false,
+		isBlurCalled: false,
+		isFocusCalled: false,
+		isKeyupCalled: false,
+		isValidateCalled: false,
+		onValidate: null,
+		formController: null,
 		setup: function() {
 			stop();
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
+			var that = this;
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				start();
-			});
+			this.formController.readyPromise.done(function () {
+				var pluginName = 'testPlugin';
+				var errorMessage = 'バリデートに失敗しました';
+				var controller = {
+					__name: 'testPluginController',
+					_onChange: function (element, name, validationResult) {
+						that.isChangeCalled = true;
+					},
+					_onBlur: function (element, name, validationResult) {
+						that.isBlurCalled = true;
+					},
+					_onFocus: function (element, name, validationResult) {
+						that.isFocusCalled = true;
+					},
+					_onKeyup: function (element, name, validationResult) {
+						that.isKeyupCalled = true;
+					},
+					_onValidate: function (validationResult) {
+						if (that.onValidate != null) {
+							that.onValidate(validationResult);
+						}
+						that.isValidateCalled = true;
+					}
+				};
+				var formCtrl = this.formController;
+				formCtrl._addOutputPlugin(pluginName, controller);
+				formCtrl.addRule({
+					a: {
+						required: true
+					}
+				});
+				formCtrl.addOutput('testPlugin');
+				formCtrl.setSetting({
+					output: {
+						testPlugin: {
+							container: $('.errorContainer')
+						}
+					},
+					property: {
+						a: {
+							composition: {
+								message: errorMessage
+							}
+						}
+					}
+				});
+
+				// FIXME: #529
+				setTimeout(start, 200);
+			}.bind(this));
 		}
 	});
 
-	test('追加したプラグインの各タイミングで関数が呼び出されること', function() {
-		var isChangeCalled = false;
-		var isBlurCalled = false;
-		var isFocusCalled = false;
-		var isKeyupCalled = false;
-		var isValidateCalled = false;
-		var reset = function() {
-			isChangeCalled = false;
-			isBlurCalled = false;
-			isFocusCalled = false;
-			isKeyupCalled = false;
-			isValidateCalled = false;
-		};
-
-		var pluginName = 'testPlugin';
-		var controller = {
-			__name: 'testPluginController',
-			_onChange: function(element, name, validationResult) {
-				isChangeCalled = true;
-			},
-			_onBlur: function(element, name, validationResult) {
-				isBlurCalled = true;
-			},
-			_onFocus: function(element, name, validationResult) {
-				isFocusCalled = true;
-			},
-			_onKeyup: function(element, name, validationResult) {
-				isKeyupCalled = true;
-			},
-			_onValidate: function(validationResult) {
-				isValidateCalled = true;
-			}
-		};
-		var formCtrl = this.formController;
-		var errorMessage = 'バリデートに失敗しました';
-		formCtrl._addOutputPlugin(pluginName, controller);
-		formCtrl.addRule({
-			a: {
-				required: true
-			}
-		});
-		formCtrl.addOutput('testPlugin');
-		formCtrl.setSetting({
-			output: {
-				testPlugin: {
-					container: $('.errorContainer')
-				}
-			},
-			property: {
+	test('changeのタイミングで関数が呼び出されること', function() {
+			var $input = $('.inputA');
+			$input.change();
+			ok(this.isChangeCalled, 'changeの場合_onChangeが呼び出されたこと');
+			ok(!this.isBlurCalled, 'changeの場合_onBlurが呼び出されていないこと');
+			ok(!this.isFocusCalled, 'changeの場合_onFocusが呼び出されていないこと');
+			ok(!this.isKeyupCalled, 'changeの場合_onKeyupが呼び出されていないこと');
+			ok(!this.isValidateCalled, 'changeの場合_onValidateが呼び出されていないこと');
+	});
+	test('blurのタイミングで関数が呼び出されること', function() {
+			var $input = $('.inputA');
+			$input.blur();
+			ok(!this.isChangeCalled, 'blurの場合_onChangeが呼び出されていないこと');
+			ok(this.isBlurCalled, 'blurの場合_onBlurが呼び出されたこと');
+			ok(!this.isFocusCalled, 'blurの場合_onFocusが呼び出されていないこと');
+			ok(!this.isKeyupCalled, 'blurの場合_onKeyupが呼び出されていないこと');
+			ok(!this.isValidateCalled, 'blurの場合_onValidateが呼び出されていないこと');
+	});
+	test('focusのタイミングで関数が呼び出されること', function() {
+			var $input = $('.inputA');
+			$input.focus();
+			ok(!this.isChangeCalled, 'focusの場合_onChangeが呼び出されていないこと');
+			ok(!this.isBlurCalled, 'focusの場合_onBlurが呼び出されていないこと');
+			ok(this.isFocusCalled, 'focusの場合_onFocusが呼び出されたこと');
+			ok(!this.isKeyupCalled, 'focusの場合_onKeyupが呼び出されていないこと');
+			ok(!this.isValidateCalled, 'focusの場合_onValidateが呼び出されていないこと');
+	});
+	test('keyupのタイミングで関数が呼び出されること', function() {
+			var $input = $('.inputA');
+			$input.keyup();
+			ok(!this.isChangeCalled, 'keyupの場合_onChangeが呼び出されていないこと');
+			ok(!this.isBlurCalled, 'keyupの場合_onBlurが呼び出されていないこと');
+			ok(!this.isFocusCalled, 'keyupの場合_onFocusが呼び出されていないこと');
+			ok(this.isKeyupCalled, 'keyupの場合_onKeyupが呼び出されたこと');
+			ok(!this.isValidateCalled, 'keyupの場合_onValidateが呼び出されていないこと');
+	});
+	test('validateのタイミングで関数が呼び出されること', function() {
+			this.formController.validate('a');
+			ok(!this.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
+			ok(!this.isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
+			ok(!this.isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
+			ok(!this.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
+			ok(this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
+	});
+	test('非同期バリデーションの場合、非同期バリデーションが完了したタイミングで関数が呼び出されること', function() {
+			this.formController.addRule({
 				a: {
-					composition: {
-						message: errorMessage
+					customFunc: function(value) {
+						var dfd = h5.async.deferred();
+						setTimeout(function(){
+							dfd.resolve({
+								valid: true,
+								a: value
+							});
+						}, 0);
+						return dfd.promise();
 					}
 				}
+			})
+			this.onValidate = function(result) {
+				console.log(result);
 			}
-		});
+			var result = this.formController.validate('a');
 
-		stop();
-		setTimeout(function() {
-			var $input = $('.inputA');
+			// 非同期処理が完了するまで呼ばれない
+			ok(!this.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
+			ok(!this.isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
+			ok(!this.isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
+			ok(!this.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
+			ok(!this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
 
-			reset();
-			$input.change();
-			ok(isChangeCalled, 'changeの場合_onChangeが呼び出されたこと');
-			ok(!isBlurCalled, 'changeの場合_onBlurが呼び出されていないこと');
-			ok(!isFocusCalled, 'changeの場合_onFocusが呼び出されていないこと');
-			ok(!isKeyupCalled, 'changeの場合_onKeyupが呼び出されていないこと');
-			ok(!isValidateCalled, 'changeの場合_onValidateが呼び出されていないこと');
-
-			reset();
-			$input.blur();
-			ok(!isChangeCalled, 'blurの場合_onChangeが呼び出されていないこと');
-			ok(isBlurCalled, 'blurの場合_onBlurが呼び出されたこと');
-			ok(!isFocusCalled, 'blurの場合_onFocusが呼び出されていないこと');
-			ok(!isKeyupCalled, 'blurの場合_onKeyupが呼び出されていないこと');
-			ok(!isValidateCalled, 'blurの場合_onValidateが呼び出されていないこと');
-
-			reset();
-			$input.focus();
-			ok(!isChangeCalled, 'focusの場合_onChangeが呼び出されていないこと');
-			ok(!isBlurCalled, 'focusの場合_onBlurが呼び出されていないこと');
-			ok(isFocusCalled, 'focusの場合_onFocusが呼び出されたこと');
-			ok(!isKeyupCalled, 'focusの場合_onKeyupが呼び出されていないこと');
-			ok(!isValidateCalled, 'focusの場合_onValidateが呼び出されていないこと');
-
-			reset();
-			$input.keyup();
-			ok(!isChangeCalled, 'keyupの場合_onChangeが呼び出されていないこと');
-			ok(!isBlurCalled, 'keyupの場合_onBlurが呼び出されていないこと');
-			ok(!isFocusCalled, 'keyupの場合_onFocusが呼び出されていないこと');
-			ok(isKeyupCalled, 'keyupの場合_onKeyupが呼び出されたこと');
-			ok(!isValidateCalled, 'keyupの場合_onValidateが呼び出されていないこと');
-
-			reset();
-			formCtrl.validate('a');
-			ok(!isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
-			ok(!isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
-			ok(!isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
-			ok(!isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
-			ok(isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
-			start();
-		}, 0);
+			var that = this;
+			result.addEventListener('validateComplete', function() {
+				ok(!that.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
+				ok(!that.isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
+				ok(!that.isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
+				ok(!that.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
+				ok(that.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
+			})
 	});
 
 	//=============================
