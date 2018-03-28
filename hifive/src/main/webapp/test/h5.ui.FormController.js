@@ -2023,6 +2023,52 @@ $(function() {
 		}, 0);
 	});
 
+	test('h5-composition-has-error CSSクラスをコンテナ要素に付与すること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'バリデートに失敗しました';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		formCtrl.addOutput('composition');
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer'),
+					hideWhenEmpty: true
+				}
+			},
+			property: {
+				a: {
+					composition: {
+						message: errorMessage
+					}
+				}
+			}
+		});
+
+		stop();
+		setTimeout(function() {
+			var $errorContainer = $('.errorContainer');
+			var $input = $('.inputA');
+
+			ok(!$errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていないこと');
+			formCtrl.validate();
+			setTimeout(function() {
+				// Compositionで、表示するエラーが1件以上ある場合にh5-composition-has-error CSSクラスをコンテナ要素に付与する
+				ok($errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていること');
+				$input.val('ok');
+				formCtrl.validate();
+				setTimeout(function() {
+					ok(!$errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていないこと');
+					start();
+				}, 100);
+			}, 100);
+		}, 0);
+	});
+
+
 	//=============================
 	// Definition
 	//=============================
