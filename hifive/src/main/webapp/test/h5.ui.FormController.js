@@ -1376,7 +1376,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('hideWhenEmpty:未定義、エラーが0件ならcontainerで指定された要素を表示すること', function() {
+	test('hideWhenEmpty:未定義、エラーが0件ならcontainerで指定された要素を非表示にすること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -1407,7 +1407,7 @@ $(function() {
 			$input.val('ok');
 			formCtrl.validate();
 
-			ok($('.errorContainer').is(':visible'), '表示になること');
+			ok($('.errorContainer').is(':hidden'), '非表示になること');
 			start();
 		}, 0);
 	});
@@ -2023,12 +2023,26 @@ $(function() {
 		}, 0);
 	});
 
-	test('h5-composition-has-error CSSクラスをコンテナ要素に付与すること', function() {
+	test('同期・非同期のバリデーションが混在する場合、validateの直後に同期のメッセージが、validateComplete発火時に非同期のメッセージが表示されること', function() {
 		var formCtrl = this.formController;
-		var errorMessage = 'バリデートに失敗しました';
+		var errorMessage = '同期バリデートに失敗しました';
+		var asyncErrorMessage = '非同期バリデートに失敗しました';
 		formCtrl.addRule({
 			a: {
 				required: true
+			},
+			b: {
+				customFunc: function (value) {
+					var dfd = h5.async.deferred();
+					setTimeout(function () {
+						dfd.reject({
+							valid: false,
+							b: value
+						});
+					}, 500);
+					return dfd.promise();
+				}
+
 			}
 		});
 		formCtrl.addOutput('composition');
@@ -2036,13 +2050,18 @@ $(function() {
 			output: {
 				composition: {
 					container: $('.errorContainer'),
-					hideWhenEmpty: true
+					updateOn: ['validate']
 				}
 			},
 			property: {
 				a: {
 					composition: {
 						message: errorMessage
+					}
+				},
+				b: {
+					composition: {
+						message: asyncErrorMessage
 					}
 				}
 			}
@@ -2053,21 +2072,18 @@ $(function() {
 			var $errorContainer = $('.errorContainer');
 			var $input = $('.inputA');
 
-			ok(!$errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていないこと');
-			formCtrl.validate();
-			setTimeout(function() {
-				// Compositionで、表示するエラーが1件以上ある場合にh5-composition-has-error CSSクラスをコンテナ要素に付与する
-				ok($errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていること');
-				$input.val('ok');
-				formCtrl.validate();
-				setTimeout(function() {
-					ok(!$errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていないこと');
+			$errorContainer.text('');
+			var result = formCtrl.validate();
+			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+
+			result.addEventListener('validateComplete', function(result) {
+				setTimeout(function(){
+					strictEqual($errorContainer.text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 					start();
-				}, 100);
-			}, 100);
+				}, 0)
+			})
 		}, 0);
 	});
-
 
 	//=============================
 	// Definition
