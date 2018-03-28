@@ -48,13 +48,19 @@
 					ruleDefault: {
 						size: {
 							//明示的に指定しない場合、ルールごとのデフォルトが適用される
-							isForceEnabledWhenEmpty: true
-						//message: 'sizeのデフォルトメッセージを上書きする'
+							//isForceEnabledWhenEmpty: true
+
+							//message: 'sizeのデフォルトメッセージを上書きする',
+
+							//validateOn: ['validate'],
+
+							//resolveOn: ['change']
+
 						}
 					},
 
 					//明示的にtrueを指定した場合のみtrue、それ以外または未指定の場合はfalse
-					isAllRulesEnabledWhenEmpty: true,
+					isAllRulesEnabledWhenEmpty: false,
 
 					customRule: {
 						validator1: {
@@ -67,13 +73,22 @@
 							},
 
 							//エラーメッセージ。必須。「{displayName}」と書くと、表示名に置き換わる。
-							message: '{displayName}はカスタムルール1に違反しています。',
+							message: function(param) {
+								return "test";
+							},
+							//'{displayName}はカスタムルール1に違反しています。',
 
 							//このバリデータを、値が空文字の場合でも実行するかどうか。デフォルト値：未指定。
 							isForceEnabledWhenEmpty: true,
 
-							//このバリデータを、どのタイミングで実行するかを指定する。"blur", "validate"が指定可能。
-							validateOn: ['validate']
+							//このバリデータを、どのタイミングで実行するかを指定する。
+							//未指定またはnullの場合、プラグインのupdateOnで存在するタイミング。
+							validateOn: ['validate'],
+
+							//未指定またはnullの場合はvalidateOnと同じタイミング。
+							//なお、明示的に指定した場合でも、validateOnのタイミングは必ず含まれる。
+							resolveOn: ['validate']
+
 						},
 						novalid: {
 							func: function(value) {
@@ -84,10 +99,26 @@
 						}
 					},
 
+					property: {
+						user: {
+//							message: function(param) {
+//								console.log(param);
+//							}
+						}
+					},
+
 					output: { // 各プラグイン毎の設定
 						balloon: { // キー名にプラグイン名
 							placement: 'right' // 設定プロパティと値を記述
 
+
+						},
+
+						style: {
+
+						},
+
+						asyncIndicator: {
 
 						},
 
@@ -96,7 +127,7 @@
 							wrapper: '<li></li>',
 
 							//どのタイミングの表示を更新するか。"validate"はvalidate()メソッド呼び出し時、"blur"はフォーカスが外れたとき。
-							updateOn: ['validate', 'blur'],
+							updateOn: ['blur'],
 
 							//項目に対するすべてのエラーを出力するかどうか。デフォルト値：true。
 							showAllErrors: true,
@@ -110,6 +141,8 @@
 
 				this.formController.addOutput('composition');
 				this.formController.addOutput('balloon');
+				//this.formController.addOutput('style');
+				//this.formController.addOutput('asyncIndicator');
 
 				var preValidationHookFunction = function(context) {
 					console.log(context);
@@ -124,6 +157,12 @@
 				var rules = {
 					textarea1: {
 						required: true
+					},
+
+					user: {
+						validator1: true,
+						required: true,
+//						size: 10
 					}
 				};
 				this.formController.addRule(rules);
@@ -163,6 +202,10 @@
 				var $msg = $('<span class="errorMsg"></span>');
 				$msg.text(reason.message);
 				$(element).after($msg);
+			},
+
+			'{rootElement} validate': function() {
+				console.log(this.formController.getLastValidationResult().invalidProperties.length);
 			}
 		});
 	});
@@ -199,8 +242,7 @@ form {
 	<form id="form1">
 		<p>FormControllerのバインド先(form1)</p>
 		<p>
-			<input class="form-controls" type="text" name="user" value="" placeholder="必須" data-h5-v-validator1 data-required
-				data-size="[1,3]" />
+			<input class="form-controls" type="text" name="user" value="" placeholder="必須" data-size="[1,3]" /><!--  -->
 		</p>
 		<p>
 			<input class="form-controls" type="text" name="mail" value="no-name" data-pattern=".+@.+" data-size="[1,3]" />
