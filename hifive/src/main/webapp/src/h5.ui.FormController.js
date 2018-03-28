@@ -710,6 +710,11 @@
 
 (function() {
 	/**
+	 * Compositionプラグインで、エラーがある場合にコンテナ要素に付与するCSSクラス名
+	 */
+	var CSS_H5_COMPOSITION_HAS_ERROR = 'h5-composition-has-error';
+
+	/**
 	 * validate時にエラーがあった時、エラーメッセージを表示するプラグイン
 	 * <p>
 	 * compositionプラグインには以下の設定項目があります。
@@ -883,17 +888,21 @@
 			}
 
 			//TODO 非同期バリデーションが更新されたらアップデートする必要がある
-			var shouldHide = !this._lastValidationResult || this._lastValidationResult.isAllValid;
+			var shouldHide = !this._lastValidationResult
+					|| this._lastValidationResult.invalidCount === 0;
 
 			//単純にdisplay属性をnone/空文字にする方法だと、
 			//style属性でなくCSSクラスで非表示に設定されている場合などに正しく制御できない。
 			//jQueryのshow/hideは、カスケーディングの状態や、要素の
 			//デフォルトスタイル(block,inline-block等)を考慮して制御しているので、
 			//ここではjQueryのメソッドを使用する。
+			var $container = $(this._container);
 			if (shouldHide) {
-				$(this._container).hide();
+				$container.hide();
+				$container.removeClass(CSS_H5_COMPOSITION_HAS_ERROR);
 			} else {
-				$(this._container).show();
+				$container.show();
+				$container.addClass(CSS_H5_COMPOSITION_HAS_ERROR);
 			}
 		},
 
