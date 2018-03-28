@@ -2023,47 +2023,6 @@ $(function() {
 		}, 0);
 	});
 
-	test('updateOn:同じタイミングで発生する[change,blur]の配列を設定する場合は更新が一度だけ起きること', function() {
-		var formCtrl = this.formController;
-		var errorMessage = 'バリデートに失敗しました';
-		var count = 0;
-		formCtrl.addRule({
-			a: {
-				max: 1
-			}
-		});
-		formCtrl.addOutput('composition');
-		formCtrl.setSetting({
-			output: {
-				composition: {
-					container: $('.errorContainer'),
-					updateOn: ['change', 'blur']
-				}
-			},
-			property: {
-				a: {
-					composition: {
-						message: function() {
-							count++;
-							return errorMessage;
-						}
-					}
-				}
-			}
-		});
-		
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-
-			$input.val('1234').change().blur();
-			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			strictEqual(count, 1, '一度だけメッセージ関数が呼び出されたこと');
-			start();
-		}, 0);
-	});
-
 	//=============================
 	// Definition
 	//=============================
