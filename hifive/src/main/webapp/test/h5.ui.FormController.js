@@ -1376,7 +1376,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('hideWhenEmpty:未定義、エラーが0件ならcontainerで指定された要素を非表示にすること', function() {
+	test('hideWhenEmpty:未定義、エラーが0件ならcontainerで指定された要素を表示すること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -1407,7 +1407,7 @@ $(function() {
 			$input.val('ok');
 			formCtrl.validate();
 
-			ok($('.errorContainer').is(':hidden'), '非表示になること');
+			ok($('.errorContainer').is(':visible'), '表示になること');
 			start();
 		}, 0);
 	});
