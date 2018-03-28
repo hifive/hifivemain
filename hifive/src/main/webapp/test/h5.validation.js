@@ -1140,8 +1140,6 @@ $(function() {
 			p1: {
 				assertNotNull: true,
 				min: 0,
-				max: [1.1, true],
-				digits: [1, 1]
 			},
 			p2: {
 				min: 0
@@ -1153,6 +1151,7 @@ $(function() {
 		validator.addRule({
 			p1: {
 				min: 10,
+				max: 20
 			},
 			p3: {
 				min: 0
@@ -1161,10 +1160,13 @@ $(function() {
 		});
 		strictEqual(validator.validate({
 			p1: 1
-		}).isValid, false, '既存のプロパティについてルールが上書かれていること');
+		}).isValid, false, '既存のプロパティについて同じバリデータが与えられた場合はルールが上書かれていること');
+		strictEqual(validator.validate({
+			p1: 30
+		}).isValid, false, '既存のプロパティについて別のバリデータが与えられた場合はルールに追記(マージ)すること');
 		strictEqual(validator.validate({
 			p1: null
-		}).isValid, true, '既存のプロパティについてルールが上書かれていること');
+		}).isValid, false, '既存のプロパティについて別のバリデータが与えられた場合はルールに追記(マージ)し、既存のバリデータは残ること');
 		strictEqual(validator.validate({
 			p2: -1
 		}).isValid, false, '上書かれていないプロパティは前のルールが適用されていること');
@@ -1173,7 +1175,7 @@ $(function() {
 		}).isValid, false, '新しく追加したプロパティのルールが適用されていること');
 		strictEqual(validator.validate({
 			p4: -1
-		}).isValid, true, 'nullで上書けること');
+		}).isValid, false, 'nullの場合は無視されること');
 	});
 
 	test('removeRuleでルールの削除', function() {
