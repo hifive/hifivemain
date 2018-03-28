@@ -4008,7 +4008,7 @@ $(function() {
 		var $inputA = $('.inputA');
 		// 全体バリデート時にあてられたクラスを除去し
 		// イベントが起きてもクラスが設定されないことを確認する
-		var $inputA = $('.inputA');
+		$inputA.removeClass(this.errorClassName);
 		$inputA.keyup();
 		var that = this;
 		gate({
