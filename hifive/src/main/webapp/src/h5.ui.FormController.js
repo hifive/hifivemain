@@ -807,11 +807,16 @@
 
 		/**
 		 * @private
-		 * @param element
-		 * @param name
+		 * @param element onValidateから呼ばれる場合はnull
+		 * @param name onValidateから呼ばれる場合はnull
 		 * @param validationResult
 		 */
 		_update: function(element, name, validationResult) {
+			if (this._setting.off === true) {
+				//offが指定されていたら何もしない
+				return;
+			}
+
 			var lastResult = validationResult;
 			if (this._showAllErrors) {
 				lastResult = this._formController.getLastValidationResult();
@@ -932,18 +937,7 @@
 				return;
 			}
 
-			var result = validationResult;
-			if (this._showAllErrors) {
-				result = this._formController.getLastValidationResult();
-			}
-
-			this._lastValidationResult = result;
-
-			this._messageOutputController.clearMessage();
-			this._messageOutputController.appendMessageByValidationResult(result, null,
-					this._showAllErrors);
-
-			this._updateVisible();
+			this._update(null, null, validationResult);
 		},
 
 		/**

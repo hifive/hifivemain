@@ -1136,7 +1136,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			formCtrl.validate('a');
@@ -1180,7 +1180,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			formCtrl.validate('a');
@@ -1224,7 +1224,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			formCtrl.validate('a');
@@ -1260,7 +1260,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $input = $('.inputA');
@@ -1296,7 +1296,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			formCtrl.validate();
@@ -1330,7 +1330,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $input = $('.inputA');
@@ -1366,7 +1366,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			formCtrl.validate();
@@ -1376,7 +1376,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('hideWhenEmpty:未定義、エラーが0件ならcontainerで指定された要素を非表示にすること', function() {
+	test('hideWhenEmpty:未定義、エラーが0件ならcontainerで指定された要素を表示すること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -1400,14 +1400,14 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $input = $('.inputA');
 			$input.val('ok');
 			formCtrl.validate();
 
-			ok($('.errorContainer').is(':hidden'), '非表示になること');
+			ok($('.errorContainer').is(':visible'), '表示になること');
 			start();
 		}, 0);
 	});
@@ -1436,7 +1436,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			formCtrl.validate();
@@ -1471,7 +1471,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $input = $('.inputA');
@@ -1513,7 +1513,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $input = $('.inputA');
@@ -1554,7 +1554,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
@@ -1564,7 +1564,7 @@ $(function() {
 			$errorContainer.text('');
 			$input.blur();
 			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	
+
 			// blur以外の場合
 			$errorContainer.text('');
 			formCtrl.validate('a');
@@ -1609,7 +1609,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
@@ -1619,7 +1619,7 @@ $(function() {
 			$errorContainer.text('');
 			formCtrl.validate('a');
 			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	
+
 			// validate以外の場合
 			$errorContainer.text('');
 			$input.blur();
@@ -1664,7 +1664,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
@@ -1674,7 +1674,7 @@ $(function() {
 			$errorContainer.text('');
 			$input.change();
 			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	
+
 			// change以外の場合
 			$errorContainer.text('');
 			$input.blur();
@@ -1719,7 +1719,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
@@ -1729,7 +1729,7 @@ $(function() {
 			$errorContainer.text('');
 			$input.focus();
 			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	
+
 			// focus以外の場合
 			$errorContainer.text('');
 			$input.blur();
@@ -1774,7 +1774,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
@@ -1784,7 +1784,7 @@ $(function() {
 			$errorContainer.text('');
 			$input.keyup();
 			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	
+
 			// keyup以外の場合
 			$errorContainer.text('');
 			$input.blur();
@@ -1829,7 +1829,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
@@ -1839,7 +1839,7 @@ $(function() {
 			$errorContainer.text('');
 			formCtrl.validate('a');
 			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	
+
 			// validate以外の場合
 			$errorContainer.text('');
 			$input.blur();
@@ -1884,12 +1884,12 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
 			var $input = $('.inputA');
-	
+
 			$errorContainer.text('');
 			$input.blur();
 			strictEqual($errorContainer.text(), '', 'バリデートエラーがないこと');
@@ -1937,7 +1937,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
@@ -1947,7 +1947,7 @@ $(function() {
 			$errorContainer.text('');
 			$input.blur();
 			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	
+
 			// blur以外の場合
 			$errorContainer.text('');
 			formCtrl.validate('a');
@@ -1992,7 +1992,7 @@ $(function() {
 				}
 			}
 		});
-		
+
 		stop();
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
@@ -2006,7 +2006,7 @@ $(function() {
 			$errorContainer.text('');
 			formCtrl.validate('a');
 			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	
+
 			// blur、validate以外の場合
 			$errorContainer.text('');
 			$input.change();
@@ -2022,6 +2022,52 @@ $(function() {
 			start();
 		}, 0);
 	});
+
+	test('h5-composition-has-error CSSクラスをコンテナ要素に付与すること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'バリデートに失敗しました';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		formCtrl.addOutput('composition');
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer'),
+					hideWhenEmpty: true
+				}
+			},
+			property: {
+				a: {
+					composition: {
+						message: errorMessage
+					}
+				}
+			}
+		});
+
+		stop();
+		setTimeout(function() {
+			var $errorContainer = $('.errorContainer');
+			var $input = $('.inputA');
+
+			ok(!$errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていないこと');
+			formCtrl.validate();
+			setTimeout(function() {
+				// Compositionで、表示するエラーが1件以上ある場合にh5-composition-has-error CSSクラスをコンテナ要素に付与する
+				ok($errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていること');
+				$input.val('ok');
+				formCtrl.validate();
+				setTimeout(function() {
+					ok(!$errorContainer.hasClass('h5-composition-has-error'), 'h5-composition-has-errorが付与されていないこと');
+					start();
+				}, 100);
+			}, 100);
+		}, 0);
+	});
+
 
 	//=============================
 	// Definition
@@ -6724,7 +6770,7 @@ $(function() {
 			if (validationContext.name === 'a') {
 				validationContext.skip();
 			}
-			
+
 			isCalled = true;
 		});
 
@@ -6774,7 +6820,7 @@ $(function() {
 					}
 				}
 			});
-	
+
 			setTimeout(function() {
 				$('.inputA').val('1234');
 				formCtrl.validate();
@@ -6807,7 +6853,7 @@ $(function() {
 					}
 				}
 			});
-	
+
 			setTimeout(function() {
 				$('.inputA').val('1234');
 				formCtrl.validate();
@@ -7510,7 +7556,7 @@ $(function() {
 			$input.keyup();
 			validationResult = formCtrl.getLastValidationResult();
 			strictEqual(validationResult.invalidCount, 0, 'バリデートエラーがないこと');
-	
+
 			$input.val('ng');
 			$input.keyup();
 			validationResult = formCtrl.getLastValidationResult();
@@ -7774,7 +7820,7 @@ $(function() {
 			formCtrl.validate('a');
 			validationResult = formCtrl.getLastValidationResult();
 			strictEqual(validationResult.invalidCount, 0, 'バリデートエラーがないこと');
-			
+
 			$input.val('ng');
 			$input.change();
 			validationResult = formCtrl.getLastValidationResult();
@@ -7794,7 +7840,7 @@ $(function() {
 			$input.focus();
 			validationResult = formCtrl.getLastValidationResult();
 			strictEqual(validationResult.invalidCount, 0, 'バリデートエラーがないこと');
-	
+
 			$input.val('ng');
 			$input.keyup();
 			validationResult = formCtrl.getLastValidationResult();
@@ -7919,7 +7965,7 @@ $(function() {
 			formCtrl.validate('a');
 			validationResult = formCtrl.getLastValidationResult();
 			strictEqual(validationResult.invalidCount, 0, 'バリデートエラーがないこと');
-			
+
 			$input.val('ng');
 			$input.blur();
 			validationResult = formCtrl.getLastValidationResult();
@@ -7939,7 +7985,7 @@ $(function() {
 			$input.focus();
 			validationResult = formCtrl.getLastValidationResult();
 			strictEqual(validationResult.invalidCount, 0, 'バリデートエラーがないこと');
-	
+
 			$input.val('ng');
 			$input.blur();
 			validationResult = formCtrl.getLastValidationResult();
@@ -8273,7 +8319,7 @@ $(function() {
 				setTimeout(function() {
 					// requiredなのに入力がないのでバリデートエラー発生
 					ok($compositionErrors.is(':visible'), 'compositionが表示されていること');
-	
+
 					$textarea.text('fuga').blur();
 					setTimeout(function() {
 						// requiredなので入力を入れるとバリデートエラーなし
