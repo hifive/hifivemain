@@ -8161,7 +8161,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('FormControllerのパラメータ設定test', {
+	module('エラー表示・非表示の切り替え', {
 		setup: function() {
 			stop();
 			var html = '';
