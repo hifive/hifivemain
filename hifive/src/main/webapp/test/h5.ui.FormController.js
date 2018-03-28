@@ -660,12 +660,12 @@ $(function() {
 		$('.inputA').keyup();
 		gate({
 			func: function() {
-				return $('.inputA > .h5-indicator').length === 1;
+				return $('.inputA > .h5-indicator').length === 0;
 			},
-			failMsg: 'インジケータが表示されませんでした',
+			failMsg: 'インジケータが表示されました',
 			maxWait: 3000
 		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
+			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
 		}).always(start);
 	});
 
@@ -745,17 +745,17 @@ $(function() {
 		strictEqual($('form> .inputA >.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
 	});
 
-	asyncTest('focus時に表示されること', function() {
+	asyncTest('focus時に表示されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				return $('.inputA > .h5-indicator').length === 1;
+				return $('.inputA > .h5-indicator').length === 0;
 			},
-			failMsg: 'インジケータが表示されませんでした',
+			failMsg: 'インジケータが表示されました',
 			maxWait: 3000
 		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
+			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
 		}).always(start);
 	});
 
@@ -778,26 +778,26 @@ $(function() {
 		$('.inputA').keyup();
 		gate({
 			func: function() {
+				return $('.inputA > .h5-indicator').length === 0;
+			},
+			failMsg: 'インジケータが表示されました',
+			maxWait: 3000
+		}).done(function() {
+			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
+		}).always(start);
+	});
+
+	asyncTest('change時に表示されること', function() {
+		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		$('.inputA').change();
+		gate({
+			func: function() {
 				return $('.inputA > .h5-indicator').length === 1;
 			},
 			failMsg: 'インジケータが表示されませんでした',
 			maxWait: 3000
 		}).done(function() {
 			strictEqual($('.inputA>.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
-		}).always(start);
-	});
-
-	asyncTest('change時に表示されないこと', function() {
-		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
-		$('.inputA').change();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されませんでした',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
 		}).always(start);
 	});
 
@@ -4007,8 +4007,11 @@ $(function() {
 		ok($('.inputA').hasClass(this.errorClassName), 'クラスが設定されること');
 	});
 
-	asyncTest('focus時に設定されること', function() {
+	asyncTest('focus時に設定されないこと', function() {
 		var $inputA = $('.inputA');
+		// 全体バリデート時にあてられたクラスを除去し
+		// イベントが起きてもクラスが設定されないことを確認する
+		$inputA.removeClass(this.errorClassName);
 		$inputA.focus();
 		var that = this;
 		gate({
@@ -4016,9 +4019,10 @@ $(function() {
 				return $inputA.hasClass(that.errorClassName);
 			},
 			maxWait: 1000,
-			failMsg: 'クラスが設定されない'
 		}).done(function() {
-			ok($inputA.hasClass(that.errorClassName), 'クラスが設定されること');
+			ok(false, 'クラスが設定される');
+		}).fail(function() {
+			ok(!$inputA.hasClass(that.errorClassName), 'クラスが設定されないこと');
 		}).always(start);
 	});
 
@@ -4041,27 +4045,12 @@ $(function() {
 		}).always(start);
 	});
 
-	asyncTest('keyup時に設定されること', function() {
-		var $inputA = $('.inputA');
-		$inputA.keyup();
-		var that = this;
-		gate({
-			func: function() {
-				return $inputA.hasClass(that.errorClassName);
-			},
-			maxWait: 1000,
-			failMsg: 'クラスが設定されない'
-		}).done(function() {
-			ok($inputA.hasClass(that.errorClassName), 'クラスが設定されること');
-		}).always(start);
-	});
-
-	asyncTest('change時に設定されないこと', function() {
+	asyncTest('keyup時に設定されないこと', function() {
 		var $inputA = $('.inputA');
 		// 全体バリデート時にあてられたクラスを除去し
 		// イベントが起きてもクラスが設定されないことを確認する
-		$inputA.removeClass(this.errorClassName);
-		$inputA.change();
+		var $inputA = $('.inputA');
+		$inputA.keyup();
 		var that = this;
 		gate({
 			func: function() {
@@ -4072,6 +4061,21 @@ $(function() {
 			ok(false, 'クラスが設定される');
 		}).fail(function() {
 			ok(!$inputA.hasClass(that.errorClassName), 'クラスが設定されないこと');
+		}).always(start);
+	});
+
+	asyncTest('change時に設定されること', function() {
+		var $inputA = $('.inputA');
+		$inputA.change();
+		var that = this;
+		gate({
+			func: function() {
+				return $inputA.hasClass(that.errorClassName);
+			},
+			maxWait: 1000,
+			failMsg: 'クラスが設定されない'
+		}).done(function() {
+			ok($inputA.hasClass(that.errorClassName), 'クラスが設定されること');
 		}).always(start);
 	});
 
@@ -4143,7 +4147,7 @@ $(function() {
 		ok($('.inputA').hasClass(this.errorClassName), 'クラスが設定されること');
 	});
 
-	asyncTest('focus時に設定されること', function() {
+	asyncTest('focus時に設定されないこと', function() {
 		var $inputA = $('.inputA');
 		$inputA.focus();
 		var that = this;
@@ -4151,10 +4155,11 @@ $(function() {
 			func: function() {
 				return $inputA.hasClass(that.errorClassName);
 			},
-			maxWait: 1000,
-			failMsg: 'クラスが設定されない'
+			maxWait: 1000
 		}).done(function() {
-			ok($inputA.hasClass(that.errorClassName), 'クラスが設定されること');
+			ok(false, 'クラスが設定される');
+		}).fail(function() {
+			ok(!$inputA.hasClass(that.errorClassName), 'クラスが設定されないこと');
 		}).always(start);
 	});
 
@@ -4174,24 +4179,9 @@ $(function() {
 		}).always(start);
 	});
 
-	asyncTest('keyup時に設定されること', function() {
+	asyncTest('keyup時に設定されないこと', function() {
 		var $inputA = $('.inputA');
 		$inputA.keyup();
-		var that = this;
-		gate({
-			func: function() {
-				return $inputA.hasClass(that.errorClassName);
-			},
-			maxWait: 1000,
-			failMsg: 'クラスが設定されない'
-		}).done(function() {
-			ok($inputA.hasClass(that.errorClassName), 'クラスが設定されること');
-		}).always(start);
-	});
-
-	asyncTest('change時に設定されないこと', function() {
-		var $inputA = $('.inputA');
-		$inputA.change();
 		var that = this;
 		gate({
 			func: function() {
@@ -4202,6 +4192,21 @@ $(function() {
 			ok(false, 'クラスが設定される');
 		}).fail(function() {
 			ok(!$inputA.hasClass(that.errorClassName), 'クラスが設定されないこと');
+		}).always(start);
+	});
+
+	asyncTest('cahnge時に設定されること', function() {
+		var $inputA = $('.inputA');
+		$inputA.change();
+		var that = this;
+		gate({
+			func: function() {
+				return $inputA.hasClass(that.errorClassName);
+			},
+			maxWait: 1000,
+			failMsg: 'クラスが設定されない'
+		}).done(function() {
+			ok($inputA.hasClass(that.errorClassName), 'クラスが設定されること');
 		}).always(start);
 	});
 
@@ -5981,7 +5986,7 @@ $(function() {
 			a: ''
 		});
 		this.messageOutputCtrl.appendMessageByValidationResult(result, 'a');
-		strictEqual(this.$container.text(), 'aは必須項目です', 'displayName は必須項目です');
+		strictEqual(this.$container.text(), 'aは必須項目です。', 'displayName は必須項目です');
 	});
 
 	test('min inclusive=true', function() {
@@ -6190,7 +6195,7 @@ $(function() {
 			a: false
 		});
 		this.messageOutputCtrl.appendMessageByValidationResult(result, 'a');
-		var expectMsg = 'aは条件を満たしません';
+		var expectMsg = 'aは条件を満たしません。';
 		strictEqual(this.$container.text(), expectMsg, 'displayName は条件を満たしません');
 	});
 
