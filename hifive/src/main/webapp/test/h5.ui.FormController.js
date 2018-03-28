@@ -7990,7 +7990,7 @@ $(function() {
 		setTimeout(function() {
 			var $errorContainer = $('.errorContainer');
 			var $input = $('.inputA');
-			$input.val('2').foucs().blur();
+			$input.val('2').focus().blur();
 			setTimeout(function() {
 				strictEqual($errorContainer.text(), 'test', 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 				start();
