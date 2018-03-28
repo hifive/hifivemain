@@ -4386,15 +4386,19 @@ $(function() {
 	test('バリデーション対象のプロパティに対応する表示名 displayName を設定できること', function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
+			property: {
+				a: {
+					displayName: 'composition displayName'
+				}
+			},
 			output: {
 				composition: {
-					container: '.testContainer',
-					displayName: 'composition displayName'
+					container: '.testContainer'
 				}
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.testContainer').text(), 'composition displayNameは必須項目です',
+		strictEqual($('.testContainer').text(), 'composition displayNameは必須項目です。',
 				'バリデーション対象のプロパティに対応する表示名 displayName を設定できること');
 	});
 
@@ -4402,10 +4406,14 @@ $(function() {
 		var errorMessage = 'errorMessage';
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
+			property: {
+				a: {
+					message: errorMessage
+				}
+			},
 			output: {
 				composition: {
-					container: '.testContainer',
-					message: errorMessage
+					container: '.testContainer'
 				}
 			}
 		});
@@ -4418,12 +4426,16 @@ $(function() {
 		var errorMessage = 'errorMessage';
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
-			output: {
-				composition: {
-					container: '.testContainer',
+			property: {
+				a: {
 					message: function(param) {
 						return errorMessage;
 					}
+				}
+			},
+			output: {
+				composition: {
+					container: '.testContainer'
 				}
 			}
 		});
