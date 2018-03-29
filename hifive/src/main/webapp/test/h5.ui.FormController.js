@@ -2928,7 +2928,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('balloonプラグイン 全体バリデートを行った場合', {
+	module('balloonプラグイン updateOnを指定せず全体バリデートを行った場合 ', {
 		setup: function() {
 			stop();
 			this.errorMessage = 'errorMessage';
@@ -3059,7 +3059,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('balloonプラグイン 全体バリデートを行っていない場合', {
+	module('balloonプラグイン updateOnを指定せず全体バリデートを行っていない場合', {
 		setup: function() {
 			stop();
 			this.errorMessage = 'errorMessage';
@@ -3173,7 +3173,7 @@ $(function() {
 	//=============================
 	// Definition
 	//=============================
-	module('balloonプラグイン バルーンを表示する位置を指定', {
+	module('balloonプラグイン updateOnを指定せずバルーンを表示する位置を指定', {
 		setup: function() {
 			stop();
 			this.errorMessage = 'errorMessage';
