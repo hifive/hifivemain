@@ -2232,7 +2232,7 @@ $(function() {
 			stop();
 			var that = this;
 			this.errorMessage = 'errorMessage';
-			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
+			var html = '<form class="testForm"><input class="inputA" name="a"><input class="inputB" name="b"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
 			var formCtrl = this.formController = h5.core.controller('.testForm',
@@ -2496,6 +2496,65 @@ $(function() {
 		// FIXME #530 setSetting()で各プロパティ毎のプラグイン設定でメッセージを指定しない場合、
 		// プラグイン設定のmessageではなくバリデーションルールのデフォルトメッセージが表示される。
 		strictEqual($('.errorMessageWrapper').text(), '', 'バリデート結果表示をリセットできること');
+	});
+
+	test('同期・非同期のバリデーションが混在する場合、validateの直後に同期のメッセージが、validateComplete発火時に非同期のメッセージが表示されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = '同期バリデートに失敗しました';
+		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		formCtrl.addRule({
+			a: {
+				required: true
+			},
+			b: {
+				customFunc: function (value) {
+					var dfd = h5.async.deferred();
+					setTimeout(function () {
+						dfd.reject({
+							valid: false,
+							b: value
+						});
+					}, 500);
+					return dfd.promise();
+				}
+			}
+		});
+		formCtrl.addOutput('message');
+		formCtrl.setSetting({
+			output: {
+				message: {
+					updateOn: ['validate']
+				}
+			},
+			property: {
+				a: {
+					message: {
+						message: errorMessage
+					}
+				},
+				b: {
+					message: {
+						message: asyncErrorMessage
+					}
+				}
+			}
+		});
+
+		stop();
+		setTimeout(function() {
+			var $inputA = $('.inputA');
+
+			var result = formCtrl.validate();
+			strictEqual($inputA.next().text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+
+			result.addEventListener('validateComplete', function(result) {
+				setTimeout(function(){
+					$inputB = $('.inputB');
+					strictEqual($inputB.next().text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+					start();
+				}, 0);
+			});
+		}, 0);
 	});
 
 	//=============================
@@ -2809,7 +2868,7 @@ $(function() {
 			stop();
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><div class="testBalloonContainer">';
-			html += '<input class="inputA" name="a"></div></form>';
+			html += '<input class="inputA" name="a"><input class="inputB" name="b"></div></form>';
 			$('body').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
@@ -2923,6 +2982,70 @@ $(function() {
 			// TODO 要再考。Balloonプラグインのバリデート結果のリセットはどういう意味を考える
 			strictEqual($('.validation-balloon').length, 0, 'バリデート結果表示をリセットできること');
 		}).always(start);
+	});
+
+	test('同期・非同期のバリデーションが混在する場合、focusの直後に同期のメッセージが、validateComplete発火時に非同期のメッセージが表示されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = '同期バリデートに失敗しました';
+		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		formCtrl.addRule({
+			a: {
+				required: true
+			},
+			b: {
+				customFunc: function (value) {
+					var dfd = h5.async.deferred();
+					setTimeout(function () {
+						dfd.reject({
+							valid: false,
+							b: value
+						});
+					}, 500);
+					return dfd.promise();
+				}
+			}
+		});
+		formCtrl.addOutput('balloon');
+		formCtrl.setSetting({
+			output: {
+				balloon: {
+					placement: 'right',
+					updateOn: ['focus']
+				}
+			},
+			property: {
+				a: {
+					balloon: {
+						message: errorMessage
+					}
+				},
+				b: {
+					balloon: {
+						message: asyncErrorMessage
+					}
+				}
+			}
+		});
+
+		stop();
+		setTimeout(function() {
+			var $inputA = $('.inputA');
+
+			// validateだとballoonを表示しない
+			var result = formCtrl.validate();
+			$inputA.focus();
+			// 待機しないとballoonが表示されない
+			setTimeout(function() {
+				strictEqual($('.validation-balloon').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+
+				result.addEventListener('validateComplete', function(result) {
+					setTimeout(function(){
+						strictEqual($('.validation-balloon').text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+						start();
+					}, 0);
+				});
+			}, 100);
+		}, 0);
 	});
 
 	//=============================
@@ -3330,7 +3453,7 @@ $(function() {
 				that.bsCss = bsCss;
 				that.bsJs = bsJs;
 				var html = '<form class="testForm"><div class="testBalloonContainer">';
-				html += '<input class="inputA" name="a"></div></form>';
+				html += '<input class="inputA" name="a"><input class="inputB" name="b"></div></form>';
 				$('body').append(html);
 				that.formController = h5.core.controller('.testForm', h5.ui.FormController);
 				that.formController.readyPromise.done(function() {
@@ -3454,6 +3577,70 @@ $(function() {
 			// TODO 要再考。balloonプラグインのバリデート結果のリセットはどういう意味を考える
 			strictEqual($('.tooltip').length, 0, 'バリデート結果表示をリセットできること');
 		}).always(start);
+	});
+
+	test('同期・非同期のバリデーションが混在する場合、focusの直後に同期のメッセージが、validateComplete発火時に非同期のメッセージが表示されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = '同期バリデートに失敗しました';
+		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		formCtrl.addRule({
+			a: {
+				required: true
+			},
+			b: {
+				customFunc: function (value) {
+					var dfd = h5.async.deferred();
+					setTimeout(function () {
+						dfd.reject({
+							valid: false,
+							b: value
+						});
+					}, 500);
+					return dfd.promise();
+				}
+			}
+		});
+		formCtrl.addOutput('bsBalloon');
+		formCtrl.setSetting({
+			output: {
+				bsBalloon: {
+					placement: 'right',
+					updateOn: ['focus']
+				}
+			},
+			property: {
+				a: {
+					bsBalloon: {
+						message: errorMessage
+					}
+				},
+				b: {
+					bsBalloon: {
+						message: asyncErrorMessage
+					}
+				}
+			}
+		});
+
+		stop();
+		setTimeout(function() {
+			var $inputA = $('.inputA');
+
+			// validateだとballoonを表示しない
+			var result = formCtrl.validate();
+			$inputA.focus();
+			// 待機しないとballoonが表示されない
+			setTimeout(function() {
+				strictEqual($('.tooltip>.tooltip-inner').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+
+				result.addEventListener('validateComplete', function(result) {
+					setTimeout(function(){
+						strictEqual($('.tooltip>.tooltip-inner').text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+						start();
+					}, 0);
+				});
+			}, 100);
+		}, 0);
 	});
 
 	//=============================
@@ -3842,7 +4029,7 @@ $(function() {
 			stop();
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><div class="testBalloonContainer">';
-			html += '<input class="inputA" name="a"></div></form>';
+			html += '<input class="inputA" name="a"><input class="inputB" name="b"></div></form>';
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
@@ -3976,6 +4163,66 @@ $(function() {
 			ok(!$inputC.hasClass(validatingClassName), '適用したクラスがリセットされていること');
 			start();
 		});
+	});
+
+	test('同期・非同期のバリデーションが混在する場合、validateの直後に同期のメッセージが、validateComplete発火時に非同期のメッセージが表示されること', function() {
+		var formCtrl = this.formController;
+		var errorClassName = 'error';
+		var asyncErrorClassName = 'asyncError';
+		formCtrl.addRule({
+			a: {
+				required: true
+			},
+			b: {
+				customFunc: function (value) {
+					var dfd = h5.async.deferred();
+					setTimeout(function () {
+						dfd.reject({
+							valid: false,
+							b: value
+						});
+					}, 500);
+					return dfd.promise();
+				}
+			}
+		});
+		formCtrl.addOutput('style');
+		formCtrl.setSetting({
+			output: {
+				style: {
+					container: $('.errorContainer'),
+					updateOn: ['validate']
+				}
+			},
+			property: {
+				a: {
+					style: {
+						errorClassName: errorClassName
+					}
+				},
+				b: {
+					style: {
+						errorClassName: asyncErrorClassName
+					}
+				}
+			}
+		});
+
+		stop();
+		setTimeout(function() {
+			var $inputA = $('.inputA');
+
+			var result = formCtrl.validate();
+			ok($inputA.hasClass(errorClassName), 'バリデートエラーが有った場合にCSSクラスが追加されること');
+
+			result.addEventListener('validateComplete', function(result) {
+				setTimeout(function(){
+					var $inputB = $('.inputB');
+					ok($inputB.hasClass(asyncErrorClassName), 'バリデートエラーが有った場合にCSSクラスが追加されること');
+					start();
+				}, 0);
+			});
+		}, 0);
 	});
 
 	//=============================
