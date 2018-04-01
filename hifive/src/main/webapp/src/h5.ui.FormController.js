@@ -892,7 +892,6 @@
 				return;
 			}
 
-			//TODO 非同期バリデーションが更新されたらアップデートする必要がある
 			var shouldHide = !this._lastValidationResult
 					|| this._lastValidationResult.invalidCount === 0;
 
@@ -937,6 +936,16 @@
 				return;
 			}
 
+			this._update(null, null, validationResult);
+		},
+
+		/**
+		 * @private
+		 * @param element
+		 * @param name
+		 * @param validationResult
+		 */
+		_onAsyncValidate: function(element, name, validationResult) {
 			this._update(null, null, validationResult);
 		},
 
@@ -1493,9 +1502,20 @@
 	 */
 	var controller = {
 		__name: 'h5.ui.validation.Message',
+
+		/**
+		 * @private
+		 */
 		_messageElementMap: {},
+
+		/**
+		 * @private
+		 */
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 
+		/**
+		 * @private
+		 */
 		_updateOn: null,
 
 		/**
@@ -1526,9 +1546,13 @@
 		 * @param {ValidationResult} result
 		 */
 		_onValidate: function(result) {
-			var validProperties = result.validProperties;
-			for (var i = 0, l = validProperties.length; i < l; i++) {
-				var name = validProperties[i];
+			if (!this._shouldUpdateOn('validate')) {
+				return;
+			}
+
+			var properties = result.properties;
+			for (var i = 0, l = properties.length; i < l; i++) {
+				var name = properties[i];
 				this._setMessage(this.parentController._getElementByName(name), name, result,
 						'validate');
 			}
@@ -1547,6 +1571,10 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onFocus: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('focus')) {
+				return;
+			}
+
 			this._setMessage(element, name, validationResult, 'focus');
 		},
 
@@ -1563,6 +1591,10 @@
 		 * @param {ValidationResult} validationResult
 		 */
 		_onBlur: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('blur')) {
+				return;
+			}
+
 			this._setMessage(element, name, validationResult, 'blur');
 		},
 
@@ -1573,6 +1605,10 @@
 		 * @param validationResult
 		 */
 		_onChange: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('change')) {
+				return;
+			}
+
 			this._setMessage(element, name, validationResult, 'change');
 		},
 
@@ -1583,6 +1619,10 @@
 		 * @param validationResult
 		 */
 		_onKeyup: function(element, name, validationResult) {
+			if (!this._shouldUpdateOn('keyup')) {
+				return;
+			}
+
 			this._setMessage(element, name, validationResult, 'keyup');
 		},
 
@@ -1639,6 +1679,11 @@
 			// 既存のエラーメッセージを削除
 			this._removeMessage(name);
 
+			if ($.inArray(name, validationResult.validProperties) !== -1) {
+				//このプロパティが今回validになった場合、エラー出力しないのでここで終了
+				return;
+			}
+
 			var appendMessage = propSetting.appendMessage;
 			var replaceElement = propSetting.replaceElement;
 			var target = isFunction(replaceElement) ? replaceElement(element)
@@ -1647,7 +1692,7 @@
 			var $errorMsg = this._messageElementMap[name];
 			if (!$errorMsg) {
 				// TODO タグやクラスを設定できるようにする
-				$errorMsg = $('<span class="message">');
+				$errorMsg = $('<span class="message"></span>');
 				this._messageElementMap[name] = $errorMsg;
 			}
 			$errorMsg.html(this._messageOutputController.getMessageByValidationResult(
@@ -1708,7 +1753,16 @@
 		 */
 		_setDefaultMessage: function(validatorName, message) {
 			this._messageOutputController._setDefaultMessage(validatorName, message);
-		}
+		},
+
+		/**
+		 * @private
+		 * @param timing
+		 * @returns {Boolean}
+		 */
+		_shouldUpdateOn: function(timing) {
+			return $.inArray(timing, this._updateOn) !== -1;
+		},
 	};
 	h5.core.expose(controller);
 })();
@@ -1944,6 +1998,15 @@
 })();
 
 (function() {
+
+	function pushIfNotExist(value, array) {
+		if ($.inArray(value, array) === -1) {
+			array.push(value);
+			return true;
+		}
+		return false;
+	}
+
 	// ログメッセージ
 	var FW_LOG_NOT_DEFINED_PLUGIN_NAME = 'プラグイン"{0}"は存在しません';
 	var FW_LOG_ALREADY_ADDED = 'プラグイン"{0}"は登録済みです。';
@@ -2442,7 +2505,32 @@
 			this._addRuleCreator(DATA_RULE_PAST, defaultRuleCreators.pastRuleCreator);
 			this._addRuleCreator(DATA_RULE_PATTERN, defaultRuleCreators.patternRuleCreator);
 			this._addRuleCreator(DATA_RULE_SIZE, defaultRuleCreators.sizeRuleCreator);
+
+			var that = this;
+
+			/**
+			 * @private
+			 * @param event
+			 */
+			this._asyncValidateResultListenerWrapper = function(event) {
+				switch (event.type) {
+				case 'validate':
+					that._asyncValidateListener(event);
+					break;
+				case 'abort':
+					that._asyncAbortListener(event);
+					break;
+				case 'validateComplete':
+					that._asyncValidateCompleteListener(event);
+					break;
+				}
+			};
 		},
+
+		/**
+		 * @private
+		 */
+		_asyncValidateResultListenerWrapper: null,
 
 		/**
 		 * @memberOf h5.ui.FormController
@@ -3147,14 +3235,20 @@
 			}
 
 			if (result.isAsync) {
+				//一番最後に行われたバリデーション結果のみを使用する。
+				//waiting-mapに、このプロパティに対して実行した最新のValidationResultを保持しておき、
+				//validateイベント時にそのValidationResultとこのマップに保存したResultが一致するかどうかをチェックして
+				//反映させるかどうかを決定する。マップに保持したものととevent.targetのインスタンスが一致しないということは
+				//そのtargetは古いバリデーションなので、画面に反映させない。
 				var properties = result.validatingProperties;
 				for (var i = 0, l = properties.length; i < l; i++) {
 					var p = properties[i];
 					this._waitingValidationResultMap[p] = result;
 				}
-				result.addEventListener('validate', this.own(function(ev) {
-					delete this._waitingValidationResultMap[ev.name];
-				}));
+				result.addEventListener('validate', this._asyncValidateResultListenerWrapper);
+				result.addEventListener('validateComplete',
+						this._asyncValidateResultListenerWrapper);
+				result.addEventListener('abort', this._asyncValidateResultListenerWrapper);
 			}
 
 			return result;
@@ -3162,6 +3256,114 @@
 
 		getLastValidationResult: function() {
 			return this._lastResult;
+		},
+
+		/**
+		 * @private
+		 * @param event
+		 */
+		_asyncValidateListener: function(event) {
+			var result = event.target;
+			var name = event.name;
+
+			if (this._waitingValidationResultMap[name] !== result) {
+				//このnameのプロパティについての最新のバリデーション結果以外の結果の場合は反映させない
+				return;
+			}
+
+			this._updateByAsyncResult(name, result, event.violation);
+
+			this._callPluginForAsyncValidation(name, result);
+
+			delete this._waitingValidationResultMap[name];
+		},
+
+		/**
+		 * @private
+		 * @param name
+		 * @param validationResult
+		 * @param violation
+		 */
+		_updateByAsyncResult: function(name, validationResult, violation) {
+			var lastResult = this._lastResult;
+
+			if (!violation) {
+				//violationがnull === この非同期ルールの結果はValidだった
+				pushIfNotExist(name, lastResult.validProperties);
+				lastResult.validCount++;
+			} else {
+				lastResult.isValid = false;
+				var isAddedToInvalid = pushIfNotExist(name, lastResult.invalidProperties);
+				if (isAddedToInvalid) {
+					lastResult.invalidCount++;
+				}
+
+				if (!lastResult.invalidReason[name]) {
+					lastResult.invalidReason[name] = {
+						name: name,
+						value: ev.value,
+						violation: []
+					};
+				}
+
+				for (var i = 0, len = lastResult.invalidReason[name].violation.length; i < len; i++) {
+					var lastViolation = lastResult.invalidReason[name].violation[i];
+					if (violation.ruleName === lastViolation.ruleName) {
+						//すでにこのルールのエラーが出力されている場合、新しいViolationで置換する
+						lastResult.invalidReason[name].violation[i] = violation;
+						return;
+					}
+				}
+
+				//今回新たにエラー出力する
+				lastResult.invalidReason[name].violation.push(violation);
+				lastResult.violationCount++;
+			}
+
+			lastResult.validatingProperties.splice(
+					$.inArray(name, lastResult.validatingProperties), 1);
+
+			if (!lastResult.isValid || !lastResult.validatingProperties.length) {
+				lastResult.isAllValid = lastResult.isValid;
+			}
+		},
+
+		/**
+		 * @private
+		 * @param event
+		 */
+		_asyncAbortListener: function(event) {
+			var abortedValidationResult = event.target;
+
+			for ( var propName in this._waitingValidationResultMap) {
+				var waitingResult = this._waitingValidationResultMap[propName];
+				if (waitingResult === abortedValidationResult) {
+					delete this._waitingValidationResultMap[propName];
+				}
+			}
+
+			this._removeAllValidationResultListenerWrapper(abortedValidationResult);
+		},
+
+		/**
+		 * @private
+		 * @param event
+		 */
+		_asyncValidateCompleteListener: function(event) {
+			var result = event.target;
+			this._removeAllValidationResultListenerWrapper(result);
+		},
+
+		/**
+		 * @private
+		 * @param validationResult
+		 */
+		_removeAllValidationResultListenerWrapper: function(validationResult) {
+			validationResult.removeEventListener('validate',
+					this._asyncValidateResultListenerWrapper);
+			validationResult.removeEventListener('validateComplete',
+					this._asyncValidateResultListenerWrapper);
+			validationResult.removeEventListener('abort', this._asyncValidateResultListenerWrapper);
 		},
 
 		/**
@@ -3245,6 +3447,23 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		_callPluginElementEvent: function(eventType, element, name, validationResult) {
+			var plugins = this._plugins;
+			for ( var pluginName in plugins) {
+				var plugin = plugins[pluginName];
+				if (plugin[eventType]) {
+					plugin[eventType](element, name, validationResult);
+				}
+			}
+		},
+
+		/**
+		 * @private
+		 */
+		_callPluginForAsyncValidation: function(name, validationResult) {
+			var eventType = '_onAsyncValidate';
+
+			var element = this._getElementByName(name);
+
 			var plugins = this._plugins;
 			for ( var pluginName in plugins) {
 				var plugin = plugins[pluginName];

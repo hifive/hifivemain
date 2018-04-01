@@ -1666,7 +1666,8 @@
 								name: _prop,
 								isValid: true,
 								// validate対象のオブジェクトに指定された値
-								value: obj[_prop]
+								value: obj[_prop],
+								violation: null
 							});
 							checkValidateComplete(validationResult);
 						};
