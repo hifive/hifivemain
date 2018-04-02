@@ -2846,7 +2846,6 @@
 			});
 
 			// セッティングに記述されているがinput要素の集約で集められないプロパティを追加
-			var otherProperties = [];
 			for ( var p in propertySetting) {
 				if ((!names || $.inArray(p, names) !== -1) && $.inArray(p, elementNames) === -1) {
 					var valueFunc = propertySetting[p] && propertySetting[p].valueFunc;
