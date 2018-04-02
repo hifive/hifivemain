@@ -473,10 +473,6 @@
 						 * @private
 						 */
 						_merge: function(result) {
-							//			this.isAllValid = result.isAllValid;
-							//			this.isValid = result.isValid;
-							//			this.isAsync = result.isAsync;
-
 							var newInvalidProperties = [];
 							var newValidProperties = [];
 
@@ -752,7 +748,8 @@
 		CHANGE: 'change',
 		BLUR: 'blur',
 		FOCUS: 'focus',
-		KEY_UP: 'keyup'
+		KEY_UP: 'keyup',
+		ASYNC_RESULT: 'asyncResult'
 	};
 
 	/**

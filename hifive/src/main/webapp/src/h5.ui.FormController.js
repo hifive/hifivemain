@@ -335,6 +335,12 @@
 			return this._getAllMessagesForName(invalidReason, name);
 		},
 
+		/**
+		 * @private
+		 * @param invalidReason
+		 * @param name
+		 * @returns {Array}
+		 */
 		_getAllMessagesForName: function(invalidReason, name) {
 			if (!invalidReason) {
 				return [];
@@ -370,7 +376,8 @@
 		 * @param {boolean} [showAllErrors] すべてのエラーを出力するかどうか。省略時はfalse（先頭のエラーのみ出力）。
 		 */
 		appendMessageByValidationResult: function(validationResult, names, showAllErrors) {
-			var invalidProperties = validationResult.invalidProperties;
+			//違反があったプロパティのプロパティ名辞書順でソートし、出力順を安定させる
+			var invalidProperties = validationResult.invalidProperties.sort();
 			names = isString(names) ? [names] : names;
 			for (var i = 0, l = invalidProperties.length; i < l; i++) {
 				var name = invalidProperties[i];
@@ -388,29 +395,16 @@
 					this.appendMessage(message);
 				}
 			}
-			if (validationResult.isAllValid === null) {
-				// 非同期でまだ結果が返ってきていないものがある場合
-				validationResult.addEventListener('validate', this.own(function(ev) {
-					if (!ev.isValid && !names || $.inArray(ev.name, names) !== -1) {
-						var invalidReason = ev.target.invalidReason[ev.name];
+		},
 
-						if (showAllErrors === true) {
-							var allMessagesAsync = this._getAllMessagesForName(invalidReason,
-									ev.name);
-							for (var idx2 = 0, len2 = allMessages.length; idx2 < len2; idx2++) {
-								this.appendMessage(allMessagesAsync[idx2]);
-							}
-						} else {
-							var message = h5internal.validation.createValidateErrorMessage(ev.name,
-									invalidReason, this._setting[ev.name], null,
-									this._validatorDefaultMessageMap);
-							this.appendMessage(message);
-						}
-
-					}
-				}));
-				return;
-			}
+		/**
+		 * @private
+		 * @param name
+		 * @returns
+		 */
+		_getDisplayName: function(name) {
+			var displayName = this._setting[name].displayName || null;
+			return displayName;
 		}
 	};
 	h5.core.expose(controller);
@@ -2988,10 +2982,13 @@
 			// バリデート実行
 			var result = this._validate(names, 'validate');
 
-			this.trigger('validationUpdate');
-
 			// _onValidateの呼び出し
 			this._callPluginValidateEvent(PLUGIN_EVENT_VALIDATE, result);
+
+			//出力プラグインの更新が終わってからイベントを上げる
+			//例えばCompositionのCSSクラスの付与などが終わった状態にするため
+			this._fireValidationUpdateEvent('validate');
+
 			return result;
 		},
 
@@ -3270,11 +3267,13 @@
 				return;
 			}
 
-			this._updateByAsyncResult(name, result, event.violation);
+			this._updateByAsyncResult(event);
 
 			this._callPluginForAsyncValidation(name, result);
 
 			delete this._waitingValidationResultMap[name];
+
+			this._fireValidationUpdateEvent('asyncResult');
 		},
 
 		/**
@@ -3283,7 +3282,9 @@
 		 * @param validationResult
 		 * @param violation
 		 */
-		_updateByAsyncResult: function(name, validationResult, violation) {
+		_updateByAsyncResult: function(event) {
+			var name = event.name;
+			var violation = event.violation;
 			var lastResult = this._lastResult;
 
 			if (!violation) {
@@ -3300,7 +3301,7 @@
 				if (!lastResult.invalidReason[name]) {
 					lastResult.invalidReason[name] = {
 						name: name,
-						value: ev.value,
+						value: event.value,
 						violation: []
 					};
 				}
@@ -3420,7 +3421,14 @@
 				this._callPluginElementEvent(eventType, groupTarget, groupName, validationResult);
 			}
 
-			this.trigger('validationUpdate');
+			this._fireValidationUpdateEvent(validationTiming);
+		},
+
+		_fireValidationUpdateEvent: function(timing) {
+			var evArg = {
+				timing: timing
+			};
+			this.trigger('validationUpdate', evArg);
 		},
 
 		/**
