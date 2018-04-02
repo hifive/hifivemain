@@ -3508,7 +3508,11 @@ $(function() {
 				$('body').append(html);
 				that.formController = h5.core.controller('.testForm', h5.ui.FormController);
 				that.formController.readyPromise.done(function() {
-					start();
+					var pluginName = 'bsBalloon';
+					this.addOutput(pluginName);
+					this.getOutput(pluginName).readyPromise.done(function() {
+						start();
+					});
 				});
 			}).fail(start);
 		},
@@ -3525,7 +3529,7 @@ $(function() {
 	//=============================
 	test('bsBalloonプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		var pluginCtrl = formCtrl.getOutput('bsBalloon');
 		strictEqual(pluginCtrl.__name, 'h5.ui.validation.BootstrapErrorBalloon',
 				'bsBalloonプラグインを有効化できること');
@@ -3533,7 +3537,7 @@ $(function() {
 
 	asyncTest('バリデートエラーがあってもBootstrapのバルーンが表示されないこと', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3554,7 +3558,7 @@ $(function() {
 
 	asyncTest('Bootstrapのバルーンを表示する位置を文字列で指定できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3583,7 +3587,7 @@ $(function() {
 
 	asyncTest('バルーン要素を配置するコンテナを設定できること)', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3610,7 +3614,7 @@ $(function() {
 
 	asyncTest('バリデート結果表示をリセットできること)', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3651,7 +3655,7 @@ $(function() {
 				}
 			}
 		});
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				bsBalloon: {
