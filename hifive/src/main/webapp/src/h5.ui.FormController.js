@@ -3426,7 +3426,7 @@
 
 		_fireValidationUpdateEvent: function(timing) {
 			var evArg = {
-				timing: validationTiming
+				timing: timing
 			};
 			this.trigger('validationUpdate', evArg);
 		},
