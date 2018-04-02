@@ -2375,7 +2375,11 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
-				start();
+				var pluginName = 'message';
+				this.addOutput(pluginName);
+				this.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -2388,7 +2392,7 @@ $(function() {
 	//=============================
 	test('messageプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		var pluginCtrl = formCtrl.getOutput('message');
 		strictEqual(pluginCtrl.__name, 'h5.ui.validation.Message', 'messageプラグインを有効化できること');
 	});
@@ -2396,7 +2400,7 @@ $(function() {
 	test('バリデートエラーが有った場合にエラーメッセージが表示されること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2419,7 +2423,7 @@ $(function() {
 	test('メッセージ要素配置関数を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2445,7 +2449,7 @@ $(function() {
 	test('メッセージを出力する要素のタグ名を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2469,7 +2473,7 @@ $(function() {
 	test('メッセージを出力する要素のタグ生成文字列を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2493,7 +2497,7 @@ $(function() {
 	test('バリデート結果表示をリセットできること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2536,7 +2540,7 @@ $(function() {
 				}
 			}
 		});
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				message: {
