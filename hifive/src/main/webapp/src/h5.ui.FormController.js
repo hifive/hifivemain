@@ -2982,10 +2982,13 @@
 			// バリデート実行
 			var result = this._validate(names, 'validate');
 
-			this.trigger('validationUpdate');
-
 			// _onValidateの呼び出し
 			this._callPluginValidateEvent(PLUGIN_EVENT_VALIDATE, result);
+
+			//出力プラグインの更新が終わってからイベントを上げる
+			//例えばCompositionのCSSクラスの付与などが終わった状態にするため
+			this._fireValidationUpdateEvent('validate');
+
 			return result;
 		},
 
@@ -3269,6 +3272,8 @@
 			this._callPluginForAsyncValidation(name, result);
 
 			delete this._waitingValidationResultMap[name];
+
+			this._fireValidationUpdateEvent('asyncResult');
 		},
 
 		/**
@@ -3416,7 +3421,14 @@
 				this._callPluginElementEvent(eventType, groupTarget, groupName, validationResult);
 			}
 
-			this.trigger('validationUpdate');
+			this._fireValidationUpdateEvent(validationTiming);
+		},
+
+		_fireValidationUpdateEvent: function(timing) {
+			var evArg = {
+				timing: validationTiming
+			};
+			this.trigger('validationUpdate', evArg);
 		},
 
 		/**
