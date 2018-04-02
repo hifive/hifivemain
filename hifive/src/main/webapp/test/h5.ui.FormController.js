@@ -4101,7 +4101,11 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
-				start();
+				var pluginName = 'style';
+				this.addOutput(pluginName);
+				this.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -4114,7 +4118,7 @@ $(function() {
 	//=============================
 	test('styleプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('style');
+		// moduleのsetupでaddOutputを行っている
 		var pluginCtrl = formCtrl.getOutput('style');
 		strictEqual(pluginCtrl.__name, 'h5.ui.validation.Style', 'styleプラグインを有効化できること');
 	});
@@ -4135,7 +4139,7 @@ $(function() {
 				var validatingClassName = 'validating';
 
 				var formCtrl = this.formController;
-				formCtrl.addOutput('style');
+				// moduleのsetupでaddOutputを行っている
 				formCtrl.addRule({
 					a: {
 						required: true
@@ -4196,7 +4200,7 @@ $(function() {
 		var validatingClassName = 'validating';
 
 		var formCtrl = this.formController;
-		formCtrl.addOutput('style');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -4254,7 +4258,7 @@ $(function() {
 				}
 			}
 		});
-		formCtrl.addOutput('style');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				style: {
