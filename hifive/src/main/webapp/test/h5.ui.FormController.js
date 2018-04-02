@@ -2031,22 +2031,15 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorMessage = '同期バリデートに失敗しました';
 		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
-
 			}
 		});
 		// moduleのsetupでaddOutputを行っている
@@ -2071,35 +2064,26 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
+
+		// 同期のバリデーション
+		var result = formCtrl.validate();
+
+		// 同期メッセージ確認
+		strictEqual($errorContainer.text(), errorMessage, '同期時に同期のメッセージが表示されること');
+
+		// 非同期のバリデーション
+		dfd.reject({
+			valid: false
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
 		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-
-			$errorContainer.text('');
-			var result = formCtrl.validate();
-			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-
-			result.addEventListener('validateComplete', function(result) {
-				setTimeout(function() {
-					strictEqual($errorContainer.text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-					isCalled = true;
-				}, 0);
-			});
+			// 非同期のメッセージ確認
+			strictEqual($errorContainer.text(), errorMessage+asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+			start();
 		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
-		gate({
-			func: function() {
-				return isCalled;
-			},
-			maxWait: 1000
-		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
-		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
-		}).always(start);
 	});
 
 	//=============================
@@ -2523,19 +2507,13 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorMessage = '同期バリデートに失敗しました';
 		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
 			}
@@ -2561,34 +2539,25 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
+		var $inputA = $('.inputA');
+		var $inputB = $('.inputB');
+
+		// 同期のバリデーション
+		var result = formCtrl.validate();
+
+		// 同期メッセージ確認
+		strictEqual($inputA.next().text(), errorMessage, '同期時に同期のメッセージが表示されること');
+
+		// 非同期のバリデーション
+		dfd.reject({
+			valid: false
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
 		setTimeout(function() {
-			var $inputA = $('.inputA');
-
-			var result = formCtrl.validate();
-			strictEqual($inputA.next().text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-
-			result.addEventListener('validateComplete', function(result) {
-				setTimeout(function() {
-					$inputB = $('.inputB');
-					strictEqual($inputB.next().text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-					isCalled = true;
-				}, 0);
-			});
+			strictEqual($inputB.next().text(), errorMessage+asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+			start();
 		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
-		gate({
-			func: function() {
-				return isCalled;
-			},
-			maxWait: 1000
-		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
-		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
-		}).always(start);
 	});
 
 	//=============================
@@ -3026,19 +2995,13 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorMessage = '同期バリデートに失敗しました';
 		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
 			}
@@ -3065,37 +3028,40 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
-		setTimeout(function() {
-			var $inputA = $('.inputA');
+		var $inputA = $('.inputA');
 
-			// validateだとballoonを表示しない
-			var result = formCtrl.validate();
-			$inputA.focus();
-			// 待機しないとballoonが表示されない
-			setTimeout(function() {
-				strictEqual($('.validation-balloon').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+		// 同期のバリデーション
+		$inputA.focus();
 
-				result.addEventListener('validateComplete', function(result) {
-					setTimeout(function() {
-						strictEqual($('.validation-balloon').text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-						isCalled = true;
-					}, 0);
-				});
-			}, 100);
-		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
 		gate({
 			func: function() {
-				return isCalled;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
+			// 同期のメッセージ確認
+			strictEqual($('.validation-balloon').text(), errorMessage, '同期時に同期のメッセージが表示されること');
+			// 非同期のバリデーション
+			dfd.reject({
+				valid: false
+			});
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			stop();
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.validation-balloon').length === 1;
+					},
+					maxWait: 1000
+				}).done(function() {
+					// 非同期のメッセージ確認
+					strictEqual($('.validation-balloon').text(), asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+				}).fail(function() {
+					ok(false, '非同期時にballoonが表示されない');
+				}).always(start);
+			}, 0);
 		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
+			ok(false, '同期時にballoonが表示されない');
 		}).always(start);
 	});
 
@@ -3638,19 +3604,13 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorMessage = '同期バリデートに失敗しました';
 		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
 			}
@@ -3677,37 +3637,40 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
-		setTimeout(function() {
-			var $inputA = $('.inputA');
+		var $inputA = $('.inputA');
 
-			// validateだとballoonを表示しない
-			var result = formCtrl.validate();
-			$inputA.focus();
-			// 待機しないとballoonが表示されない
-			setTimeout(function() {
-				strictEqual($('.tooltip>.tooltip-inner').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+		// 同期のバリデーション
+		$inputA.focus();
 
-				result.addEventListener('validateComplete', function(result) {
-					setTimeout(function() {
-						strictEqual($('.tooltip>.tooltip-inner').text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-						isCalled = true;
-					}, 0);
-				});
-			}, 100);
-		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
 		gate({
 			func: function() {
-				return isCalled;
+				return $('.tooltip').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
+			// 同期のメッセージ確認
+			strictEqual($('.tooltip>.tooltip-inner').text(), errorMessage, '同期時に同期のメッセージが表示されること');
+			// 非同期のバリデーション
+			dfd.reject({
+				valid: false
+			});
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			stop();
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.tooltip').length === 1;
+					},
+					maxWait: 1000
+				}).done(function() {
+					// 非同期のメッセージ確認
+					strictEqual($('.tooltip>.tooltip-inner').text(), asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+				}).fail(function() {
+					ok(false, '非同期時にballoonが表示されない');
+				}).always(start);
+			}, 0);
 		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
+			ok(false, '同期時にballoonが表示されない');
 		}).always(start);
 	});
 
@@ -4241,19 +4204,13 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorClassName = 'error';
 		var asyncErrorClassName = 'asyncError';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
 			}
@@ -4280,34 +4237,27 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
+		var $inputA = $('.inputA');
+		var $inputB = $('.inputB');
+
+		// 同期のバリデーション
+		var result = formCtrl.validate();
+
+		// 同期メッセージ確認
+		ok($inputA.hasClass(errorClassName), '同期時に適用した同期クラスが追加されていること');
+		ok(!$inputB.hasClass(asyncErrorClassName), '同期時に適用した非同期クラスが追加されていないこと');
+
+		// 非同期のバリデーション
+		dfd.reject({
+			valid: false
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
 		setTimeout(function() {
-			var $inputA = $('.inputA');
-
-			var result = formCtrl.validate();
-			ok($inputA.hasClass(errorClassName), 'バリデートエラーが有った場合にCSSクラスが追加されること');
-
-			result.addEventListener('validateComplete', function(result) {
-				setTimeout(function() {
-					var $inputB = $('.inputB');
-					ok($inputB.hasClass(asyncErrorClassName), 'バリデートエラーが有った場合にCSSクラスが追加されること');
-					isCalled = true;
-				}, 0);
-			});
+			ok($inputA.hasClass(errorClassName), '非同期時に適用した同期クラスが追加されていること');
+			ok($inputB.hasClass(asyncErrorClassName), '非同期時に適用したクラスが追加されていること');
+			start();
 		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
-		gate({
-			func: function() {
-				return isCalled;
-			},
-			maxWait: 1000
-		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
-		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
-		}).always(start);
 	});
 
 	//=============================
