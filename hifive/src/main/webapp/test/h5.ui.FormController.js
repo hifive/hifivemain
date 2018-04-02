@@ -886,7 +886,11 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
-				start();
+				var pluginName = 'composition';
+				this.addOutput(pluginName);
+				this.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -900,7 +904,7 @@ $(function() {
 	test('compositionプラグインを有効化できること',
 			function() {
 				var formCtrl = this.formController;
-				formCtrl.addOutput('composition');
+				// moduleのsetupでaddOutputを行っている
 				var pluginCtrl = formCtrl.getOutput('composition');
 				strictEqual(pluginCtrl.__name, 'h5.ui.validation.Composition',
 						'compositionプラグインを有効化できること');
@@ -914,7 +918,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -945,7 +949,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -976,7 +980,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1007,7 +1011,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1037,7 +1041,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1062,7 +1066,7 @@ $(function() {
 						required: true
 					}
 				});
-				formCtrl.addOutput('composition');
+				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
 					output: {
 						composition: {
@@ -1086,7 +1090,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1115,7 +1119,7 @@ $(function() {
 				max: 1
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1159,7 +1163,7 @@ $(function() {
 				max: 1
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1203,7 +1207,7 @@ $(function() {
 				max: 1
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1244,7 +1248,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1280,7 +1284,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1314,7 +1318,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1350,7 +1354,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1384,7 +1388,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1420,7 +1424,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1454,7 +1458,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1496,7 +1500,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1538,7 +1542,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1593,7 +1597,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1648,7 +1652,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1703,7 +1707,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1758,7 +1762,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1813,7 +1817,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1868,7 +1872,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1921,7 +1925,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1976,7 +1980,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -2045,7 +2049,7 @@ $(function() {
 
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
