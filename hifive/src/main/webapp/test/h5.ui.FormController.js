@@ -8547,17 +8547,11 @@ $(function() {
 			ok(!this.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
 			ok(this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
 	});
-	test('非同期バリデーションの場合、非同期バリデーションが完了したタイミングで関数が呼び出されること', function() {
+	asyncTest('非同期バリデーションの場合、非同期バリデーションが完了したタイミングで関数が呼び出されること', function() {
+			var dfd = h5.async.deferred();
 			this.formController.addRule({
 				a: {
 					customFunc: function(value) {
-						var dfd = h5.async.deferred();
-						setTimeout(function(){
-							dfd.resolve({
-								valid: true,
-								a: value
-							});
-						}, 0);
 						return dfd.promise();
 					}
 				}
@@ -8565,7 +8559,9 @@ $(function() {
 			this.onValidate = function(result) {
 				console.log(result);
 			}
-			var result = this.formController.validate('a');
+
+			// 同期のバリデーション
+			this.formController.validate('a');
 
 			// 非同期処理が完了するまで呼ばれない
 			ok(!this.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
@@ -8574,14 +8570,20 @@ $(function() {
 			ok(!this.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
 			ok(!this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
 
+			// 非同期のバリデーション
+			dfd.reject({
+				valid: false
+			});
+
 			var that = this;
-			result.addEventListener('validateComplete', function() {
+			setTimeout(function() {
 				ok(!that.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
 				ok(!that.isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
 				ok(!that.isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
 				ok(!that.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
 				ok(that.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
-			})
+				start();
+			}, 0);
 	});
 
 	//=============================
