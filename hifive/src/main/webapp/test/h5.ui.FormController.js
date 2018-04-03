@@ -5339,20 +5339,13 @@ $(function() {
 					$('body').append(html);
 
 					this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-					this.formController.readyPromise.done(function() {
-						this.addRule({
-							a: {
-								customFunc: function() {
-									var dfd = h5.async.deferred();
-									setTimeout(function() {
-										dfd.resolve();
-									}, 500);
-									return dfd.promise();
-								}
-							}
+					var formCtrl = this.formController;
+					formCtrl.readyPromise.done(function() {
+						var pluginName = 'asyncIndicator';
+						formCtrl.addOutput(pluginName);
+						formCtrl.getOutput(pluginName).readyPromise.done(function() {
+								start();
 						});
-						this.addOutput('asyncIndicator');
-						start();
 					});
 				},
 				teardown: function() {
@@ -5366,6 +5359,14 @@ $(function() {
 	//=============================
 	asyncTest('クラス適用対象要素 replaceElement をDOMで設定できること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
+		formCtrl.addRule({
+			a: {
+				customFunc: function() {
+					return dfd.promise();
+				}
+			}
+		});
 		formCtrl.setSetting({
 			output: {
 				asyncIndicator: {
@@ -5373,16 +5374,34 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
-		});
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
 		strictEqual($('.replaceContainer > .h5-indicator').length, 1,
 				'replaceElementの子要素にインジケータが表示されること');
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			start();
+		}, 0);
 	});
 
 	asyncTest('クラス適用対象要素 replaceElement をjQueryで設定できること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
+		formCtrl.addRule({
+			a: {
+				customFunc: function() {
+					return dfd.promise();
+				}
+			}
+		});
 		formCtrl.setSetting({
 			output: {
 				asyncIndicator: {
@@ -5390,16 +5409,34 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
-		});
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
 		strictEqual($('.replaceContainer > .h5-indicator').length, 1,
 				'replaceElementの子要素にインジケータが表示されること');
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			start();
+		}, 0);
 	});
 
 	asyncTest('クラス適用対象要素 replaceElement をセレクタ文字列で設定できること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
+		formCtrl.addRule({
+			a: {
+				customFunc: function() {
+					return dfd.promise();
+				}
+			}
+		});
 		formCtrl.setSetting({
 			output: {
 				asyncIndicator: {
@@ -5407,16 +5444,34 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
-		});
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
 		strictEqual($('.replaceContainer > .h5-indicator').length, 1,
 				'replaceElementの子要素にインジケータが表示されること');
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			start();
+		}, 0);
 	});
 
 	asyncTest('クラス適用対象要素 replaceElement を関数で設定できること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
+		formCtrl.addRule({
+			a: {
+				customFunc: function() {
+					return dfd.promise();
+				}
+			}
+		});
 		formCtrl.setSetting({
 			output: {
 				asyncIndicator: {
@@ -5426,12 +5481,22 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
-		});
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
 		strictEqual($('.replaceContainer > .h5-indicator').length, 1,
 				'replaceElementの子要素にインジケータが表示されること');
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			start();
+		}, 0);
 	});
 
 	//=============================
