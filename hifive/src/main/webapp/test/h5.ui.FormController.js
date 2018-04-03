@@ -4060,7 +4060,7 @@ $(function() {
 			stop();
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><div class="testBalloonContainer">';
-			html += '<input class="inputA" name="a"><input class="inputB" name="b"></div></form>';
+			html += '<input class="inputA" name="a"><input class="inputB" name="b"><input class="inputC" name="c"><input class="inputD" name="d"></div></form>';
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
@@ -4089,17 +4089,17 @@ $(function() {
 	asyncTest(
 			'バリデート時に適用するクラス名を設定できること',
 			function() {
-				var $form = $('.testForm');
-				var html = '<input class="inputB" name="b"><input class="inputC" name="c"><input class="inputD" name="d">';
-				$form.append(html);
 				var $inputA = $('.inputA');
 				var $inputB = $('.inputB');
 				var $inputC = $('.inputC');
 				var $inputD = $('.inputD');
-				$inputA.val('aaa');
+
 				var successClassName = 'successValidate';
 				var errorClassName = 'failValidate';
 				var validatingClassName = 'validating';
+
+				var dfdC = h5.async.deferred();
+				var dfdD = h5.async.deferred();
 
 				var formCtrl = this.formController;
 				// moduleのsetupでaddOutputを行っている
@@ -4112,20 +4112,12 @@ $(function() {
 					},
 					c: {
 						customFunc: function() {
-							var dfd = h5.async.deferred();
-							setTimeout(function() {
-								dfd.resolve();
-							}, 500);
-							return dfd.promise();
+							return dfdC.promise();
 						}
 					},
 					d: {
 						customFunc: function() {
-							var dfd = h5.async.deferred();
-							setTimeout(function() {
-								dfd.reject();
-							}, 500);
-							return dfd.promise();
+							return dfdD.promise();
 						}
 					}
 				});
@@ -4138,29 +4130,48 @@ $(function() {
 						}
 					}
 				});
+
+				// inputA,inputCだけsuccessになる
+				$inputA.val('aaa');
+				$inputC.val('aaa');
+
+				// 同期のバリデーション
 				var result = formCtrl.validate();
+
+				// 同期のバリデーション結果でクラスが適用されているか確認
 				ok($inputA.hasClass(successClassName), 'バリデート成功した要素にバリデート成功クラスが適用されること');
 				ok($inputB.hasClass(errorClassName), 'バリデート失敗した要素にバリデート失敗クラスが適用されること');
 				ok($inputC.hasClass(validatingClassName),
 						'非同期バリデートの結果待機中の要素に非同期バリデート結果待機のクラスが適用されること');
-				result.addEventListener('validateComplete', function() {
+
+				// 非同期のバリデーション
+				// inputCはsuccess
+				dfdC.resolve({
+					valid: true
+				});
+				// inputDはerror
+				dfdD.reject({
+					valid: false
+				});
+
+				// 非同期のバリデーションの後に実行するために処理を遅らせる
+				setTimeout(function() {
 					ok($inputC.hasClass(successClassName), '非同期バリデートの結果が成功であればバリデート成功クラスが適用されること');
 					ok($inputD.hasClass(errorClassName), '非同期バリデートの結果が失敗であればバリデート失敗クラスが適用されること');
 					start();
-				});
+				}, 0);
 			});
 
-	asyncTest('バリデート結果表示をリセットできること)', function() {
-		var $form = $('.testForm');
-		var html = '<input class="inputB" name="b"><input class="inputC" name="c">';
-		$form.append(html);
+	test('バリデート結果表示をリセットできること)', function() {
 		var $inputA = $('.inputA');
 		var $inputB = $('.inputB');
 		var $inputC = $('.inputC');
-		$inputA.val('aaa');
+
 		var successClassName = 'successValidate';
 		var errorClassName = 'failValidate';
 		var validatingClassName = 'validating';
+
+		var dfd = h5.async.deferred();
 
 		var formCtrl = this.formController;
 		// moduleのsetupでaddOutputを行っている
@@ -4173,10 +4184,6 @@ $(function() {
 			},
 			c: {
 				customFunc: function() {
-					var dfd = h5.async.deferred();
-					setTimeout(function() {
-						dfd.resolve();
-					}, 500);
 					return dfd.promise();
 				}
 			}
@@ -4190,14 +4197,25 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			formCtrl.resetValidation();
-			ok(!$inputA.hasClass(successClassName), '適用したクラスがリセットされていること');
-			ok(!$inputB.hasClass(errorClassName), '適用したクラスがリセットされていること');
-			ok(!$inputC.hasClass(validatingClassName), '適用したクラスがリセットされていること');
-			start();
-		});
+
+		// inputAだけsuccessになる
+		$inputA.val('aaa');
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
+		// validatingクラスが適用されているか確認したいので非同期のバリデーションは行わない
+
+		// 同期のバリデーション結果でクラスが適用されているか確認
+		ok($inputA.hasClass(successClassName), 'successを適用したクラスが設定されていること');
+		ok($inputB.hasClass(errorClassName), 'errorを適用したクラスが設定されていること');
+		ok($inputC.hasClass(validatingClassName), 'validatingを適用したクラスが設定されていること');
+
+		// 適用したクラスがリセットされていることを確認
+		formCtrl.resetValidation();
+		ok(!$inputA.hasClass(successClassName), 'successを適用したクラスがリセットされていること');
+		ok(!$inputB.hasClass(errorClassName), 'errorを適用したクラスがリセットされていること');
+		ok(!$inputC.hasClass(validatingClassName), 'validatingを適用したクラスがリセットされていること');
 	});
 
 	asyncTest('同期・非同期のバリデーションが混在する場合、validateの直後に同期のメッセージが、validateComplete発火時に非同期のメッセージが表示されること', function() {
