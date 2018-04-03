@@ -933,10 +933,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
@@ -964,10 +961,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer').text(), errorMessage, 'メッセージ出力先となるコンテナ要素を設定できること');
 	});
@@ -995,10 +989,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer').text(), errorMessage, 'メッセージ出力先となるコンテナ要素を設定できること');
 	});
@@ -1026,10 +1017,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer').text(), errorMessage, 'メッセージ出力先となるコンテナ要素を設定できること');
 	});
@@ -1050,10 +1038,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer > li').length, 1, 'メッセージを出力する要素のタグ名を設定できること');
 	});
@@ -1075,9 +1060,7 @@ $(function() {
 						}
 					}
 				});
-				// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-				// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-				// 設定されておらず表示されない
+
 				formCtrl.validate();
 				strictEqual($('.errorContainer > .errorMessage').length, 1,
 						'メッセージを出力する要素のタグ生成文字列を設定できること');
@@ -1098,11 +1081,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
-		// このテストではメッセージが表示されていなくてもresetValidation()で消してしまうので結果的に成功している
+
 		formCtrl.validate();
 		formCtrl.resetValidation();
 		strictEqual($('.errorContainer').text(), '', 'バリデート結果表示をリセットできること');
@@ -2099,25 +2078,28 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						size: [5, 10]
-					}
-				});
-				this.addOutput('composition');
-				// FIXME #529
-				formCtrl.setSetting({
-					output: {
-						composition: {
-							container: $('.errorContainer'),
-							message: that.errorMessage,
-							wrapper: 'li'
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							size: [5, 10]
 						}
-					}
+					});
+
+					formCtrl.setSetting({
+						output: {
+							composition: {
+								container: $('.errorContainer'),
+								message: that.errorMessage,
+								wrapper: 'li'
+							}
+						}
+					});
+					formCtrl.validate();
+					start();
 				});
-				formCtrl.validate();
-				start();
 			});
 		},
 		teardown: function() {
@@ -2238,24 +2220,27 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						size: [5, 10]
-					}
-				});
-				this.addOutput('composition');
-				// FIXME #529
-				formCtrl.setSetting({
-					output: {
-						composition: {
-							container: $('.errorContainer'),
-							message: that.errorMessage,
-							wrapper: 'li'
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							size: [5, 10]
 						}
-					}
+					});
+
+					formCtrl.setSetting({
+						output: {
+							composition: {
+								container: $('.errorContainer'),
+								message: that.errorMessage,
+								wrapper: 'li'
+							}
+						}
+					});
+					start();
 				});
-				start();
 			});
 		},
 		teardown: function() {
@@ -2573,23 +2558,26 @@ $(function() {
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
-				});
-				this.addOutput('message');
-				// FIXME #529
-				formCtrl.setSetting({
-					output: {
-						message: {
-							message: that.errorMessage,
-							wrapper: '<span class="errorMessageWrapper">'
+				var pluginName = 'message';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
 						}
-					}
+					});
+
+					formCtrl.setSetting({
+						output: {
+							message: {
+								message: that.errorMessage,
+								wrapper: '<span class="errorMessageWrapper">'
+							}
+						}
+					});
+					formCtrl.validate();
+					start();
 				});
-				formCtrl.validate();
-				start();
 			});
 		},
 		teardown: function() {
@@ -8541,29 +8529,29 @@ $(function() {
 				};
 				var formCtrl = this.formController;
 				formCtrl._addOutputPlugin(pluginName, controller);
-				formCtrl.addRule({
-					a: {
-						required: true
-					}
-				});
-				formCtrl.addOutput('testPlugin');
-				formCtrl.setSetting({
-					output: {
-						testPlugin: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
 						a: {
-							composition: {
-								message: errorMessage
+							required: true
+						}
+					});
+					formCtrl.setSetting({
+						output: {
+							testPlugin: {
+								container: $('.errorContainer')
+							}
+						},
+						property: {
+							a: {
+								composition: {
+									message: errorMessage
+								}
 							}
 						}
-					}
+					});
+					start();
 				});
-
-				// FIXME: #529
-				setTimeout(start, 200);
 			}.bind(this));
 		}
 	});
