@@ -4561,41 +4561,46 @@ $(function() {
 			$('body').append(html);
 
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
-				});
-				this.addOutput(['asyncIndicator', 'composition', 'message', 'balloon', 'bsBalloon',
-						'style']);
-				this.setSetting({
-					output: {
-						asyncIndicator: {
-							replaceElement: containerClass,
-							off: true
-						},
-						composition: {
-							container: containerClass,
-							off: true
-						},
-						message: {
-							wrapper: '<li class="testMessage">',
-							off: true
-						},
-						balloon: {
-							off: true
-						},
-						bsBalloon: {
-							off: true
-						},
-						style: {
-							errorClassName: that.errorClassName,
-							off: true
+			var formCtrl = this.formController;
+			formCtrl.readyPromise.done(function() {
+				var pluginNames = ['asyncIndicator', 'composition', 'message', 'balloon', 'bsBalloon', 'style'];
+				formCtrl.addOutput(pluginNames);
+				h5.async.when(pluginNames.map(function(pluginName) {
+					return formCtrl.getOutput(pluginName).readyPromise;
+				})).done(function() {
+					formCtrl.addRule({
+							a: {
+									required: true
+							}
+					});
+					formCtrl.setSetting({
+						output: {
+							asyncIndicator: {
+								replaceElement: containerClass,
+								off: true
+							},
+							composition: {
+								container: containerClass,
+								off: true
+							},
+							message: {
+								wrapper: '<li class="testMessage">',
+								off: true
+							},
+							balloon: {
+								off: true
+							},
+							bsBalloon: {
+								off: true
+							},
+							style: {
+								errorClassName: that.errorClassName,
+								off: true
+							}
 						}
-					}
+					});
+					start();
 				});
-				start();
 			});
 		},
 		teardown: function() {
@@ -4609,23 +4614,28 @@ $(function() {
 	//=============================
 	asyncTest('asyncIndicatorプラグインが無効になること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				customFunc: function() {
-					var dfd = h5.async.deferred();
-					setTimeout(function() {
-						dfd.resolve();
-					}, 500);
 					return dfd.promise();
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
+		// 同期のバリデーション
+		formCtrl.validate();
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
 		});
-		var $indicator = $('.h5-indicator');
-		strictEqual($indicator.length, 0, 'asyncIndicatorプラグインが無効になること');
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			var $indicator = $('.h5-indicator');
+			strictEqual($indicator.length, 0, 'asyncIndicatorプラグインが無効になること');
+			start();
+		}, 0);
 	});
 
 	test('compositionプラグインが無効になること', function() {
