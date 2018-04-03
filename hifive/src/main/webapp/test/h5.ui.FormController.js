@@ -5995,26 +5995,31 @@ $(function() {
 			}
 		});
 		msgOutputCtrl.setContainer('.messageContainer');
+		var dfd = h5.async.deferred();
 		logic.addRule({
 			a: {
 				customFunc: function() {
-					var dfd = h5.async.deferred();
-					setTimeout(function() {
-						dfd.reject();
-					}, 0);
 					return dfd.promise();
 				}
 			}
 		});
+
+		// 同期のバリデーション
 		var result = logic.validate({
 			a: ''
 		});
-		result.addEventListener('validateComplete', function() {
-			strictEqual($container.text(), '入力要素Aが違反しています',
-					'ValidationResultが非同期バリデート待ちの場合は結果が返ってきたときにメッセージを表示すること');
-			start();
+
+		// 非同期のバリデーション
+		dfd.reject({
+			valid: false
 		});
-		msgOutputCtrl.appendMessageByValidationResult(result, 'a');
+
+		setTimeout(function() {
+			// 非同期のバリデーション結果をメッセージに追加
+			msgOutputCtrl.appendMessageByValidationResult(result, 'a');
+			strictEqual($container.text(), '入力要素Aが違反しています', 'ValidationResultが非同期バリデート待ちの場合は結果が返ってきたときにメッセージを表示すること');
+			start();
+		}, 0);
 	});
 
 	test('setContainer()でコンテナを未設定の場合は何も表示しないこと', function() {
