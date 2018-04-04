@@ -1728,6 +1728,10 @@
 				}
 			}
 
+			if ('wrapper' in setting) {
+				this._messageOutputController.setWrapper(setting.wrapper);
+			}
+
 			// 各プロパティ毎のメッセージ設定をする
 			var property = setting.property;
 			var messageSetting = {};
