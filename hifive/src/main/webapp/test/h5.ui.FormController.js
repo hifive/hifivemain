@@ -4900,14 +4900,18 @@ $(function() {
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			var formCtrl = this.formController;
 			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
+				var pluginName = 'balloon';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+					start();
 				});
-				this.addOutput('balloon');
-				start();
 			});
 		},
 		teardown: function() {
@@ -4919,87 +4923,101 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('バリデーション対象のプロパティに対応する表示名 displayName を設定できること', function() {
+	asyncTest('バリデーション対象のプロパティに対応する表示名 displayName を設定できること', function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
-			output: {
-				balloon: {
+			property: {
+				a: {
 					displayName: 'balloon displayName'
 				}
 			}
 		});
-		formCtrl.validate();
-		strictEqual($('.validation-balloon').text(), 'balloon displayNameは必須項目です',
-				'バリデーション対象のプロパティに対応する表示名 displayName を設定できること');
+		$('.inputA').focus();
+		gate({
+			func: function() {
+				return $('.validation-balloon').length !== 0;
+			},
+			maxWait: 1000,
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			strictEqual($('.validation-balloon').text(), 'balloon displayNameは必須項目です。',
+			'バリデーション対象のプロパティに対応する表示名 displayName を設定できること');
+		}).always(start);
 	});
 
-	test('バリデートエラー時に表示するメッセージ文字列 message を設定できること', function() {
+	asyncTest('バリデートエラー時に表示するメッセージ文字列 message を設定できること', function() {
 		var errorMessage = 'errorMessage';
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
-			output: {
-				balloon: {
+			property: {
+				a: {
 					message: errorMessage
 				}
 			}
 		});
-		formCtrl.validate();
-		strictEqual($('.validation-balloon').text(), errorMessage,
-				'バリデートエラー時に表示するメッセージ文字列 message を設定できること');
+		$('.inputA').focus();
+		gate({
+			func: function() {
+				return $('.validation-balloon').length !== 0;
+			},
+			maxWait: 1000,
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			strictEqual($('.validation-balloon').text(), errorMessage,
+					'バリデートエラー時に表示するメッセージ文字列 message を設定できること');
+		}).always(start);
 	});
 
-	test('バリデートエラー時に表示するメッセージ生成関数 message を設定できること', function() {
+	asyncTest('バリデートエラー時に表示するメッセージ生成関数 message を設定できること', function() {
 		var errorMessage = 'errorMessage';
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
-			output: {
-				balloon: {
+			property: {
+				a: {
 					message: function(param) {
 						return errorMessage;
 					}
 				}
 			}
 		});
-		formCtrl.validate();
-		strictEqual($('.validation-balloon').text(), errorMessage,
-				'バリデートエラー時に表示するメッセージ生成関数 message を設定できること');
+		$('.inputA').focus();
+		gate({
+			func: function() {
+				return $('.validation-balloon').length !== 0;
+			},
+			maxWait: 1000,
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			strictEqual($('.validation-balloon').text(), errorMessage,
+					'バリデートエラー時に表示するメッセージ生成関数 message を設定できること');
+		}).always(start);
 	});
 
-	test('バリデートエラー時に表示するメッセージ生成関数に与えられる引数がtargetViolationプロパティを持つこと', function() {
+	asyncTest('バリデートエラー時に表示するメッセージ生成関数に与えられる引数がtargetViolationプロパティを持つこと', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		var isCalled = false;
-		var targetViolation = null;
 		formCtrl.setSetting({
-			output: {
-				output: {
-					balloon: {
-						container: $('.errorContainer')
-					}
-				},
-				property: {
-					a: {
-						balloon: {
-							message: function(param) {
-								isCalled = true;
-								targetViolation = param.targetViolation;
-								return errorMessage;
-							}
-						}
+			property: {
+				a: {
+					message: function(param) {
+						ok(param.targetViolation, 'targetViolationプロパティを持つこと');
+						isCalled = true;
+						return errorMessage;
 					}
 				}
 			}
 		});
-
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, '関数が呼び出されたこと');
-				ok(targetViolation, 'targetViolationプロパティを持つこと');
-				start();
-			}, 100);
-		}, 0);
+		$('.inputA').focus();
+		gate({
+			func: function() {
+				return $('.validation-balloon').length !== 0;
+			},
+			maxWait: 1000,
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			ok(isCalled, 'メッセージ生成関数が呼び出されたこと');
+		}).always(start);
 	});
 
 	//=============================
