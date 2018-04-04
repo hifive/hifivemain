@@ -395,16 +395,6 @@
 					this.appendMessage(message);
 				}
 			}
-		},
-
-		/**
-		 * @private
-		 * @param name
-		 * @returns
-		 */
-		_getDisplayName: function(name) {
-			var displayName = this._setting[name].displayName || null;
-			return displayName;
 		}
 	};
 	h5.core.expose(controller);
@@ -901,17 +891,6 @@
 			} else {
 				$container.show();
 				$container.addClass(CSS_H5_COMPOSITION_HAS_ERROR);
-			}
-		},
-
-		/**
-		 * @private
-		 * @param value
-		 * @param array
-		 */
-		_pushIfNotExist: function(value, array) {
-			if ($.inArray(value, array) === -1) {
-				array.push(value);
 			}
 		},
 
@@ -1726,6 +1705,10 @@
 				} else {
 					this._updateOn = [updateOn];
 				}
+			}
+
+			if ('wrapper' in setting) {
+				this._messageOutputController.setWrapper(setting.wrapper);
 			}
 
 			// 各プロパティ毎のメッセージ設定をする
