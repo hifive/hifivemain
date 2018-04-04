@@ -886,7 +886,11 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
-				start();
+				var pluginName = 'composition';
+				this.addOutput(pluginName);
+				this.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -900,7 +904,7 @@ $(function() {
 	test('compositionプラグインを有効化できること',
 			function() {
 				var formCtrl = this.formController;
-				formCtrl.addOutput('composition');
+				// moduleのsetupでaddOutputを行っている
 				var pluginCtrl = formCtrl.getOutput('composition');
 				strictEqual(pluginCtrl.__name, 'h5.ui.validation.Composition',
 						'compositionプラグインを有効化できること');
@@ -914,7 +918,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -929,10 +933,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
@@ -945,7 +946,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -960,10 +961,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer').text(), errorMessage, 'メッセージ出力先となるコンテナ要素を設定できること');
 	});
@@ -976,7 +974,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -991,10 +989,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer').text(), errorMessage, 'メッセージ出力先となるコンテナ要素を設定できること');
 	});
@@ -1007,7 +1002,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1022,10 +1017,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer').text(), errorMessage, 'メッセージ出力先となるコンテナ要素を設定できること');
 	});
@@ -1037,7 +1029,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1046,10 +1038,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
+
 		formCtrl.validate();
 		strictEqual($('.errorContainer > li').length, 1, 'メッセージを出力する要素のタグ名を設定できること');
 	});
@@ -1062,7 +1051,7 @@ $(function() {
 						required: true
 					}
 				});
-				formCtrl.addOutput('composition');
+				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
 					output: {
 						composition: {
@@ -1071,9 +1060,7 @@ $(function() {
 						}
 					}
 				});
-				// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-				// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-				// 設定されておらず表示されない
+
 				formCtrl.validate();
 				strictEqual($('.errorContainer > .errorMessage').length, 1,
 						'メッセージを出力する要素のタグ生成文字列を設定できること');
@@ -1086,7 +1073,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1094,11 +1081,7 @@ $(function() {
 				}
 			}
 		});
-		// FIXME #529 addOutput()の直後はcompositionプラグインが子コントローラ化が完了していない
-		// 内部でsettingはコントローラ化完了後に行われるので、完了を待たずにバリデートするとエラーメッセージ表示先が
-		// 設定されておらず表示されない
-		// 本来は表示されるはず
-		// このテストではメッセージが表示されていなくてもresetValidation()で消してしまうので結果的に成功している
+
 		formCtrl.validate();
 		formCtrl.resetValidation();
 		strictEqual($('.errorContainer').text(), '', 'バリデート結果表示をリセットできること');
@@ -1115,7 +1098,7 @@ $(function() {
 				max: 1
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1159,7 +1142,7 @@ $(function() {
 				max: 1
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1203,7 +1186,7 @@ $(function() {
 				max: 1
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1244,7 +1227,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1280,7 +1263,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1314,7 +1297,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1350,7 +1333,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1384,7 +1367,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1420,7 +1403,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1454,7 +1437,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1496,7 +1479,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1538,7 +1521,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1593,7 +1576,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1648,7 +1631,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1703,7 +1686,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1758,7 +1741,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1813,7 +1796,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1868,7 +1851,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1921,7 +1904,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -1976,7 +1959,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -2027,25 +2010,18 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorMessage = '同期バリデートに失敗しました';
 		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
-
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -2067,35 +2043,26 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
+
+		// 同期のバリデーション
+		var result = formCtrl.validate();
+
+		// 同期メッセージ確認
+		strictEqual($errorContainer.text(), errorMessage, '同期時に同期のメッセージが表示されること');
+
+		// 非同期のバリデーション
+		dfd.reject({
+			valid: false
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
 		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-
-			$errorContainer.text('');
-			var result = formCtrl.validate();
-			strictEqual($errorContainer.text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-
-			result.addEventListener('validateComplete', function(result) {
-				setTimeout(function() {
-					strictEqual($errorContainer.text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-					isCalled = true;
-				}, 0);
-			});
+			// 非同期のメッセージ確認
+			strictEqual($errorContainer.text(), errorMessage+asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+			start();
 		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
-		gate({
-			func: function() {
-				return isCalled;
-			},
-			maxWait: 1000
-		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
-		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
-		}).always(start);
 	});
 
 	//=============================
@@ -2111,25 +2078,28 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						size: [5, 10]
-					}
-				});
-				this.addOutput('composition');
-				// FIXME #529
-				formCtrl.setSetting({
-					output: {
-						composition: {
-							container: $('.errorContainer'),
-							message: that.errorMessage,
-							wrapper: 'li'
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							size: [5, 10]
 						}
-					}
+					});
+
+					formCtrl.setSetting({
+						output: {
+							composition: {
+								container: $('.errorContainer'),
+								message: that.errorMessage,
+								wrapper: 'li'
+							}
+						}
+					});
+					formCtrl.validate();
+					start();
 				});
-				formCtrl.validate();
-				start();
 			});
 		},
 		teardown: function() {
@@ -2250,24 +2220,27 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						size: [5, 10]
-					}
-				});
-				this.addOutput('composition');
-				// FIXME #529
-				formCtrl.setSetting({
-					output: {
-						composition: {
-							container: $('.errorContainer'),
-							message: that.errorMessage,
-							wrapper: 'li'
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							size: [5, 10]
 						}
-					}
+					});
+
+					formCtrl.setSetting({
+						output: {
+							composition: {
+								container: $('.errorContainer'),
+								message: that.errorMessage,
+								wrapper: 'li'
+							}
+						}
+					});
+					start();
 				});
-				start();
 			});
 		},
 		teardown: function() {
@@ -2371,7 +2344,11 @@ $(function() {
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
-				start();
+				var pluginName = 'message';
+				this.addOutput(pluginName);
+				this.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -2384,7 +2361,7 @@ $(function() {
 	//=============================
 	test('messageプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		var pluginCtrl = formCtrl.getOutput('message');
 		strictEqual(pluginCtrl.__name, 'h5.ui.validation.Message', 'messageプラグインを有効化できること');
 	});
@@ -2392,7 +2369,7 @@ $(function() {
 	test('バリデートエラーが有った場合にエラーメッセージが表示されること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2415,7 +2392,7 @@ $(function() {
 	test('メッセージ要素配置関数を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2441,7 +2418,7 @@ $(function() {
 	test('メッセージを出力する要素のタグ名を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2465,7 +2442,7 @@ $(function() {
 	test('メッセージを出力する要素のタグ生成文字列を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2489,7 +2466,7 @@ $(function() {
 	test('バリデート結果表示をリセットできること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = this.errorMessage;
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		// #529
 		formCtrl.addRule({
 			a: {
@@ -2515,24 +2492,18 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorMessage = '同期バリデートに失敗しました';
 		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
 			}
 		});
-		formCtrl.addOutput('message');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				message: {
@@ -2553,34 +2524,25 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
+		var $inputA = $('.inputA');
+		var $inputB = $('.inputB');
+
+		// 同期のバリデーション
+		var result = formCtrl.validate();
+
+		// 同期メッセージ確認
+		strictEqual($inputA.next().text(), errorMessage, '同期時に同期のメッセージが表示されること');
+
+		// 非同期のバリデーション
+		dfd.reject({
+			valid: false
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
 		setTimeout(function() {
-			var $inputA = $('.inputA');
-
-			var result = formCtrl.validate();
-			strictEqual($inputA.next().text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-
-			result.addEventListener('validateComplete', function(result) {
-				setTimeout(function() {
-					$inputB = $('.inputB');
-					strictEqual($inputB.next().text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-					isCalled = true;
-				}, 0);
-			});
+			strictEqual($inputB.next().text(), errorMessage+asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+			start();
 		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
-		gate({
-			func: function() {
-				return isCalled;
-			},
-			maxWait: 1000
-		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
-		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
-		}).always(start);
 	});
 
 	//=============================
@@ -2596,23 +2558,26 @@ $(function() {
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
-				});
-				this.addOutput('message');
-				// FIXME #529
-				formCtrl.setSetting({
-					output: {
-						message: {
-							message: that.errorMessage,
-							wrapper: '<span class="errorMessageWrapper">'
+				var pluginName = 'message';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
 						}
-					}
+					});
+
+					formCtrl.setSetting({
+						output: {
+							message: {
+								message: that.errorMessage,
+								wrapper: '<span class="errorMessageWrapper">'
+							}
+						}
+					});
+					formCtrl.validate();
+					start();
 				});
-				formCtrl.validate();
-				start();
 			});
 		},
 		teardown: function() {
@@ -2898,7 +2863,11 @@ $(function() {
 			$('body').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
-				start();
+				var pluginName = 'balloon';
+				this.addOutput(pluginName);
+				this.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -2912,14 +2881,14 @@ $(function() {
 	//=============================
 	test('balloonプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('balloon');
+		// moduleのsetupでaddOutputを行っている
 		var pluginCtrl = formCtrl.getOutput('balloon');
 		strictEqual(pluginCtrl.__name, 'h5.ui.validation.ErrorBalloon', 'balloonプラグインを有効化できること');
 	});
 
 	asyncTest('バリデートエラーがあってもバルーンが表示されないこと', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('balloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -2932,7 +2901,7 @@ $(function() {
 
 	asyncTest('バルーンを表示する位置を文字列で指定できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('balloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -2961,7 +2930,7 @@ $(function() {
 
 	asyncTest('バルーン要素を配置するコンテナを設定できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('balloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -2990,7 +2959,7 @@ $(function() {
 
 	asyncTest('バリデート結果表示をリセットできること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('balloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3014,24 +2983,18 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorMessage = '同期バリデートに失敗しました';
 		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
 			}
 		});
-		formCtrl.addOutput('balloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				balloon: {
@@ -3053,37 +3016,40 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
-		setTimeout(function() {
-			var $inputA = $('.inputA');
+		var $inputA = $('.inputA');
 
-			// validateだとballoonを表示しない
-			var result = formCtrl.validate();
-			$inputA.focus();
-			// 待機しないとballoonが表示されない
-			setTimeout(function() {
-				strictEqual($('.validation-balloon').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+		// 同期のバリデーション
+		$inputA.focus();
 
-				result.addEventListener('validateComplete', function(result) {
-					setTimeout(function() {
-						strictEqual($('.validation-balloon').text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-						isCalled = true;
-					}, 0);
-				});
-			}, 100);
-		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
 		gate({
 			func: function() {
-				return isCalled;
+				return $('.validation-balloon').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
+			// 同期のメッセージ確認
+			strictEqual($('.validation-balloon').text(), errorMessage, '同期時に同期のメッセージが表示されること');
+			// 非同期のバリデーション
+			dfd.reject({
+				valid: false
+			});
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			stop();
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.validation-balloon').length === 1;
+					},
+					maxWait: 1000
+				}).done(function() {
+					// 非同期のメッセージ確認
+					strictEqual($('.validation-balloon').text(), asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+				}).fail(function() {
+					ok(false, '非同期時にballoonが表示されない');
+				}).always(start);
+			}, 0);
 		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
+			ok(false, '同期時にballoonが表示されない');
 		}).always(start);
 	});
 
@@ -3496,7 +3462,11 @@ $(function() {
 				$('body').append(html);
 				that.formController = h5.core.controller('.testForm', h5.ui.FormController);
 				that.formController.readyPromise.done(function() {
-					start();
+					var pluginName = 'bsBalloon';
+					this.addOutput(pluginName);
+					this.getOutput(pluginName).readyPromise.done(function() {
+						start();
+					});
 				});
 			}).fail(start);
 		},
@@ -3513,7 +3483,7 @@ $(function() {
 	//=============================
 	test('bsBalloonプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		var pluginCtrl = formCtrl.getOutput('bsBalloon');
 		strictEqual(pluginCtrl.__name, 'h5.ui.validation.BootstrapErrorBalloon',
 				'bsBalloonプラグインを有効化できること');
@@ -3521,7 +3491,7 @@ $(function() {
 
 	asyncTest('バリデートエラーがあってもBootstrapのバルーンが表示されないこと', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3542,7 +3512,7 @@ $(function() {
 
 	asyncTest('Bootstrapのバルーンを表示する位置を文字列で指定できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3571,7 +3541,7 @@ $(function() {
 
 	asyncTest('バルーン要素を配置するコンテナを設定できること)', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3598,7 +3568,7 @@ $(function() {
 
 	asyncTest('バリデート結果表示をリセットできること)', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -3622,24 +3592,18 @@ $(function() {
 		var formCtrl = this.formController;
 		var errorMessage = '同期バリデートに失敗しました';
 		var asyncErrorMessage = '非同期バリデートに失敗しました';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
 			}
 		});
-		formCtrl.addOutput('bsBalloon');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				bsBalloon: {
@@ -3661,37 +3625,40 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
-		setTimeout(function() {
-			var $inputA = $('.inputA');
+		var $inputA = $('.inputA');
 
-			// validateだとballoonを表示しない
-			var result = formCtrl.validate();
-			$inputA.focus();
-			// 待機しないとballoonが表示されない
-			setTimeout(function() {
-				strictEqual($('.tooltip>.tooltip-inner').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+		// 同期のバリデーション
+		$inputA.focus();
 
-				result.addEventListener('validateComplete', function(result) {
-					setTimeout(function() {
-						strictEqual($('.tooltip>.tooltip-inner').text(), asyncErrorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-						isCalled = true;
-					}, 0);
-				});
-			}, 100);
-		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
 		gate({
 			func: function() {
-				return isCalled;
+				return $('.tooltip').length === 1;
 			},
 			maxWait: 1000
 		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
+			// 同期のメッセージ確認
+			strictEqual($('.tooltip>.tooltip-inner').text(), errorMessage, '同期時に同期のメッセージが表示されること');
+			// 非同期のバリデーション
+			dfd.reject({
+				valid: false
+			});
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			stop();
+			setTimeout(function() {
+				gate({
+					func: function() {
+						return $('.tooltip').length === 1;
+					},
+					maxWait: 1000
+				}).done(function() {
+					// 非同期のメッセージ確認
+					strictEqual($('.tooltip>.tooltip-inner').text(), asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+				}).fail(function() {
+					ok(false, '非同期時にballoonが表示されない');
+				}).always(start);
+			}, 0);
 		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
+			ok(false, '同期時にballoonが表示されない');
 		}).always(start);
 	});
 
@@ -4081,11 +4048,15 @@ $(function() {
 			stop();
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><div class="testBalloonContainer">';
-			html += '<input class="inputA" name="a"><input class="inputB" name="b"></div></form>';
+			html += '<input class="inputA" name="a"><input class="inputB" name="b"><input class="inputC" name="c"><input class="inputD" name="d"></div></form>';
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
-				start();
+				var pluginName = 'style';
+				this.addOutput(pluginName);
+				this.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -4098,7 +4069,7 @@ $(function() {
 	//=============================
 	test('styleプラグインを有効化できること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('style');
+		// moduleのsetupでaddOutputを行っている
 		var pluginCtrl = formCtrl.getOutput('style');
 		strictEqual(pluginCtrl.__name, 'h5.ui.validation.Style', 'styleプラグインを有効化できること');
 	});
@@ -4106,20 +4077,20 @@ $(function() {
 	asyncTest(
 			'バリデート時に適用するクラス名を設定できること',
 			function() {
-				var $form = $('.testForm');
-				var html = '<input class="inputB" name="b"><input class="inputC" name="c"><input class="inputD" name="d">';
-				$form.append(html);
 				var $inputA = $('.inputA');
 				var $inputB = $('.inputB');
 				var $inputC = $('.inputC');
 				var $inputD = $('.inputD');
-				$inputA.val('aaa');
+
 				var successClassName = 'successValidate';
 				var errorClassName = 'failValidate';
 				var validatingClassName = 'validating';
 
+				var dfdC = h5.async.deferred();
+				var dfdD = h5.async.deferred();
+
 				var formCtrl = this.formController;
-				formCtrl.addOutput('style');
+				// moduleのsetupでaddOutputを行っている
 				formCtrl.addRule({
 					a: {
 						required: true
@@ -4129,20 +4100,12 @@ $(function() {
 					},
 					c: {
 						customFunc: function() {
-							var dfd = h5.async.deferred();
-							setTimeout(function() {
-								dfd.resolve();
-							}, 500);
-							return dfd.promise();
+							return dfdC.promise();
 						}
 					},
 					d: {
 						customFunc: function() {
-							var dfd = h5.async.deferred();
-							setTimeout(function() {
-								dfd.reject();
-							}, 500);
-							return dfd.promise();
+							return dfdD.promise();
 						}
 					}
 				});
@@ -4155,32 +4118,51 @@ $(function() {
 						}
 					}
 				});
+
+				// inputA,inputCだけsuccessになる
+				$inputA.val('aaa');
+				$inputC.val('aaa');
+
+				// 同期のバリデーション
 				var result = formCtrl.validate();
+
+				// 同期のバリデーション結果でクラスが適用されているか確認
 				ok($inputA.hasClass(successClassName), 'バリデート成功した要素にバリデート成功クラスが適用されること');
 				ok($inputB.hasClass(errorClassName), 'バリデート失敗した要素にバリデート失敗クラスが適用されること');
 				ok($inputC.hasClass(validatingClassName),
 						'非同期バリデートの結果待機中の要素に非同期バリデート結果待機のクラスが適用されること');
-				result.addEventListener('validateComplete', function() {
+
+				// 非同期のバリデーション
+				// inputCはsuccess
+				dfdC.resolve({
+					valid: true
+				});
+				// inputDはerror
+				dfdD.reject({
+					valid: false
+				});
+
+				// 非同期のバリデーションの後に実行するために処理を遅らせる
+				setTimeout(function() {
 					ok($inputC.hasClass(successClassName), '非同期バリデートの結果が成功であればバリデート成功クラスが適用されること');
 					ok($inputD.hasClass(errorClassName), '非同期バリデートの結果が失敗であればバリデート失敗クラスが適用されること');
 					start();
-				});
+				}, 0);
 			});
 
-	asyncTest('バリデート結果表示をリセットできること)', function() {
-		var $form = $('.testForm');
-		var html = '<input class="inputB" name="b"><input class="inputC" name="c">';
-		$form.append(html);
+	test('バリデート結果表示をリセットできること)', function() {
 		var $inputA = $('.inputA');
 		var $inputB = $('.inputB');
 		var $inputC = $('.inputC');
-		$inputA.val('aaa');
+
 		var successClassName = 'successValidate';
 		var errorClassName = 'failValidate';
 		var validatingClassName = 'validating';
 
+		var dfd = h5.async.deferred();
+
 		var formCtrl = this.formController;
-		formCtrl.addOutput('style');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.addRule({
 			a: {
 				required: true
@@ -4190,10 +4172,6 @@ $(function() {
 			},
 			c: {
 				customFunc: function() {
-					var dfd = h5.async.deferred();
-					setTimeout(function() {
-						dfd.resolve();
-					}, 500);
 					return dfd.promise();
 				}
 			}
@@ -4207,38 +4185,43 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			formCtrl.resetValidation();
-			ok(!$inputA.hasClass(successClassName), '適用したクラスがリセットされていること');
-			ok(!$inputB.hasClass(errorClassName), '適用したクラスがリセットされていること');
-			ok(!$inputC.hasClass(validatingClassName), '適用したクラスがリセットされていること');
-			start();
-		});
+
+		// inputAだけsuccessになる
+		$inputA.val('aaa');
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
+		// validatingクラスが適用されているか確認したいので非同期のバリデーションは行わない
+
+		// 同期のバリデーション結果でクラスが適用されているか確認
+		ok($inputA.hasClass(successClassName), 'successを適用したクラスが設定されていること');
+		ok($inputB.hasClass(errorClassName), 'errorを適用したクラスが設定されていること');
+		ok($inputC.hasClass(validatingClassName), 'validatingを適用したクラスが設定されていること');
+
+		// 適用したクラスがリセットされていることを確認
+		formCtrl.resetValidation();
+		ok(!$inputA.hasClass(successClassName), 'successを適用したクラスがリセットされていること');
+		ok(!$inputB.hasClass(errorClassName), 'errorを適用したクラスがリセットされていること');
+		ok(!$inputC.hasClass(validatingClassName), 'validatingを適用したクラスがリセットされていること');
 	});
 
 	asyncTest('同期・非同期のバリデーションが混在する場合、validateの直後に同期のメッセージが、validateComplete発火時に非同期のメッセージが表示されること', function() {
 		var formCtrl = this.formController;
 		var errorClassName = 'error';
 		var asyncErrorClassName = 'asyncError';
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				required: true
 			},
 			b: {
 				customFunc: function (value) {
-					var dfd = h5.async.deferred();
-					setTimeout(function () {
-						dfd.reject({
-							valid: false,
-							b: value
-						});
-					}, 500);
 					return dfd.promise();
 				}
 			}
 		});
-		formCtrl.addOutput('style');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				style: {
@@ -4260,34 +4243,27 @@ $(function() {
 			}
 		});
 
-		var isCalled = false;
+		var $inputA = $('.inputA');
+		var $inputB = $('.inputB');
+
+		// 同期のバリデーション
+		var result = formCtrl.validate();
+
+		// 同期メッセージ確認
+		ok($inputA.hasClass(errorClassName), '同期時に適用した同期クラスが追加されていること');
+		ok(!$inputB.hasClass(asyncErrorClassName), '同期時に適用した非同期クラスが追加されていないこと');
+
+		// 非同期のバリデーション
+		dfd.reject({
+			valid: false
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
 		setTimeout(function() {
-			var $inputA = $('.inputA');
-
-			var result = formCtrl.validate();
-			ok($inputA.hasClass(errorClassName), 'バリデートエラーが有った場合にCSSクラスが追加されること');
-
-			result.addEventListener('validateComplete', function(result) {
-				setTimeout(function() {
-					var $inputB = $('.inputB');
-					ok($inputB.hasClass(asyncErrorClassName), 'バリデートエラーが有った場合にCSSクラスが追加されること');
-					isCalled = true;
-				}, 0);
-			});
+			ok($inputA.hasClass(errorClassName), '非同期時に適用した同期クラスが追加されていること');
+			ok($inputB.hasClass(asyncErrorClassName), '非同期時に適用したクラスが追加されていること');
+			start();
 		}, 0);
-
-		// validateCompleteイベントハンドラが呼び出されるまで待機
-		// 1秒たっても呼び出されない場合はテスト失敗
-		gate({
-			func: function() {
-				return isCalled;
-			},
-			maxWait: 1000
-		}).done(function() {
-			ok(true, 'validateCompleteのイベントリスナーが呼び出されたこと');
-		}).fail(function() {
-			ok(false, 'validateCompleteのイベントリスナーが呼び出されないこと');
-		}).always(start);
 	});
 
 	//=============================
@@ -4573,41 +4549,46 @@ $(function() {
 			$('body').append(html);
 
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
-				});
-				this.addOutput(['asyncIndicator', 'composition', 'message', 'balloon', 'bsBalloon',
-						'style']);
-				this.setSetting({
-					output: {
-						asyncIndicator: {
-							replaceElement: containerClass,
-							off: true
-						},
-						composition: {
-							container: containerClass,
-							off: true
-						},
-						message: {
-							wrapper: '<li class="testMessage">',
-							off: true
-						},
-						balloon: {
-							off: true
-						},
-						bsBalloon: {
-							off: true
-						},
-						style: {
-							errorClassName: that.errorClassName,
-							off: true
+			var formCtrl = this.formController;
+			formCtrl.readyPromise.done(function() {
+				var pluginNames = ['asyncIndicator', 'composition', 'message', 'balloon', 'bsBalloon', 'style'];
+				formCtrl.addOutput(pluginNames);
+				h5.async.when(pluginNames.map(function(pluginName) {
+					return formCtrl.getOutput(pluginName).readyPromise;
+				})).done(function() {
+					formCtrl.addRule({
+							a: {
+									required: true
+							}
+					});
+					formCtrl.setSetting({
+						output: {
+							asyncIndicator: {
+								replaceElement: containerClass,
+								off: true
+							},
+							composition: {
+								container: containerClass,
+								off: true
+							},
+							message: {
+								wrapper: '<li class="testMessage">',
+								off: true
+							},
+							balloon: {
+								off: true
+							},
+							bsBalloon: {
+								off: true
+							},
+							style: {
+								errorClassName: that.errorClassName,
+								off: true
+							}
 						}
-					}
+					});
+					start();
 				});
-				start();
 			});
 		},
 		teardown: function() {
@@ -4621,23 +4602,28 @@ $(function() {
 	//=============================
 	asyncTest('asyncIndicatorプラグインが無効になること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
 		formCtrl.addRule({
 			a: {
 				customFunc: function() {
-					var dfd = h5.async.deferred();
-					setTimeout(function() {
-						dfd.resolve();
-					}, 500);
 					return dfd.promise();
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
+		// 同期のバリデーション
+		formCtrl.validate();
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
 		});
-		var $indicator = $('.h5-indicator');
-		strictEqual($indicator.length, 0, 'asyncIndicatorプラグインが無効になること');
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			var $indicator = $('.h5-indicator');
+			strictEqual($indicator.length, 0, 'asyncIndicatorプラグインが無効になること');
+			start();
+		}, 0);
 	});
 
 	test('compositionプラグインが無効になること', function() {
@@ -5341,20 +5327,13 @@ $(function() {
 					$('body').append(html);
 
 					this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-					this.formController.readyPromise.done(function() {
-						this.addRule({
-							a: {
-								customFunc: function() {
-									var dfd = h5.async.deferred();
-									setTimeout(function() {
-										dfd.resolve();
-									}, 500);
-									return dfd.promise();
-								}
-							}
+					var formCtrl = this.formController;
+					formCtrl.readyPromise.done(function() {
+						var pluginName = 'asyncIndicator';
+						formCtrl.addOutput(pluginName);
+						formCtrl.getOutput(pluginName).readyPromise.done(function() {
+								start();
 						});
-						this.addOutput('asyncIndicator');
-						start();
 					});
 				},
 				teardown: function() {
@@ -5368,6 +5347,14 @@ $(function() {
 	//=============================
 	asyncTest('クラス適用対象要素 replaceElement をDOMで設定できること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
+		formCtrl.addRule({
+			a: {
+				customFunc: function() {
+					return dfd.promise();
+				}
+			}
+		});
 		formCtrl.setSetting({
 			output: {
 				asyncIndicator: {
@@ -5375,16 +5362,34 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
-		});
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
 		strictEqual($('.replaceContainer > .h5-indicator').length, 1,
 				'replaceElementの子要素にインジケータが表示されること');
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			start();
+		}, 0);
 	});
 
 	asyncTest('クラス適用対象要素 replaceElement をjQueryで設定できること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
+		formCtrl.addRule({
+			a: {
+				customFunc: function() {
+					return dfd.promise();
+				}
+			}
+		});
 		formCtrl.setSetting({
 			output: {
 				asyncIndicator: {
@@ -5392,16 +5397,34 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
-		});
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
 		strictEqual($('.replaceContainer > .h5-indicator').length, 1,
 				'replaceElementの子要素にインジケータが表示されること');
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			start();
+		}, 0);
 	});
 
 	asyncTest('クラス適用対象要素 replaceElement をセレクタ文字列で設定できること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
+		formCtrl.addRule({
+			a: {
+				customFunc: function() {
+					return dfd.promise();
+				}
+			}
+		});
 		formCtrl.setSetting({
 			output: {
 				asyncIndicator: {
@@ -5409,16 +5432,34 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
-		});
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
 		strictEqual($('.replaceContainer > .h5-indicator').length, 1,
 				'replaceElementの子要素にインジケータが表示されること');
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			start();
+		}, 0);
 	});
 
 	asyncTest('クラス適用対象要素 replaceElement を関数で設定できること', function() {
 		var formCtrl = this.formController;
+		var dfd = h5.async.deferred();
+		formCtrl.addRule({
+			a: {
+				customFunc: function() {
+					return dfd.promise();
+				}
+			}
+		});
 		formCtrl.setSetting({
 			output: {
 				asyncIndicator: {
@@ -5428,12 +5469,22 @@ $(function() {
 				}
 			}
 		});
-		var result = formCtrl.validate();
-		result.addEventListener('validateComplete', function() {
-			start();
-		});
+
+		// 同期のバリデーション
+		formCtrl.validate();
+
 		strictEqual($('.replaceContainer > .h5-indicator').length, 1,
 				'replaceElementの子要素にインジケータが表示されること');
+
+		// 非同期のバリデーション
+		dfd.resolve({
+			valid: true
+		});
+
+		// 非同期のバリデーションの後に実行するために処理を遅らせる
+		setTimeout(function() {
+			start();
+		}, 0);
 	});
 
 	//=============================
@@ -5997,26 +6048,31 @@ $(function() {
 			}
 		});
 		msgOutputCtrl.setContainer('.messageContainer');
+		var dfd = h5.async.deferred();
 		logic.addRule({
 			a: {
 				customFunc: function() {
-					var dfd = h5.async.deferred();
-					setTimeout(function() {
-						dfd.reject();
-					}, 0);
 					return dfd.promise();
 				}
 			}
 		});
+
+		// 同期のバリデーション
 		var result = logic.validate({
 			a: ''
 		});
-		result.addEventListener('validateComplete', function() {
-			strictEqual($container.text(), '入力要素Aが違反しています',
-					'ValidationResultが非同期バリデート待ちの場合は結果が返ってきたときにメッセージを表示すること');
-			start();
+
+		// 非同期のバリデーション
+		dfd.reject({
+			valid: false
 		});
-		msgOutputCtrl.appendMessageByValidationResult(result, 'a');
+
+		setTimeout(function() {
+			// 非同期のバリデーション結果をメッセージに追加
+			msgOutputCtrl.appendMessageByValidationResult(result, 'a');
+			strictEqual($container.text(), '入力要素Aが違反しています', 'ValidationResultが非同期バリデート待ちの場合は結果が返ってきたときにメッセージを表示すること');
+			start();
+		}, 0);
 	});
 
 	test('setContainer()でコンテナを未設定の場合は何も表示しないこと', function() {
@@ -8473,29 +8529,29 @@ $(function() {
 				};
 				var formCtrl = this.formController;
 				formCtrl._addOutputPlugin(pluginName, controller);
-				formCtrl.addRule({
-					a: {
-						required: true
-					}
-				});
-				formCtrl.addOutput('testPlugin');
-				formCtrl.setSetting({
-					output: {
-						testPlugin: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
 						a: {
-							composition: {
-								message: errorMessage
+							required: true
+						}
+					});
+					formCtrl.setSetting({
+						output: {
+							testPlugin: {
+								container: $('.errorContainer')
+							}
+						},
+						property: {
+							a: {
+								composition: {
+									message: errorMessage
+								}
 							}
 						}
-					}
+					});
+					start();
 				});
-
-				// FIXME: #529
-				setTimeout(start, 200);
 			}.bind(this));
 		}
 	});
@@ -8544,17 +8600,11 @@ $(function() {
 			ok(!this.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
 			ok(this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
 	});
-	test('非同期バリデーションの場合、非同期バリデーションが完了したタイミングで関数が呼び出されること', function() {
+	asyncTest('非同期バリデーションの場合、非同期バリデーションが完了したタイミングで関数が呼び出されること', function() {
+			var dfd = h5.async.deferred();
 			this.formController.addRule({
 				a: {
 					customFunc: function(value) {
-						var dfd = h5.async.deferred();
-						setTimeout(function(){
-							dfd.resolve({
-								valid: true,
-								a: value
-							});
-						}, 0);
 						return dfd.promise();
 					}
 				}
@@ -8562,7 +8612,9 @@ $(function() {
 			this.onValidate = function(result) {
 				console.log(result);
 			}
-			var result = this.formController.validate('a');
+
+			// 同期のバリデーション
+			this.formController.validate('a');
 
 			// 非同期処理が完了するまで呼ばれない
 			ok(!this.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
@@ -8571,14 +8623,20 @@ $(function() {
 			ok(!this.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
 			ok(!this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
 
+			// 非同期のバリデーション
+			dfd.reject({
+				valid: false
+			});
+
 			var that = this;
-			result.addEventListener('validateComplete', function() {
+			setTimeout(function() {
 				ok(!that.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
 				ok(!that.isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
 				ok(!that.isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
 				ok(!that.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
 				ok(that.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
-			})
+				start();
+			}, 0);
 	});
 
 	//=============================
