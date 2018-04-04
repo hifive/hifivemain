@@ -5118,14 +5118,18 @@ $(function() {
 			$('body').append(html);
 
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
+			var formCtrl = this.formController;
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'message';
+				formCtrl.addOutput('message');
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+					start();
 				});
-				this.addOutput('message');
-				start();
 			});
 		},
 		teardown: function() {
@@ -5147,7 +5151,7 @@ $(function() {
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.replaceContainer').text(), 'aは必須項目です',
+		strictEqual($('.replaceContainer').next().text(), 'aは必須項目です。',
 				'クラス適用対象要素 replaceElement をDOMで設定できること');
 	});
 
@@ -5161,7 +5165,7 @@ $(function() {
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.replaceContainer').text(), 'aは必須項目です',
+		strictEqual($('.replaceContainer').next().text(), 'aは必須項目です。',
 				'クラス適用対象要素 replaceElement をjQueryで設定できること');
 	});
 
@@ -5176,7 +5180,7 @@ $(function() {
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.replaceContainer').text(), 'aは必須項目です',
+		strictEqual($('.replaceContainer').next().text(), 'aは必須項目です。',
 				'クラス適用対象要素 replaceElement をセレクタ文字列で設定できること');
 	});
 
@@ -5193,7 +5197,7 @@ $(function() {
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.replaceContainer').text(), 'aは必須項目です',
+		strictEqual($('.replaceContainer').next().text(), 'aは必須項目です。',
 				'クラス適用対象要素 replaceElement を関数でで設定できること');
 	});
 
