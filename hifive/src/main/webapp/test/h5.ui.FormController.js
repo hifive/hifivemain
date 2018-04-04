@@ -5201,6 +5201,21 @@ $(function() {
 				'クラス適用対象要素 replaceElement を関数でで設定できること');
 	});
 
+	test('クラス適用対象要素 replaceElement を定義しないこと', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			output: {
+				message: {
+					// replaceElementを定義しない
+					replaceElement: null
+				}
+			}
+		});
+		formCtrl.validate();
+		ok(!$('.replaceContainer').next().hasClass('message'), 'replaceElementの後ろの要素にメッセージが表示されてないこと');
+		strictEqual($('.inputA').next().text(), 'aは必須項目です。', 'バリデート対象の要素の後ろの要素にメッセージが表示されること');
+	});
+
 	//=============================
 	// Definition
 	//=============================
