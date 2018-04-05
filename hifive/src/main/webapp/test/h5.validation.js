@@ -960,7 +960,7 @@ $(function() {
 					strictEqual(ev.target, result, 'イベントオブジェクトのtargetはValidationResult');
 					strictEqual(ev.value, dfd1, 'イベントオブジェクトのvalueから値が取れること');
 					strictEqual(ev.isValid, true, 'イベントオブジェクトのisValidはtrue');
-					strictEqual(ev.violation, undefined, 'イベントオブジェクトのviolationはundefined');
+					strictEqual(ev.violation, null, 'イベントオブジェクトのviolationはnull');
 
 					strictEqual(this.validCount, 1, 'validateイベントハンドラの時点でvalidCountが増えている');
 					strictEqual(this.validProperties[0], 'p1',
