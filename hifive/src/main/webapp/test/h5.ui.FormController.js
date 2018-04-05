@@ -3810,7 +3810,7 @@ $(function() {
 			},
 			failMsg: 'バルーンが表示されない'
 		}).done(function() {
-			strictEqual($('.tooltip-inner').text(), 'aは必須項目です', 'title属性を指定しても正しくメッセージが表示されること');
+			strictEqual($('.tooltip-inner').text(), 'aは必須項目です。', 'title属性を指定しても正しくメッセージが表示されること');
 		}).always(start);
 	});
 
@@ -5031,9 +5031,18 @@ $(function() {
 			$('body').append(html);
 
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addOutput('style');
-				start();
+			var formCtrl = this.formController;
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'style';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -5055,6 +5064,7 @@ $(function() {
 				}
 			}
 		});
+		$('.inputA').val('ok');
 		formCtrl.validate();
 		ok($('.replaceContainer').hasClass('successValidate'),
 				'クラス適用対象要素 replaceElement をDOMで設定できること');
@@ -5070,6 +5080,7 @@ $(function() {
 				}
 			}
 		});
+		$('.inputA').val('ok');
 		formCtrl.validate();
 		ok($('.replaceContainer').hasClass('successValidate'),
 				'クラス適用対象要素 replaceElement をjQueryで設定できること');
@@ -5085,6 +5096,7 @@ $(function() {
 				}
 			}
 		});
+		$('.inputA').val('ok');
 		formCtrl.validate();
 		ok($('.replaceContainer').hasClass('successValidate'),
 				'クラス適用対象要素 replaceElement をセレクタ文字列で設定できること');
@@ -5102,9 +5114,28 @@ $(function() {
 				}
 			}
 		});
+		$('.inputA').val('ok');
 		formCtrl.validate();
 		ok($('.replaceContainer').hasClass('successValidate'),
 				'クラス適用対象要素 replaceElement を関数でで設定できること');
+	});
+
+	test('クラス適用対象要素 replaceElement を定義しないこと', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			output: {
+				style: {
+					successClassName: 'successValidate',
+					// replaceElementを定義しない
+					replaceElement: null
+				}
+			}
+		});
+		var $inputA = $('.inputA');
+		$inputA.val('ok');
+		formCtrl.validate();
+		ok(!$('.replaceContainer').hasClass('successValidate'), 'replaceElement にクラスが追加されていないこと');
+		ok($inputA.hasClass('successValidate'), 'バリデート対象の要素にクラスが追加されていること');
 	});
 
 	//=============================
@@ -5225,23 +5256,28 @@ $(function() {
 				setup: function() {
 					stop();
 					var html = '<form class="testForm">';
-					html += '<div class="replaceContainer" style="height:10px; width: 100px; border: solid 1px;"></div>';
 					html += '<input class="inputA" name="a"></form>';
+					html += '<div class="replaceContainer" style="height:10px; width: 100px; border: solid 1px;"></div>';
 					$('#qunit-fixture').append(html);
 
 					this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-					this.formController.readyPromise.done(function() {
-						this.addRule({
-							a: {
-								required: true
-							}
+					var formCtrl = this.formController;
+					formCtrl.readyPromise.done(function() {
+						var pluginName = 'balloon';
+						formCtrl.addOutput(pluginName);
+						formCtrl.getOutput(pluginName).readyPromise.done(function() {
+							formCtrl.addRule({
+								a: {
+									required: true
+								}
+							});
+							start();
 						});
-						this.addOutput('balloon');
-						start();
 					});
 				},
 				teardown: function() {
 					clearController();
+					$('.testForm').remove();
 					$('.validation-balloon').remove();
 				}
 			});
@@ -5258,11 +5294,11 @@ $(function() {
 				}
 			}
 		});
-		formCtrl.validate();
+
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				$('.validation-balloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
@@ -5282,11 +5318,11 @@ $(function() {
 				}
 			}
 		});
-		formCtrl.validate();
+
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				$('.validation-balloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
@@ -5307,11 +5343,11 @@ $(function() {
 				}
 			}
 		});
-		formCtrl.validate();
+
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				$('.validation-balloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
@@ -5334,11 +5370,11 @@ $(function() {
 				}
 			}
 		});
-		formCtrl.validate();
+
 		$('.inputA').focus();
 		gate({
 			func: function() {
-				$('.validation-balloon').length === 1;
+				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
@@ -5348,6 +5384,31 @@ $(function() {
 							'クラス適用対象要素 replaceElement を関数でで設定できること');
 				}).always(start);
 
+	});
+
+	asyncTest('クラス適用対象要素 replaceElement を定義しないこと', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			output: {
+				balloon: {
+					// replaceElementを定義しない
+					replaceElement: null
+				}
+			}
+		});
+
+		var $inputA = $('.inputA');
+		$inputA.focus();
+		gate({
+			func: function() {
+				return $('.validation-balloon').length === 1;
+			},
+			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
+		}).done(function() {
+			strictEqual($('.replaceContainer').next('.validation-balloon').length, 0, 'replaceElmentの後ろにballoon要素が存在しないこと');
+			strictEqual($inputA.next('.validation-balloon').length, 1, 'バリデート対象の要素の後ろにballoon要素が存在すること');
+		}).always(start);
 	});
 
 	//=============================
