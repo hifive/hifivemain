@@ -692,10 +692,12 @@ $(function() {
 		var result = validator.validate({});
 		strictEqual(result.isAsync, false, '同期バリデートの場合はisAsyncはfalse');
 
-		customAsyncRule.max = 1;
 		validator.addRule({
 			p1: requiredRule,
-			p2: customAsyncRule
+			p2: {
+				customFunc: customAsyncRule.customFunc,
+				max: 1
+			}
 		});
 		var dfd1 = h5.async.deferred();
 		result = validator.validate({
