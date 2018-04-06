@@ -1390,7 +1390,7 @@ $(function() {
 			$input.val('ok');
 			formCtrl.validate();
 
-			ok($('.errorContainer').is(':hidden'), '非表示になること');
+			ok($('.errorContainer').is(':visible'), '表示になること');
 			start();
 		}, 0);
 	});
@@ -3408,7 +3408,7 @@ $(function() {
 		formCtrl.setSetting({
 			output: {
 				balloon: {
-					placement: 'bottom'
+					placement: 'right'
 				}
 			}
 		});
@@ -5678,7 +5678,7 @@ $(function() {
 		formCtrl.removeRule('a');
 		$('.inputA').val('xxx');
 		var result = formCtrl.validate();
-		strictEqual($.inArray('a', result.validProperties), 0, '個別にバリデートルールを削除できること');
+		strictEqual($.inArray('a', result.validProperties), -1, '個別にバリデートルールを削除できること');
 	});
 
 	test('グループに対してバリデートをかけられること', function() {
