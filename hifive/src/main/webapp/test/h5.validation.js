@@ -692,10 +692,12 @@ $(function() {
 		var result = validator.validate({});
 		strictEqual(result.isAsync, false, '同期バリデートの場合はisAsyncはfalse');
 
-		customAsyncRule.max = 1;
 		validator.addRule({
 			p1: requiredRule,
-			p2: customAsyncRule
+			p2: {
+				customFunc: customAsyncRule.customFunc,
+				max: 1
+			}
 		});
 		var dfd1 = h5.async.deferred();
 		result = validator.validate({
@@ -960,7 +962,7 @@ $(function() {
 					strictEqual(ev.target, result, 'イベントオブジェクトのtargetはValidationResult');
 					strictEqual(ev.value, dfd1, 'イベントオブジェクトのvalueから値が取れること');
 					strictEqual(ev.isValid, true, 'イベントオブジェクトのisValidはtrue');
-					strictEqual(ev.violation, undefined, 'イベントオブジェクトのviolationはundefined');
+					strictEqual(ev.violation, null, 'イベントオブジェクトのviolationはnull');
 
 					strictEqual(this.validCount, 1, 'validateイベントハンドラの時点でvalidCountが増えている');
 					strictEqual(this.validProperties[0], 'p1',
