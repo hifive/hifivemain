@@ -630,7 +630,7 @@
 				return;
 			}
 			var replaceElement = propSetting.replaceElement;
-			var element = isFunction(replaceElement) ? replaceElement(element)
+			element = isFunction(replaceElement) ? replaceElement(element)
 					: (replaceElement || element);
 			if (!element) {
 				return;
@@ -997,6 +997,9 @@
 })();
 
 (function() {
+	//FormControllerからコピーになっているので要整理
+	var DATA_INPUTGROUP_CONTAINER = 'h5-input-group-container';
+
 	var DEFAULT_PLACEMENT = 'top';
 	/**
 	 * validate時にエラーがあった時、エラーバルーンを表示するプラグイン
@@ -1035,6 +1038,8 @@
 		_messageOutputController: h5.ui.validation.MessageOutputController,
 		_setting: {},
 		_balloonTargets: [],
+
+		_nameToTargetMap: {},
 
 		_updateOn: null,
 
@@ -1163,6 +1168,7 @@
 			$(this._balloonTargets).each(this.own(function(el) {
 				this._hideBalloon(el);
 			}));
+			this._balloonTargets = [];
 		},
 
 		/**
@@ -1183,18 +1189,49 @@
 				// off指定されていれば何もしない
 				return;
 			}
+
+			var target = null;
+			var groupContainerTarget = null;
+
+			//バルーン表示対象がグループコンテナの場合、
+			//activeな要素を表示対象とする。ただし、Activeな要素がない場合は最初のコンテナを対象とする。
+			if (this.parentController._isGroupName(name)) {
+				var $groupContainers = $(this.parentController._getInputGroupElements()).filter(
+						'[data-' + DATA_INPUTGROUP_CONTAINER + '="' + name + '"]');
+				var $activeGroupContainer = $groupContainers.has(document.activeElement);
+				if ($activeGroupContainer.length > 0) {
+					groupContainerTarget = $activeGroupContainer[0];
+				} else {
+					groupContainerTarget = $groupContainers[0];
+				}
+			}
+
 			var replaceElement = propSetting.replaceElement;
-			var target = isFunction(replaceElement) ? replaceElement(element)
-					: (replaceElement || element);
+
+			if (isFunction(replaceElement)) {
+				target = replaceElement(element);
+			} else if (replaceElement != null) {
+				target = replaceElement;
+			} else if (groupContainerTarget) {
+				target = groupContainerTarget;
+			} else {
+				target = element;
+			}
+
 			if (!target) {
 				return;
 			}
 
+			//対象がグループコンテナの場合、elementが「最初のコンテナ」になっているので、
+			//Hideの対象と異なる場合がある。そのため、削除対象はマップから取得する。
+			var hideTargetElement = this._nameToTargetMap[name] ? this._nameToTargetMap[name]
+					: target;
+
 			if (type === 'blur'
-					|| (element !== document.activeElement && !$(document.activeElement).closest(
-							element).length)) {
+					|| (hideTargetElement !== document.activeElement && !$(document.activeElement)
+							.closest(hideTargetElement).length)) {
 				// フォーカスが外れた時、該当要素または該当要素内の要素にフォーカスが当たっていない場合は非表示にする
-				this._hideBalloon(element);
+				this._hideBalloon(hideTargetElement, name);
 				return;
 			}
 			var placement = propSetting.placement || DEFAULT_PLACEMENT;
@@ -1203,13 +1240,13 @@
 			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
 				// 非同期バリデートの結果待ちの場合
 				validationResult.addEventListener('validate', this.own(function(ev) {
-					if (element !== document.activeElement) {
+					if (target !== document.activeElement) {
 						return;
 						// 非同期バリデート終了時に既にフォーカスが外れていたら何もしない
 					}
 					if (ev.isValid) {
 						// validならバルーンを隠す
-						this._hideBalloon(element);
+						this._hideBalloon(hideTargetElement, name);
 						return;
 					}
 					// invalidならバルーン表示
@@ -1218,17 +1255,22 @@
 				}));
 				return;
 			}
+
 			var invalidReason = validationResult.invalidReason
 					&& validationResult.invalidReason[name];
 			if (!invalidReason) {
 				// validateエラーがないときはhideして終了
-				this._hideBalloon(element);
+				this._hideBalloon(hideTargetElement, name);
 				return;
+			}
+
+			if (this.parentController._isGroupName(name)) {
+				this._nameToTargetMap[name] = target;
 			}
 
 			// validateエラーがあるとき
 			this._showBalloon(target, placement, container, this._messageOutputController
-					.getMessageByValidationResult(validationResult, name));
+					.getMessageByValidationResult(validationResult, name), name);
 		},
 
 		/**
@@ -1240,8 +1282,8 @@
 		 * @param placement
 		 * @param message
 		 */
-		_showBalloon: function(target, placement, container, message) {
-			this._hideBalloon(target);
+		_showBalloon: function(target, placement, container, message, name) {
+			this._hideBalloon(target, name);
 			var balloonCtrl = this._balloonController;
 			if (!balloonCtrl) {
 				var c = h5.core.controller(this.rootElement, h5.ui.components.BalloonController);
@@ -1272,15 +1314,17 @@
 		 * @private
 		 * @memberOf h5.ui.validation.ErrorBalloon
 		 * @param target
-		 * @param placement
-		 * @param message
 		 */
-		_hideBalloon: function(target, placement, container, message) {
+		_hideBalloon: function(target, name) {
 			if (this._currentBalloon) {
 				this._currentBalloon.dispose();
 				this._currentBalloon = null;
 			}
 			this._removeBalloonTarget(target);
+
+			if (name != null && this._nameToTargetMap[name]) {
+				delete this._nameToTargetMap[name];
+			}
 		},
 
 		/**
@@ -1402,9 +1446,13 @@
 		 * @private
 		 * @memberOf h5.ui.validation.BootstrapErrorBalloon
 		 */
-		_hideBalloon: function(target) {
+		_hideBalloon: function(target, name) {
 			$(target).tooltip('hide');
 			this._removeBalloonTarget(target);
+
+			if (name != null && this._nameToTargetMap[name]) {
+				delete this._nameToTargetMap[name];
+			}
 		},
 
 		/**
@@ -1417,7 +1465,7 @@
 		 * @param container
 		 * @param message
 		 */
-		_showBalloon: function(target, placement, container, message) {
+		_showBalloon: function(target, placement, container, message, name) {
 			$(target).removeAttr('title').attr({
 				'data-placement': placement,
 				'data-container': container,
@@ -3090,6 +3138,26 @@
 						return (formAttr && formAttr === formId) || !formAttr
 								&& $allGroups.index($this) !== -1;
 					}).toArray();
+		},
+
+		/**
+		 * @private
+		 * @param name
+		 */
+		_isGroupName: function(name) {
+			if (name == null || name == '') {
+				return false;
+			}
+
+			var groupContainers = this._getInputGroupElements();
+			for (var i = 0, len = groupContainers.length; i < len; i++) {
+				var container = groupContainers[i];
+				var groupName = $(container).data(DATA_INPUTGROUP_CONTAINER);
+				if (name === groupName) {
+					return true;
+				}
+			}
+			return false;
 		},
 
 		/**
