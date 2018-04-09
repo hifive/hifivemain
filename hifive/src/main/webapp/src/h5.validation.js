@@ -784,6 +784,8 @@
 				validateOn, resolveOn);
 	}
 
+	var UNIX_TIME_REGEXP = /^[0-9]+$/;
+
 	// =========================================================================
 	//
 	// Body
@@ -944,10 +946,45 @@
 		 * </p>
 		 *
 		 * @param {Any} value 判定する値
+		 * @param {Date|Number|String} reference 基準時刻。NumberまたはStringの場合、UNIX時刻が渡されたものとみなす
 		 * @returns {boolean}
 		 */
-		future: function(value) {
-			return value == null || value instanceof Date && new Date().getTime() < value.getTime();
+		future: function(value, reference) {
+			if (value == null) {
+				//nullの場合はtrueとする
+				return true;
+			}
+
+			var refTime = null;
+
+			if (reference instanceof Date) {
+				//Dateインスタンスの場合はそのまま使用
+				refTime = reference.getTime();
+			} else if (typeof reference === 'number') {
+				//UNIX TIMEを数値で渡された場合
+				refTime = reference;
+			} else if (typeof reference === 'string' && UNIX_TIME_REGEXP.test(reference)) {
+				//UNX TIMEを文字列で渡された場合
+				refTime = parseInt(reference);
+			} else {
+				//それ以外の場合は現在時刻を用いる
+				refTime = new Date().getTime();
+			}
+
+			//valueは、DateインスタンスならgetTime()し、そうでなければUnixTime値(Number型)が入っているとみなす
+			var targetTime = 0;
+			if (value instanceof Date) {
+				targetTime = value.getTime();
+			} else if (typeof value === 'number') {
+				targetTime = value;
+			} else if (typeof value === 'string' && UNIX_TIME_REGEXP.test(value)) {
+				targetTime = parseInt(value);
+			} else {
+				return false;
+			}
+
+			//targetTimeが基準時刻より後ならtrue
+			return refTime < targetTime;
 		},
 
 		/**
@@ -960,10 +997,47 @@
 		 * </p>
 		 *
 		 * @param {Any} value 判定する値
+		 * @param {Date|Number|String} reference 基準時刻。NumberまたはStringの場合、UNIX時刻が渡されたものとみなす
 		 * @returns {boolean}
 		 */
-		past: function(value) {
-			return value == null || value instanceof Date && value.getTime() < new Date().getTime();
+		past: function(value, reference) {
+			if (value == null) {
+				//nullの場合はtrueとする
+				return true;
+			}
+
+			var refTime = null;
+
+			if (reference instanceof Date) {
+				//Dateインスタンスの場合はそのまま使用
+				refTime = reference.getTime();
+			} else if (typeof reference === 'number') {
+				//UNIX TIMEを数値で渡された場合
+				refTime = reference;
+			} else if (typeof reference === 'string' && UNIX_TIME_REGEXP.test(reference)) {
+				//UNX TIMEを文字列で渡された場合
+				refTime = parseInt(reference);
+			} else {
+				//それ以外の場合は現在時刻を用いる
+				refTime = new Date().getTime();
+			}
+
+			//valueは、DateインスタンスならgetTime()し、そうでなければUnixTime値(Number型)が入っているとみなす
+			var targetTime = 0;
+
+			if (value instanceof Date) {
+				targetTime = value.getTime();
+			} else if (typeof value === 'number') {
+				targetTime = value;
+			} else if (typeof value === 'string' && UNIX_TIME_REGEXP.test(value)) {
+				targetTime = parseInt(value);
+			} else {
+				//日付またはUNIX TIMEとして解釈できない値が渡された場合はfalseとする
+				return false;
+			}
+
+			//targetTimeが基準時刻より前ならtrue
+			return targetTime < refTime;
 		},
 
 		/**
@@ -1744,7 +1818,11 @@
 				return isNumberValue(value) ? parseFloat(value) : NaN;
 			case DEFAULT_RULE_NAME_FUTURE:
 			case DEFAULT_RULE_NAME_PAST:
-				return new Date(value);
+				if (value instanceof Date) {
+					return value;
+				} else if (typeof value === 'number') {
+					return new Date(value);
+				}
 			}
 			return value;
 		},
@@ -1821,8 +1899,8 @@
 	defineRule(DEFAULT_RULE_NAME_ASSERT_TRUE, rule.assertTrue, null, 50, false, null, null);
 	defineRule(DEFAULT_RULE_NAME_MAX, rule.max, ['max', 'inclusive'], 50, false, null, null);
 	defineRule(DEFAULT_RULE_NAME_MIN, rule.min, ['min', 'inclusive'], 50, false, null, null);
-	defineRule(DEFAULT_RULE_NAME_FUTURE, rule.future, null, 50, false, null, null);
-	defineRule(DEFAULT_RULE_NAME_PAST, rule.past, null, 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_FUTURE, rule.future, ['referenceTime'], 50, false, null, null);
+	defineRule(DEFAULT_RULE_NAME_PAST, rule.past, ['referenceTime'], 50, false, null, null);
 	defineRule(DEFAULT_RULE_NAME_DIGITS, rule.digits, ['integer', 'fraction'], 50, false, null,
 			null);
 	defineRule(DEFAULT_RULE_NAME_PATTERN, rule.pattern, ['regexp'], 50, false, null, null);
