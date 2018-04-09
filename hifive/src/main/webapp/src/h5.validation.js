@@ -1831,6 +1831,13 @@
 	// =============================
 	// Expose to window
 	// =============================
+
+	if (!h5internal.validation) {
+		h5internal.validation = {};
+	}
+	h5internal.validation.ValidationResult = ValidationResult;
+
+
 	/**
 	 * @namespace
 	 * @name validation

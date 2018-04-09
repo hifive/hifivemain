@@ -154,9 +154,10 @@
 	// =============================
 	// Expose to window
 	// =============================
-	h5internal.validation = {
-		createValidateErrorMessage: createValidateErrorMessage
-	};
+	if (!h5internal.validation) {
+		h5internal.validation = {};
+	}
+	h5internal.validation.createValidateErrorMessage = createValidateErrorMessage;
 
 	/**
 	 * メッセージ及びvalidate結果から作成したメッセージを出力するコントローラ
@@ -672,7 +673,11 @@
 			var validatingClassName = propSetting.validatingClassName;
 			$(element).removeClass(errorClassName).removeClass(successClassName).removeClass(
 					validatingClassName);
-			if (!state) {
+			if (state == null) {
+				if (this._styleAppliedElements[name]) {
+					//マップから要素を削除（stateがnullになるのはver.1.3.2ではresetから呼ばれる場合のみ）
+					delete this._styleAppliedElements[name];
+				}
 				return;
 			}
 			var className = propSetting[state + 'ClassName'];
@@ -803,7 +808,7 @@
 
 			var lastResult = validationResult;
 			if (this._showAllErrors) {
-				lastResult = this._formController.getLastValidationResult();
+				lastResult = this.parentController.getLastValidationResult();
 			}
 
 			this._lastValidationResult = lastResult;
@@ -931,7 +936,7 @@
 		 * @memberOf h5.ui.validation.Composition
 		 */
 		reset: function() {
-			this._messageOutputController.clearMessage();
+			this._update(null, null, this.parentController.getLastValidationResult());
 		},
 
 		/**
@@ -989,9 +994,7 @@
 		 */
 		_setDefaultMessage: function(validatorName, message) {
 			this._messageOutputController._setDefaultMessage(validatorName, message);
-		},
-
-		_formController: null
+		}
 	};
 	h5.core.expose(controller);
 })();
@@ -1381,12 +1384,9 @@
 		 */
 		_removeBalloonTarget: function(target) {
 			var index = $.inArray(target, this._balloonTargets);
-
-			if (index === -1) {
-				return;
+			if (index !== -1) {
+				this._balloonTargets.splice(index, 1);
 			}
-
-			this._balloonTargets.splice(index, 1);
 		},
 
 		/**
@@ -1657,8 +1657,7 @@
 		 */
 		reset: function() {
 			for ( var p in this._messageElementMap) {
-				var $target = this._messageElementMap[name];
-				$target && $target.remove();
+				this._removeMessage(p);
 			}
 		},
 
@@ -1732,7 +1731,13 @@
 		 * @param name
 		 */
 		_removeMessage: function(name) {
-			this._messageElementMap[name] && this._messageElementMap[name].remove();
+			var $message = this._messageElementMap[name];
+			//messageElementMapにはjQueryインスタンスが入っているので、
+			//単に存在チェックをする以下のif文でよい($message[0]とはしない)
+			if ($message) {
+				$mesage.remove();
+				delete this._messageElementMap[name];
+			}
 		},
 
 		/**
@@ -2007,6 +2012,7 @@
 		_hideIndicator: function(name) {
 			if (this._indicators[name]) {
 				this._indicators[name].hide();
+				delete this._indicators[name];
 			}
 		},
 
@@ -2841,16 +2847,33 @@
 					}
 					return;
 				}
-				if (!name || (this.type === 'radio' || this.type === 'checkbox')
-						&& this.checked === false) {
+
+				if (this.type === 'radio' && this.checked === false) {
+					//ラジオボックスは、同じグループの選択肢の中から1つだけを選ぶため
+					//checkedでないものは含めない。なお、どの項目も選択されていない場合は
+					//キー自体が含まれない、ということになる。
 					return;
 				}
+
+				if (!name) {
+					//名前がない（空文字）場合は含めない
+					return;
+				}
+
 				var valueFunc = propertySetting[name] && propertySetting[name].valueFunc;
 				var value = valueFunc ? valueFunc(rootElement, name) : $(this).val();
-				if (valueFunc && value === undefined || value == null) {
-					// valueFuncがundefinedを返した場合またはvalueがnullだった場合はそのプロパティは含めない
+
+				if (valueFunc && value === undefined) {
+					// valueFuncがundefinedを返した場合はそのプロパティは含めない
+					//nullの場合は含める(ver.1.3.2以降。それ以前は、nullの場合も除外していた)
 					return;
 				}
+
+				if (this.type === 'checkbox' && this.checked === false) {
+					//チェックボックスの場合、チェックされていない場合は値を常にnullにする
+					value = null;
+				}
+
 				if (propertySetting[name] && !!propertySetting[name].isArray) {
 					// isArray:trueが指定されていたら必ず配列
 					value = wrapInArray(value);
@@ -2992,6 +3015,23 @@
 			//			for ( var p in this._waitingValidationResultMap) {
 			//				this._waitingValidationResultMap[p].abort();
 			//			}
+
+			//空の（何もバリデーションしていない）ValidationResultをセットする
+			this._lastResult = new h5internal.validation.ValidationResult({
+				validProperties: [],
+				invalidProperties: [],
+				validatingProperties: [],
+				properties: [],
+				invalidReason: {},
+				isAsync: false,
+				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
+				isValid: true,
+				// 非同期でvalidateしているものがあって現時点でisValid=falseでない(=全部OKかどうか決まっていない)時はisAllValidはnull
+				isAllValid: true,
+				violationCount: 0,
+				validPropertyToRulesMap: {}
+			});
+
 			this._waitingValidationResultMap = {};
 			var plugins = this._plugins;
 			for ( var pluginName in plugins) {
@@ -3205,8 +3245,6 @@
 			}
 			var c = h5.core.controller(this._bindedForm || this.rootElement, controller);
 			c._setSetting && c._setSetting(this._margePluginSettings(pluginName));
-
-			c._formController = this;
 
 			this.manageChild(c);
 			this._setDefaultMessages(c);
@@ -3475,6 +3513,10 @@
 			this._fireValidationUpdateEvent(validationTiming);
 		},
 
+		/**
+		 * @private
+		 * @param timing
+		 */
 		_fireValidationUpdateEvent: function(timing) {
 			var evArg = {
 				timing: timing
