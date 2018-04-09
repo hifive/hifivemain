@@ -2038,6 +2038,9 @@
 		return false;
 	}
 
+	//キャッシュ
+	var ValidationResult = h5internal.validation.ValidationResult;
+
 	// ログメッセージ
 	var FW_LOG_NOT_DEFINED_PLUGIN_NAME = 'プラグイン"{0}"は存在しません';
 	var FW_LOG_ALREADY_ADDED = 'プラグイン"{0}"は登録済みです。';
@@ -2537,6 +2540,8 @@
 			this._addRuleCreator(DATA_RULE_PATTERN, defaultRuleCreators.patternRuleCreator);
 			this._addRuleCreator(DATA_RULE_SIZE, defaultRuleCreators.sizeRuleCreator);
 
+			this._lastResult = this._createEmptyValidationResult();
+
 			var that = this;
 
 			/**
@@ -3017,20 +3022,7 @@
 			//			}
 
 			//空の（何もバリデーションしていない）ValidationResultをセットする
-			this._lastResult = new h5internal.validation.ValidationResult({
-				validProperties: [],
-				invalidProperties: [],
-				validatingProperties: [],
-				properties: [],
-				invalidReason: {},
-				isAsync: false,
-				// isValidは現時点でvalidかどうか(非同期でvalidateしているものは関係ない)
-				isValid: true,
-				// 非同期でvalidateしているものがあって現時点でisValid=falseでない(=全部OKかどうか決まっていない)時はisAllValidはnull
-				isAllValid: true,
-				violationCount: 0,
-				validPropertyToRulesMap: {}
-			});
+			this._lastResult = this._createEmptyValidationResult();
 
 			this._waitingValidationResultMap = {};
 			var plugins = this._plugins;
@@ -3313,11 +3305,10 @@
 
 			var result = this._validationLogic.validate(formData, names, timing, this._lastResult);
 
-			if (this._lastResult) {
-				this._lastResult._merge(result);
-			} else {
-				this._lastResult = result;
-			}
+			//this._lastResultは常に存在する
+			//（construct時に初期状態のValidationResultインスタンスをセットし、その後は常にmergeし続ける）ので
+			//nullチェックは不要
+			this._lastResult._merge(result);
 
 			if (result.isAsync) {
 				//一番最後に行われたバリデーション結果のみを使用する。
@@ -3602,6 +3593,28 @@
 		_isFormControls: function(element) {
 			var $formControls = $(this._getElements());
 			return $formControls.index(element) !== -1;
+		},
+
+		/**
+		 * 初期状態(何のプロパティもチェックしておらず、Valid状態)のValidationResultを生成します。
+		 *
+		 * @private
+		 * @returns {h5internal.validation.ValidationResult}
+		 */
+		_createEmptyValidationResult: function() {
+			var ret = new ValidationResult({
+				validProperties: [],
+				invalidProperties: [],
+				validatingProperties: [],
+				properties: [],
+				invalidReason: {},
+				isAsync: false,
+				isValid: true,
+				isAllValid: true,
+				violationCount: 0,
+				validPropertyToRulesMap: {}
+			});
+			return ret;
 		}
 	};
 	h5.core.expose(controller);
