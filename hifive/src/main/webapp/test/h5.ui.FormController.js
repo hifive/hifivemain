@@ -581,33 +581,34 @@ $(function() {
 	module('asyncIndicatorプラグイン 全体バリデートを行った場合', {
 		setup: function() {
 			stop();
-			var html = '<form class="testForm"><input class="inputA" name="a" value="v"></form>';
+			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
-			var that = this;
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addOutput('asyncIndicator');
-				this.addRule({
-					a: {
-						customFunc: function(v) {
-							var dfd = $.Deferred();
-							var promise = dfd.promise();
-							setTimeout(function() {
-								if (v === 'v') {
-									dfd.resolve();
-								} else {
-									dfd.reject();
-								}
-							}, 0);
-							return promise;
+
+			var dfd = h5.async.deferred();
+			var formCtrl = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'asyncIndicator';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							customFunc: function(v) {
+								return dfd.promise();
+							}
 						}
-					}
-				});
-				that.result = this.validate();
-				that.result.addEventListener('validate', function(ev) {
-					start();
+					});
+
+					// 全体バリデートを行う
+					formCtrl.validate();
+
+					// インジケータを表示するため待つ
+					setTimeout(function() {
+						start();
+					}, 0);
 				});
 			});
+			this.formController = formCtrl;
+			this.dfd = dfd;
 		},
 		teardown: function() {
 			clearController();
@@ -617,84 +618,165 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('バリデートを行った場合は表示されること', function() {
+	asyncTest('バリデートを行った場合はインジケータの表示が変更されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
 		var formCtrl = this.formController;
-		var result = formCtrl.validate();
-		result.addEventListener('validate', function(ev) {
-			start();
-		});
-		strictEqual($('form> .inputA >.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 1, '全体バリデートによって非同期バリデート対象要素にインジケータが表示されること');
+
+		// インジケータ表示中にvalidateを実行
+		formCtrl.validate();
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 1, 'validateによってインジケータの表示・非表示が変更されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
-	asyncTest('focus時に表示されること', function() {
+	asyncTest('focus時にインジケータの表示が変更されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 1, '全体バリデートによって非同期バリデート対象要素にインジケータが表示されること');
+
+		// インジケータ表示中にfocusを実行
 		$('.inputA').focus();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 1;
-			},
-			failMsg: 'インジケータが表示されませんでした',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 1, 'focusによってインジケータの表示・非表示が変更されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
-	asyncTest('blur時に表示されないこと', function() {
+	asyncTest('blur時にインジケータの表示が変更されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 1, '全体バリデートによって非同期バリデート対象要素にインジケータが表示されること');
+
+		// インジケータ表示中にblurを実行
 		$('.inputA').blur();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されました',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 1, 'blurによってインジケータの表示・非表示が変更されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
-	asyncTest('keyup時に表示されないこと', function() {
+	asyncTest('keyup時にインジケータの表示が変更されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 1, '全体バリデートによって非同期バリデート対象要素にインジケータが表示されること');
+
+		// インジケータ表示中にkeyupを実行
 		$('.inputA').keyup();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されました',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 1, 'keyupによってインジケータの表示・非表示が変更されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
-	asyncTest('change時に表示されないこと', function() {
-		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+	asyncTest('change時にインジケータの表示が変更されないこと', function() {
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 1, '全体バリデートによって非同期バリデート対象要素にインジケータが表示されること');
+
+		// インジケータ表示中にchangeを実行
 		$('.inputA').change();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されませんでした',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 1, 'changeによってインジケータの表示・非表示が変更されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
-	asyncTest('click時に表示されないこと', function() {
+	asyncTest('click時にインジケータの表示が変更されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 1, '全体バリデートによって非同期バリデート対象要素にインジケータが表示されること');
+
+		// インジケータ表示中にclickを実行
 		$('.inputA').click();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されませんでした',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 1, 'clickによってインジケータの表示・非表示が変更されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
 	//=============================
@@ -703,29 +785,30 @@ $(function() {
 	module('asyncIndicatorプラグイン 全体バリデートを行っていない場合', {
 		setup: function() {
 			stop();
-			var html = '<form class="testForm"><input class="inputA" name="a" value="v"></form>';
+			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addOutput('asyncIndicator');
-				this.addRule({
-					a: {
-						customFunc: function(v) {
-							var dfd = $.Deferred();
-							var promise = dfd.promise();
-							setTimeout(function() {
-								if (v === 'v') {
-									dfd.resolve();
-								} else {
-									dfd.reject();
-								}
-							}, 0);
-							return promise;
+
+			var dfd = h5.async.deferred();
+			var formCtrl = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'asyncIndicator';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							customFunc: function(v) {
+								return dfd.promise();
+							}
 						}
-					}
+					});
+
+					// 全体バリデートを行わない
+					// インジケータを表示しないので待たない
+					start();
 				});
-				start();
 			});
+			this.formController = formCtrl;
+			this.dfd = dfd;
 		},
 		teardown: function() {
 			clearController();
@@ -738,81 +821,163 @@ $(function() {
 	asyncTest('バリデートを行った場合は表示されること', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
 		var formCtrl = this.formController;
-		var result = formCtrl.validate();
-		result.addEventListener('validate', function(ev) {
-			start();
-		});
-		strictEqual($('form> .inputA >.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 0, '全体バリデートを行っていないので非同期バリデート対象要素にインジケータが表示されないこと');
+
+		// validateを実行
+		formCtrl.validate();
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 1, 'validateによって非同期バリデート対象要素にインジケータが表示されること');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
 	asyncTest('focus時に表示されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 0, '全体バリデートを行っていないので非同期バリデート対象要素にインジケータが表示されないこと');
+
+		// focusを実行
 		$('.inputA').focus();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されました',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 0, 'focusによって非同期バリデート対象要素にインジケータが表示されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
 	asyncTest('blur時に表示されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 0, '全体バリデートを行っていないので非同期バリデート対象要素にインジケータが表示されないこと');
+
+		// blurを実行
 		$('.inputA').blur();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されました',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 0, 'blurによって非同期バリデート対象要素にインジケータが表示されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
 	asyncTest('keyup時に表示されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 0, '全体バリデートを行っていないので非同期バリデート対象要素にインジケータが表示されないこと');
+
+		// keyupを実行
 		$('.inputA').keyup();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されました',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 0, 'keyupによって非同期バリデート対象要素にインジケータが表示されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
 	asyncTest('change時に表示されること', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 0, '全体バリデートを行っていないので非同期バリデート対象要素にインジケータが表示されないこと');
+
+		// インジケータ表示中にchangeを実行
 		$('.inputA').change();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 1;
-			},
-			failMsg: 'インジケータが表示されませんでした',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 1, 'changeによって非同期バリデート対象要素にインジケータが表示されること');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
 	asyncTest('click時に表示されないこと', function() {
 		// FIXME input要素にインジケータが表示されようとするのは仕様なのか?
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		strictEqual($('form> .inputA >.h5-indicator').length, 0, '全体バリデートを行っていないので非同期バリデート対象要素にインジケータが表示されないこと');
+
+		// インジケータ表示中にclickを実行
 		$('.inputA').click();
-		gate({
-			func: function() {
-				return $('.inputA > .h5-indicator').length === 0;
-			},
-			failMsg: 'インジケータが表示されませんでした',
-			maxWait: 3000
-		}).done(function() {
-			strictEqual($('.inputA>.h5-indicator').length, 0, '非同期バリデート対象要素にインジケータが表示されないこと');
-		}).always(start);
+
+		// インジケータを表示するため待つ
+		setTimeout(function() {
+			strictEqual($('form> .inputA >.h5-indicator').length, 0, 'clickによって非同期バリデート対象要素にインジケータが表示されないこと');
+
+			// 非同期のバリデーション
+			dfd.resolve({
+				valid: true
+			});
+
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 0, '非同期バリデートが実行されたことによりインジケータが非表示になること');
+				start();
+			}, 0);
+		}, 0);
 	});
 
 	//=============================
@@ -2073,7 +2238,7 @@ $(function() {
 			stop();
 			var that = this;
 			this.errorMessage = 'errorMessage';
-			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
+			var html = '<form class="testForm"><input class="inputA" name="a" value="a"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
 			var formCtrl = this.formController = h5.core.controller('.testForm',
@@ -2215,7 +2380,7 @@ $(function() {
 			stop();
 			var that = this;
 			this.errorMessage = 'errorMessage';
-			var html = '<form class="testForm"><input class="inputA" name="a"><input class="inputB" name="b"></form>';
+			var html = '<form class="testForm"><input class="inputA" name="a" value="hoge"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
 			var formCtrl = this.formController = h5.core.controller('.testForm',
@@ -3193,17 +3358,20 @@ $(function() {
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('body').append(html);
-			var formCtrl = this.formController = h5.core.controller('.testForm',
-					h5.ui.FormController);
+			var formCtrl = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
+				var pluginName = 'balloon';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+					start();
 				});
-				this.addOutput('balloon');
-				start();
 			});
+			this.formController = formCtrl;
 		},
 		teardown: function() {
 			clearController();
@@ -3228,17 +3396,17 @@ $(function() {
 		}).always(start);
 	});
 
-	asyncTest('focus時に表示されないこと', function() {
+	asyncTest('focus時に表示されること', function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
 				return $('.validation-balloon').length === 1;
 			},
+			failMsg: 'バルーンが表示されない'
+		}).fail(function() {
 			maxWait: 1000
 		}).done(function() {
-			ok(false, 'バルーンが表示される');
-		}).fail(function() {
-			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.validation-balloon').length, 1, 'バルーンが表示されること');
 		}).always(start);
 	});
 
@@ -3970,17 +4138,16 @@ $(function() {
 		}).always(start);
 	});
 
-	asyncTest('focus時に表示されないこと', function() {
+	asyncTest('focus時に表示されること', function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
 				return $('.tooltip').length === 1;
 			},
+			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
 		}).done(function() {
-			ok(false, 'バルーンが表示される');
-		}).fail(function() {
-			strictEqual($('.tooltip').length, 0, 'バルーンが表示されないこと');
+			strictEqual($('.tooltip').length, 1, 'バルーンが表示されること');
 		}).always(start);
 	});
 
@@ -6823,7 +6990,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('isAllValidatorsEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること', function() {
+	test('isAllRulesEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -6833,7 +7000,7 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			isAllValidatorsEnabledWhenEmpty: true,
+			isAllRulesEnabledWhenEmpty: true,
 			ruleDefault: {
 				required: {
 					isForceEnabledWhenEmpty: true
@@ -6861,7 +7028,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('isAllValidatorsEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること', function() {
+	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -6871,7 +7038,7 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			isAllValidatorsEnabledWhenEmpty: false,
+			isAllRulesEnabledWhenEmpty: false,
 			ruleDefault: {
 				required: {
 					isForceEnabledWhenEmpty: true
@@ -6899,7 +7066,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('isAllValidatorsEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること', function() {
+	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -6909,7 +7076,7 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			// isAllValidatorsEnabledWhenEmpty未定義
+			// isAllRulesEnabledWhenEmpty未定義
 			ruleDefault: {
 				required: {
 					isForceEnabledWhenEmpty: true
@@ -6937,7 +7104,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('isAllValidatorsEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
+	test('isAllRulesEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -6947,7 +7114,7 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			isAllValidatorsEnabledWhenEmpty: true,
+			isAllRulesEnabledWhenEmpty: true,
 			ruleDefault: {
 				required: {
 					isForceEnabledWhenEmpty: false
@@ -6975,7 +7142,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('isAllValidatorsEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
+	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -6985,7 +7152,7 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			isAllValidatorsEnabledWhenEmpty: false,
+			isAllRulesEnabledWhenEmpty: false,
 			ruleDefault: {
 				required: {
 					isForceEnabledWhenEmpty: false
@@ -7013,7 +7180,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('isAllValidatorsEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
+	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -7023,7 +7190,7 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			// isAllValidatorsEnabledWhenEmpty未定義
+			// isAllRulesEnabledWhenEmpty未定義
 			ruleDefault: {
 				required: {
 					isForceEnabledWhenEmpty: false
@@ -7051,7 +7218,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('isAllValidatorsEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること', function() {
+	test('isAllRulesEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -7061,8 +7228,8 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			isAllValidatorsEnabledWhenEmpty: true,
-			// ruleDefault.required.isForceEnabledWhenEmpty未定義
+			isAllRulesEnabledWhenEmpty: true,
+			// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
 			output: {
 				composition: {
 					container: $('.errorContainer')
@@ -7085,7 +7252,7 @@ $(function() {
 		}, 0);
 	});
 
-	test('isAllValidatorsEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックしないこと', function() {
+	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -7095,8 +7262,8 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			isAllValidatorsEnabledWhenEmpty: false,
-			// ruleDefault.required.isForceEnabledWhenEmpty未定義
+			isAllRulesEnabledWhenEmpty: false,
+			// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
 			output: {
 				composition: {
 					container: $('.errorContainer')
@@ -7114,12 +7281,12 @@ $(function() {
 		stop();
 		setTimeout(function() {
 			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+			strictEqual($('.errorContainer').text(), errorMessage, 'エラーメッセージが表示されないこと');
 			start();
 		}, 0);
 	});
 
-	test('isAllValidatorsEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックしないこと', function() {
+	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
@@ -7129,8 +7296,8 @@ $(function() {
 		});
 		formCtrl.addOutput('composition');
 		formCtrl.setSetting({
-			// isAllValidatorsEnabledWhenEmpty未定義
-			// ruleDefault.required.isForceEnabledWhenEmpty未定義
+			// isAllRulesEnabledWhenEmpty未定義
+			// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
 			output: {
 				composition: {
 					container: $('.errorContainer')
@@ -7148,7 +7315,7 @@ $(function() {
 		stop();
 		setTimeout(function() {
 			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+			strictEqual($('.errorContainer').text(), errorMessage, 'エラーメッセージが表示されないこと');
 			start();
 		}, 0);
 	});
@@ -8573,56 +8740,13 @@ $(function() {
 		}, 0);
 	});
 
-	test('balloonにエラーメッセージが表示されること', function() {
-		var formCtrl = this.formController;
-		var errorMessage = 'test';
-		formCtrl.addRule({
-			a: {
-				validator: true
-			}
-		});
-		formCtrl.addOutput('balloon');
-		formCtrl.setSetting({
-			isAllRulesEnabledWhenEmpty: false,
-			customRule: {
-				validator: {
-					func: function(value) {
-						if (value === '1') {
-							return true;
-						}
-						return false;
-					},
-					message: function() {
-						return errorMessage
-					},
-					isForceEnabledWhenEmpty: true,
-					validateOn: ['blur'],
-					resolveOn: ['blur']
-				}
-			},
-			output: {
-				balloon: {
-					placement: 'right'
-				}
-			}
-		});
-
-		stop();
-		setTimeout(function() {
-			var $input = $('.inputA');
-			$input.val('2').focus().blur();
-			strictEqual($('.validation-balloon').text(), 'test', 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			start();
-		}, 0);
-	});
-
 	module('addOutputPlugin', {
 		isChangeCalled: false,
 		isBlurCalled: false,
 		isFocusCalled: false,
 		isKeyupCalled: false,
 		isValidateCalled: false,
-		onValidate: null,
+		isAsyncValidateCalled: false,
 		formController: null,
 		setup: function() {
 			stop();
@@ -8649,35 +8773,16 @@ $(function() {
 						that.isKeyupCalled = true;
 					},
 					_onValidate: function (validationResult) {
-						if (that.onValidate != null) {
-							that.onValidate(validationResult);
-						}
 						that.isValidateCalled = true;
+					},
+					_onAsyncValidate: function () {
+						that.isAsyncValidateCalled = true;
 					}
 				};
 				var formCtrl = this.formController;
 				formCtrl._addOutputPlugin(pluginName, controller);
 				formCtrl.addOutput(pluginName);
 				formCtrl.getOutput(pluginName).readyPromise.done(function() {
-					formCtrl.addRule({
-						a: {
-							required: true
-						}
-					});
-					formCtrl.setSetting({
-						output: {
-							testPlugin: {
-								container: $('.errorContainer')
-							}
-						},
-						property: {
-							a: {
-								composition: {
-									message: errorMessage
-								}
-							}
-						}
-					});
 					start();
 				});
 			}.bind(this));
@@ -8685,6 +8790,11 @@ $(function() {
 	});
 
 	test('changeのタイミングで関数が呼び出されること', function() {
+			this.formController.addRule({
+				a: {
+					required: true
+				}
+			});
 			var $input = $('.inputA');
 			$input.change();
 			ok(this.isChangeCalled, 'changeの場合_onChangeが呼び出されたこと');
@@ -8692,8 +8802,14 @@ $(function() {
 			ok(!this.isFocusCalled, 'changeの場合_onFocusが呼び出されていないこと');
 			ok(!this.isKeyupCalled, 'changeの場合_onKeyupが呼び出されていないこと');
 			ok(!this.isValidateCalled, 'changeの場合_onValidateが呼び出されていないこと');
+			ok(!this.isAsyncValidateCalled, 'changeの場合_onAsyncValidateが呼び出されていないこと');
 	});
 	test('blurのタイミングで関数が呼び出されること', function() {
+			this.formController.addRule({
+				a: {
+					required: true
+				}
+			});
 			var $input = $('.inputA');
 			$input.blur();
 			ok(!this.isChangeCalled, 'blurの場合_onChangeが呼び出されていないこと');
@@ -8701,8 +8817,14 @@ $(function() {
 			ok(!this.isFocusCalled, 'blurの場合_onFocusが呼び出されていないこと');
 			ok(!this.isKeyupCalled, 'blurの場合_onKeyupが呼び出されていないこと');
 			ok(!this.isValidateCalled, 'blurの場合_onValidateが呼び出されていないこと');
+			ok(!this.isAsyncValidateCalled, 'blurの場合_onAsyncValidateが呼び出されていないこと');
 	});
 	test('focusのタイミングで関数が呼び出されること', function() {
+			this.formController.addRule({
+				a: {
+					required: true
+				}
+			});
 			var $input = $('.inputA');
 			$input.focus();
 			ok(!this.isChangeCalled, 'focusの場合_onChangeが呼び出されていないこと');
@@ -8710,8 +8832,14 @@ $(function() {
 			ok(this.isFocusCalled, 'focusの場合_onFocusが呼び出されたこと');
 			ok(!this.isKeyupCalled, 'focusの場合_onKeyupが呼び出されていないこと');
 			ok(!this.isValidateCalled, 'focusの場合_onValidateが呼び出されていないこと');
+			ok(!this.isAsyncValidateCalled, 'focusの場合_onAsyncValidateが呼び出されていないこと');
 	});
 	test('keyupのタイミングで関数が呼び出されること', function() {
+			this.formController.addRule({
+				a: {
+					required: true
+				}
+			});
 			var $input = $('.inputA');
 			$input.keyup();
 			ok(!this.isChangeCalled, 'keyupの場合_onChangeが呼び出されていないこと');
@@ -8719,14 +8847,21 @@ $(function() {
 			ok(!this.isFocusCalled, 'keyupの場合_onFocusが呼び出されていないこと');
 			ok(this.isKeyupCalled, 'keyupの場合_onKeyupが呼び出されたこと');
 			ok(!this.isValidateCalled, 'keyupの場合_onValidateが呼び出されていないこと');
+			ok(!this.isAsyncValidateCalled, 'keyupの場合_onAsyncValidateが呼び出されていないこと');
 	});
 	test('validateのタイミングで関数が呼び出されること', function() {
+			this.formController.addRule({
+				a: {
+					required: true
+				}
+			});
 			this.formController.validate('a');
 			ok(!this.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
 			ok(!this.isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
 			ok(!this.isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
 			ok(!this.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
 			ok(this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
+			ok(!this.isAsyncValidateCalled, 'validateの場合_onAsyncValidateが呼び出されていないこと');
 	});
 	asyncTest('非同期バリデーションの場合、非同期バリデーションが完了したタイミングで関数が呼び出されること', function() {
 			var dfd = h5.async.deferred();
@@ -8737,19 +8872,25 @@ $(function() {
 					}
 				}
 			})
-			this.onValidate = function(result) {
-				console.log(result);
-			}
 
 			// 同期のバリデーション
 			this.formController.validate('a');
 
-			// 非同期処理が完了するまで呼ばれない
+			// 同期のバリデーション時に各関数が呼び出されるか確認
 			ok(!this.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
 			ok(!this.isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
 			ok(!this.isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
 			ok(!this.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
-			ok(!this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
+			ok(this.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
+			ok(!this.isAsyncValidateCalled, 'validateの場合_onAsyncValidateが呼び出されていないこと');
+
+			// 呼び出されたかのチェックをクリア
+			this.isChangeCalled = false;
+			this.isBlurCalled = false;
+			this.isFocusCalled = false;
+			this.isKeyupCalled = false;
+			this.isValidateCalled = false;
+			this.isAsyncValidateCalled = false;
 
 			// 非同期のバリデーション
 			dfd.reject({
@@ -8757,12 +8898,15 @@ $(function() {
 			});
 
 			var that = this;
+			// 非同期のバリデーションの後に実行するために処理を遅らせる
 			setTimeout(function() {
+				// 非同期のバリデーション時に各関数が呼び出されるか確認
 				ok(!that.isChangeCalled, 'validateの場合_onChangeが呼び出されていないこと');
 				ok(!that.isBlurCalled, 'validateの場合_onBlurが呼び出されていないこと');
 				ok(!that.isFocusCalled, 'validateの場合_onFocusが呼び出されていないこと');
 				ok(!that.isKeyupCalled, 'validateの場合_onKeyupが呼び出されていないこと');
-				ok(that.isValidateCalled, 'validateの場合_onValidateが呼び出されたこと');
+				ok(!that.isValidateCalled, 'validateの場合_onValidateが呼び出されていないこと');
+				ok(that.isAsyncValidateCalled, 'validateの場合_onAsyncValidateが呼び出されたこと');
 				start();
 			}, 0);
 	});
