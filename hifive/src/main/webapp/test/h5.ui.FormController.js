@@ -4069,7 +4069,7 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('keyup時にバルーンが非表示になること', function() {
+	asyncTest('focus時にバルーンが表示になること', function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
@@ -4077,17 +4077,7 @@ $(function() {
 			},
 			maxWait: 1000
 		}).done(function() {
-			$('.inputA').val('hoge');
-			$('.inputB').val('fuga');
-			$('.inputA').keyup();
-			gate({
-				func: function() {
-					return $('.tooltip').length === 0;
-				},
-				maxWait: 1000
-			}).done(function() {
-				strictEqual($('.tooltip').length === 0, true, 'keyupしたinput要素のバルーンが非表示になること');
-			}).always(start);
+			ok(true, 'focusしたinput要素のバルーンが表示になること');
 		}).fail(start);
 	});
 
@@ -6457,6 +6447,31 @@ $(function() {
 		});
 		var message = msgOutputCtrl.getMessageByValidationResult(result, 'b');
 		strictEqual(message, null, '第2引数で指定したプロパティがエラーではない場合はnullを返すこと');
+	});
+
+	test('全てのプロパティがエラーではない場合はnullを返すこと', function() {
+		var msgOutputCtrl = this.messageOutputCtrl;
+		var logic = this.validateLogic;
+		msgOutputCtrl.addMessageSetting({
+			a: {
+				displayName: '入力要素A',
+				message: '{displayName}が違反しています'
+			}
+		});
+		logic.addRule({
+			a: {
+				required: true
+			},
+			b: {
+				required: true
+			}
+		});
+		var result = logic.validate({
+			a: 'valueA',
+			b: 'valueB'
+		});
+		var message = msgOutputCtrl.getMessageByValidationResult(result, 'b');
+		strictEqual(message, null, '全てのプロパティがエラーではない場合はnullを返すこと');
 	});
 
 	//=============================

@@ -322,6 +322,140 @@ $(function() {
 		}).isValid, true, 'undefinedならvalid');
 	});
 
+	test('futureのパラメータを指定できること', function() {
+		var validator = this.validator;
+		var current = new Date();
+		var future = new Date(current.getTime() + 3600000);
+
+		validator.addRule({
+			p1: {
+				future: 'hoge' // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, 'バリデーションを行った瞬間の時刻、入力が未来の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				future: current.getTime() // unixtimeな時間(number)
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, '現在時刻のUnixTime数値型を指定し、入力が未来の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				future: current.getTime().toString() // unixtimeな時間(string)
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, '現在時刻のUnixTime文字列型を指定し、入力が未来の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				future: current // Dateインスタンス
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, '現在時刻のDate型を指定し、入力が未来の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				future: true // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, 'trueを指定し、入力が未来の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				future: null // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, 'nullを指定する場合、true');
+
+		validator.addRule({
+			p1: {
+				future: undefined // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, 'undefinedを指定する場合、true');
+	});
+
+	test('futureのパラメータを指定し、入力が未来の時刻だけtrueになること', function() {
+		var validator = this.validator;
+		var current = new Date();
+		current.setMilliseconds(0);
+		var future = new Date(current.getTime() + 1000);
+		var past = new Date(current.getTime() - 1000);
+
+		validator.addRule({
+			p1: {
+				future: 'hoge'  // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, 'バリデーションを行った瞬間の時刻、入力が未来の時刻ならばtrue');
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, false, '現バリデーションを行った瞬間の時刻、入力が過去の時刻ならばfalse');
+
+		validator.addRule({
+			p1: {
+				future: current.getTime() // unixtimeな時間(number)
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, '現在時刻のUnixTime数値型を指定し、入力が未来の時刻ならばtrue');
+		strictEqual(validator.validate({
+			p1: current
+		}).isValid, false, '現在時刻のUnixTime数値型を指定し、入力が同じ時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, false, '現在時刻のUnixTime数値型を指定し、入力が過去の時刻ならばfalse');
+
+		validator.addRule({
+			p1: {
+				future: current.getTime().toString() // unixtimeな時間(string)
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, '現在時刻のUnixTime文字列型を指定し、入力が未来の時刻ならばtrue');
+		strictEqual(validator.validate({
+			p1: current
+		}).isValid, false, '現在時刻のUnixTime文字列型を指定し、入力が同じ時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, false, '現在時刻のUnixTime文字列型を指定し、入力が過去の時刻ならばfalse');
+
+		validator.addRule({
+			p1: {
+				future: current // Dateインスタンス
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, true, '現在時刻のDate型を指定し、入力が未来の時刻ならばtrue');
+		strictEqual(validator.validate({
+			p1: current
+		}).isValid, false, '現在時刻のDate型を指定し、入力が同じ時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, false, '現在時刻のDate型を指定し、入力が過去の時刻ならばfalse');
+	});
+
 	test('past', function() {
 		var validator = this.validator;
 		var current = new Date();
@@ -346,6 +480,140 @@ $(function() {
 		strictEqual(validator.validate({
 			p1: undefined
 		}).isValid, true, 'undefinedならvalid');
+	});
+
+	test('pastのパラメータを指定できること', function() {
+		var validator = this.validator;
+		var current = new Date();
+		var past = new Date(current.getTime() - 3600000);
+
+		validator.addRule({
+			p1: {
+				past: 'hoge' // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, 'バリデーションを行った瞬間の時刻、入力が過去の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				past: current.getTime() // unixtimeな時間(number)
+			}
+		});
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, '現在時刻のUnixTime数値型を指定し、入力が過去の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				past: current.getTime().toString(10) // unixtimeな時間(string)
+			}
+		});
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, '現在時刻のUnixTime文字列型を指定し、入力が過去の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				past: current // Dateインスタンス
+			}
+		});
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, '現在時刻のDate型を指定し、入力が過去の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				past: true // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, 'trueを指定し、入力が過去の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				past: null // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, 'nullを指定する場合、true');
+
+		validator.addRule({
+			p1: {
+				past: undefined // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, 'undefinedを指定する場合、true');
+	});
+
+	test('pastのパラメータを指定し、入力が過去の時刻だけtrueになること', function() {
+		var validator = this.validator;
+		var current = new Date();
+		current.setMilliseconds(0);
+		var future = new Date(current.getTime() + 1000);
+		var past = new Date(current.getTime() - 1000);
+
+		validator.addRule({
+			p1: {
+				past: 'hoge' // バリデーションを行った瞬間の時刻
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, false, 'バリデーションを行った瞬間の時刻、入力が未来の時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, 'バリデーションを行った瞬間の時刻、入力が過去の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				past: current.getTime() // unixtimeな時間(number)
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, false, '現在時刻のUnixTime数値型を指定し、入力が未来の時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: current
+		}).isValid, false, '現在時刻のUnixTime数値型を指定し、入力が同じ時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, '現在時刻のUnixTime数値型を指定し、入力が過去の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				past: current.getTime().toString() // unixtimeな時間(string)
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, false, '現在時刻のUnixTime文字列型を指定し、入力が未来の時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: current
+		}).isValid, false, '現在時刻のUnixTime文字列型を指定し、入力が同じ時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, '現在時刻のUnixTime文字列型を指定し、入力が過去の時刻ならばtrue');
+
+		validator.addRule({
+			p1: {
+				past: current // Dateインスタンス
+			}
+		});
+		strictEqual(validator.validate({
+			p1: future
+		}).isValid, false, '現在時刻のDate型を指定し、入力が未来の時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: current
+		}).isValid, false, '現在時刻のDate型を指定し、入力が同じ時刻ならばfalse');
+		strictEqual(validator.validate({
+			p1: past
+		}).isValid, true, '現在時刻のDate型を指定し、入力が過去の時刻ならばtrue');
 	});
 
 	test('assertNull', function() {
