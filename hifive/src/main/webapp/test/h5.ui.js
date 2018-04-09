@@ -1166,6 +1166,17 @@ $(function() {
 		strictEqual(cfhCount, 1, '複数のプロミスを渡したとき、まとめて1回だけcommonFailHandlerが実行されること');
 	});
 
+	test('jQueryのプロミスオブジェクトを指定した場合にインジケータが表示されること', 2, function() {
+		var dfd = $.Deferred();
+		var indicator = h5.ui.indicator(document, {
+			promises: dfd.promise()
+		}).show();
+		strictEqual($(indicator._target).find('.h5-indicator').length, 2, 'インジケータが表示されること');
+
+		dfd.reject();
+		strictEqual($(indicator._target).find('.h5-indicator').length, 0, 'プロミスが解決した時にインジケータが除去されていること');
+	});
+
 	//=============================
 	// Definition
 	//=============================

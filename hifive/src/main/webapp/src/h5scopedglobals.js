@@ -368,8 +368,17 @@ function getRegex(target) {
  * @param {Array|Any} args 複数の引数があるときは配列で渡します。
  */
 function registerCallbacksSilently(promise, method, args) {
-	if (promise) {
-		promise._h5UnwrappedCall ? promise._h5UnwrappedCall(method, args) : promise[method](args);
+	if (!promise) {
+		return;
+	}
+	if (promise._h5UnwrappedCall) {
+		promise._h5UnwrappedCall(method, args);
+		return;
+	}
+	if (isArray(args)) {
+		promise[method].apply(promise, args);
+	} else {
+		promise[method](args);
 	}
 }
 
