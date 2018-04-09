@@ -2230,6 +2230,37 @@ $(function() {
 		}, 0);
 	});
 
+	test('resetValidationでコンポジションメッセージを空にした場合、hideWhenEmptyがtrueでもコンテナ要素が非表示になること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'バリデートに失敗しました';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer'),
+					hideWhenEmpty: true
+				}
+			},
+			property: {
+				a: {
+					composition: {
+						message: errorMessage
+					}
+				}
+			}
+		});
+
+		formCtrl.validate();
+		ok($('.errorContainer').is(':visible'), 'リセット前は表示になること');
+		formCtrl.resetValidation();
+		ok($('.errorContainer').is(':hidden'), 'リセット後は非表示になること');
+	});
+
 	//=============================
 	// Definition
 	//=============================
