@@ -2261,6 +2261,32 @@ $(function() {
 		ok($('.errorContainer').is(':hidden'), 'リセット後は非表示になること');
 	});
 
+	test('エラーを表示した状態で要素をバリデーション対象から外して再バリデートするとエラー表示がなくなること', function() {
+		var formCtrl = this.formController;
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer')
+				}
+			},
+		});
+
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), 'aは必須項目です。', '事前にエラーメッセージが表示されること');
+
+		// name="a" の要素をバリデーション対象から除外
+		formCtrl.disableRule('a');
+
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+	});
+
 	//=============================
 	// Definition
 	//=============================
