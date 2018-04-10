@@ -4075,10 +4075,11 @@ $(function() {
 			func: function() {
 				return $('.tooltip').length === 2;// inputA,グループの2つのバルーンが表示される
 			},
+			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
 		}).done(function() {
 			ok(true, 'focusしたinput要素のバルーンが表示になること');
-		}).fail(start);
+		}).always(start);
 	});
 
 	asyncTest('blur時にバルーンが非表示になること', function() {
