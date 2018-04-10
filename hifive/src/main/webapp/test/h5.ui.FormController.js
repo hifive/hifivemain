@@ -2598,8 +2598,8 @@ $(function() {
 		formCtrl.setSetting({
 			output: {
 				message: {
-					appendMessage: function(messageElem, propName, target) {
-						$(target).append('<span class="errorMessageWrapper">');
+					appendMessage: function(messageElem, target, propName) {
+						$(target).after('<span class="errorMessageWrapper">' + messageElem.textContent + '</span>');
 					},
 					message: errorMessage
 				}
