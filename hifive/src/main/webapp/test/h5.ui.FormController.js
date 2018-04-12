@@ -386,6 +386,10 @@ $(function() {
 					html += '<input name="b" type="checkbox" checked>';
 					html += '<textarea name="c"></textarea>';
 					html += '<select name="d"><option selected value="selectA"><option value="selectB"></select>';
+					html += '<input name="e" type="checkbox">';
+					html += '<input name="f" type="radio" checked>';
+					html += '<input name="g" type="radio">';
+					html += '<input name="h" type="file">';
 					html += '</form>';
 					$fixture.append(html);
 					$fixture.append('<form><input name="z"></form>');
@@ -423,6 +427,18 @@ $(function() {
 		ok(result.hasOwnProperty('b'), 'キー名が各部品のname属性値となっていること');
 		ok(result.hasOwnProperty('c'), 'キー名が各部品のname属性値となっていること');
 		ok(result.hasOwnProperty('d'), 'キー名が各部品のname属性値となっていること');
+	});
+
+	test('各name属性の値を取得できること', function() {
+		var result = this.formController.getValue();
+		strictEqual(result['a'], '', 'valueを取得できること');
+		strictEqual(result['b'], 'on', 'checkboxがcheckedの場合はvalueを取得できること');
+		strictEqual(result['c'], '', 'textareaのvalueを取得できること');
+		strictEqual(result['d'], 'selectA', 'selectのvalueを取得できること');
+		strictEqual(result['e'], null, 'checkboxがcheckedでない場合はnullを取得できること');
+		strictEqual(result['f'], 'on', 'radioがcheckedの場合はvalueを取得できること');
+		strictEqual(result['g'], undefined, 'radioがcheckedでない場合は取得できないこと');
+		strictEqual(result['h'], undefined, 'fileのを取得できないこと');
 	});
 
 	//=============================
@@ -5939,6 +5955,7 @@ $(function() {
 			var html = '<form class="testForm">';
 			html += '<input type="checkbox" class="checkA" name="a" checked>';
 			html += '<input type="checkbox" class="checkB" name="a">';
+			html += '<input type="checkbox" class="checkC" name="c" checked>';
 			html += '</form>';
 			$('#qunit-fixture').append(html);
 
@@ -5960,17 +5977,63 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('デフォルトはfalseであること', function() {
-		var value = this.formController.getValue();
-		strictEqual(typeof value['a'], 'string', 'name属性が同じフォーム入力要素が複数あっても配列以外で返ってくるためfalseである');
+	test('isArrayのデフォルトはfalseなので1つしかないname属性では結果が配列以外で返ってくる', function() {
+		var formCtrl = this.formController;
+		var value = formCtrl.getValue();
+		strictEqual(typeof value['c'], 'string', '結果が配列以外で返ってくること');
 	});
 
-	test('trueを設定したプロパティは値を必ず配列で取得できること', function() {
+	test('isArrayをtrueにすると1つしかないname属性では結果が配列で返ってくる', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			property: {
+				c: {
+					isArray: true
+				}
+			}
+		});
+		var value = formCtrl.getValue();
+		ok($.isArray(value['c']), '結果が配列で返ってくること');
+	});
+
+	test('isArrayをtrueにすると1つしかないname属性では結果が配列以外で返ってくる', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			property: {
+				c: {
+					isArray: false
+				}
+			}
+		});
+		var value = formCtrl.getValue();
+		strictEqual(typeof value['c'], 'string', '結果が配列以外で返ってくること');
+	});
+
+	test('isArrayのデフォルトはfalseなので同じname属性が複数ある場合では結果が配列で返ってくる', function() {
+		var formCtrl = this.formController;
+		var value = formCtrl.getValue();
+		ok($.isArray(value['a']), '結果が配列で返ってくること');
+	});
+
+	test('isArrayをtrueにすると同じname属性が複数ある場合では結果が配列で返ってくる', function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			property: {
 				a: {
 					isArray: true
+				}
+			}
+		});
+		var value = formCtrl.getValue();
+		ok($.isArray(value['a']), '結果が配列で返ってくること');
+	});
+
+	test('isArrayをfalseにすると同じname属性が複数ある場合では結果が配列で返ってくる', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			property: {
+				a: {
+					isArray: false
 				}
 			}
 		});
