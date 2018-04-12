@@ -2298,9 +2298,14 @@ $(function() {
 
 		// name="a" の要素をバリデーション対象から除外
 		formCtrl.disableRule('a');
+		strictEqual($('.errorContainer').text(), 'aは必須項目です。', 'disbaleRule後にエラーメッセージが表示されること');
 
-		formCtrl.validate();
-		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+		var result = formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', '再バリデート後にエラーメッセージが表示されないこと');
+
+		strictEqual(result.properties.length, 0 , 'propertiesの長さが0であること');
+		strictEqual(result.invalidProperties.length,  0, 'invalidPropertiesの長さが0であること');
+		ok(!result.invalidReason.hasOwnProperty('a'), 'invalidReasonnにaというプロパティが存在しないこと');
 	});
 
 	//=============================
