@@ -3277,7 +3277,6 @@ $(function() {
 				valid: false
 			});
 			// 非同期のバリデーションの後に実行するために処理を遅らせる
-			stop();
 			setTimeout(function() {
 				gate({
 					func: function() {
@@ -3293,7 +3292,8 @@ $(function() {
 			}, 0);
 		}).fail(function() {
 			ok(false, '同期時にballoonが表示されない');
-		}).always(start);
+			start();
+		});
 	});
 
 	//=============================
@@ -3889,7 +3889,6 @@ $(function() {
 				valid: false
 			});
 			// 非同期のバリデーションの後に実行するために処理を遅らせる
-			stop();
 			setTimeout(function() {
 				gate({
 					func: function() {
@@ -3905,7 +3904,8 @@ $(function() {
 			}, 0);
 		}).fail(function() {
 			ok(false, '同期時にballoonが表示されない');
-		}).always(start);
+			start();
+		});
 	});
 
 	//=============================
