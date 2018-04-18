@@ -453,31 +453,39 @@
 			return dfd.resolve().promise();
 		}
 
-		var intervalTimer = setInterval(function() {
-			if (!gateFunction()) {
-				// 失敗時は何もせず次のインターバルを待つ
-				return;
+		setTimeout(function() {
+			// 2回目のチェックとして1フレームだけ待ってからチェックする
+			if (gateFunction()) {
+				return dfd.resolve().promise();
 			}
-			// 成功時
-			// タイマーを止めてresolve()
-			clearInterval(intervalTimer);
-			clearTimeout(limitTimer);
-			dfd.resolve();
-			return;
-		}, interval);
 
-		var limitTimer = setTimeout(function() {
-			// タイムアウトしたらタイマーを止めてreject
-			clearInterval(intervalTimer);
-			dfd.reject();
-		}, maxWait);
-
-		// failMsgが指定されていたらメッセージを表示するfailハンドラを追加する
-		if (failMsg) {
-			dfd.fail(function() {
-				ok(false, failMsg);
-			});
-		}
+			// 3回目以降のチェックとしてinterval毎にチェックする
+			var intervalTimer = setInterval(function() {
+				if (!gateFunction()) {
+					// 失敗時は何もせず次のインターバルを待つ
+					return;
+				}
+				// 成功時
+				// タイマーを止めてresolve()
+				clearInterval(intervalTimer);
+				clearTimeout(limitTimer);
+				dfd.resolve();
+				return;
+			}, interval);
+	
+			var limitTimer = setTimeout(function() {
+				// タイムアウトしたらタイマーを止めてreject
+				clearInterval(intervalTimer);
+				dfd.reject();
+			}, maxWait);
+	
+			// failMsgが指定されていたらメッセージを表示するfailハンドラを追加する
+			if (failMsg) {
+				dfd.fail(function() {
+					ok(false, failMsg);
+				});
+			}
+		}, 0);
 		return dfd.promise();
 	}
 
