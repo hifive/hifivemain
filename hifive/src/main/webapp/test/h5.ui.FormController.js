@@ -2260,6 +2260,8 @@ $(function() {
 							}
 						}
 					});
+
+					// 全体バリデートを行う
 					formCtrl.validate();
 					start();
 				});
@@ -2402,6 +2404,8 @@ $(function() {
 							}
 						}
 					});
+
+					// 全体バリデートを行わない
 					start();
 				});
 			});
@@ -2505,11 +2509,11 @@ $(function() {
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
 				var pluginName = 'message';
-				this.addOutput(pluginName);
-				this.getOutput(pluginName).readyPromise.done(function() {
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
 					start();
 				});
 			});
@@ -2738,6 +2742,8 @@ $(function() {
 							}
 						}
 					});
+
+					// 全体バリデートを行う
 					formCtrl.validate();
 					start();
 				});
@@ -2764,7 +2770,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			// FIXME #530 setSetting()で各プロパティ毎のプラグイン設定でメッセージを指定しない場合、
 			// プラグイン設定のmessageではなくバリデーションルールのデフォルトメッセージが表示される。
@@ -2785,7 +2792,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').focus();
 			gate({
@@ -2828,7 +2836,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').keyup();
 			gate({
@@ -2855,7 +2864,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').change();
 			gate({
@@ -2882,7 +2892,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').click();
 			gate({
@@ -2908,25 +2919,29 @@ $(function() {
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
-			var formCtrl = this.formController = h5.core.controller('.testForm',
-					h5.ui.FormController);
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
-				});
-				this.addOutput('message');
-				// FIXME #529
-				formCtrl.setSetting({
-					output: {
-						message: {
-							message: that.errorMessage,
-							wrapper: '<span class="errorMessageWrapper">'
+				var pluginName = 'message';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
 						}
-					}
+					});
+
+					formCtrl.setSetting({
+						output: {
+							message: {
+								message: that.errorMessage,
+								wrapper: '<span class="errorMessageWrapper">'
+							}
+						}
+					});
+
+					// 全体バリデートを行わない
+					start();
 				});
-				start();
 			});
 		},
 		teardown: function() {
@@ -3058,8 +3073,17 @@ $(function() {
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
-		start();
+
+		gate({
+			func: function() {
+				return $('.validation-balloon').length === 1;
+			},
+			maxWait: 1000
+		}).done(function() {
+			ok(false, 'バルーンが表示される');
+		}).fail(function() {
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
+		}).always(start);
 	});
 
 	asyncTest('バルーンを表示する位置を文字列で指定できること', function() {
@@ -3227,14 +3251,19 @@ $(function() {
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
+				var pluginName = 'balloon';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+
+					// 全体バリデートを行う
+					formCtrl.validate();
+					start();
 				});
-				this.addOutput('balloon');
-				formCtrl.validate();
-				start();
 			});
 		},
 		teardown: function() {
@@ -3267,7 +3296,8 @@ $(function() {
 			func: function() {
 				return $('.validation-balloon').length === 1;
 			},
-			failMsg: 'バルーンが表示されない'
+			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			strictEqual($('.validation-balloon').length, 1, 'バルーンが表示されること');
 		}).always(start);
@@ -3280,6 +3310,7 @@ $(function() {
 				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').blur();
 			gate({
@@ -3302,6 +3333,7 @@ $(function() {
 				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').keyup();
 			gate({
@@ -3364,6 +3396,8 @@ $(function() {
 							required: true
 						}
 					});
+
+					// 全体バリデートを行わない
 					start();
 				});
 			});
@@ -3845,14 +3879,19 @@ $(function() {
 						var formCtrl = that.formController = h5.core.controller('.testForm',
 								h5.ui.FormController);
 						formCtrl.readyPromise.done(function() {
-							this.addRule({
-								a: {
-									required: true
-								}
+							var pluginName = 'bsBalloon';
+							formCtrl.addOutput(pluginName);
+							formCtrl.getOutput(pluginName).readyPromise.done(function() {
+								formCtrl.addRule({
+									a: {
+										required: true
+									}
+								});
+
+								// 全体バリデートを行う
+								formCtrl.validate();
+								start();
 							});
-							this.addOutput('bsBalloon');
-							this.validate();
-							start();
 						});
 					}).fail(start);
 		},
@@ -3888,7 +3927,8 @@ $(function() {
 			func: function() {
 				return $('.tooltip').length === 1;
 			},
-			failMsg: 'バルーンが表示されない'
+			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			strictEqual($('.tooltip').length, 1, 'バルーンが表示されること');
 		}).always(start);
@@ -3901,6 +3941,7 @@ $(function() {
 				return $('.tooltip').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').blur();
 			gate({
@@ -3922,6 +3963,7 @@ $(function() {
 				return $('.tooltip').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').keyup();
 			gate({
@@ -3971,7 +4013,8 @@ $(function() {
 			func: function() {
 				return $('.tooltip').length === 1;
 			},
-			failMsg: 'バルーンが表示されない'
+			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			strictEqual($('.tooltip-inner').text(), 'aは必須項目です。', 'title属性を指定しても正しくメッセージが表示されること');
 		}).always(start);
@@ -4090,13 +4133,18 @@ $(function() {
 						var formCtrl = that.formController = h5.core.controller('.testForm',
 								h5.ui.FormController);
 						formCtrl.readyPromise.done(function() {
-							this.addRule({
-								a: {
-									required: true
-								}
+							var pluginName = 'bsBalloon';
+							formCtrl.addOutput(pluginName);
+							formCtrl.getOutput(pluginName).readyPromise.done(function() {
+								formCtrl.addRule({
+									a: {
+										required: true
+									}
+								});
+
+								// 全体バリデートを行わない
+								start();
 							});
-							this.addOutput('bsBalloon');
-							start();
 						});
 					}).fail(start);
 		},
