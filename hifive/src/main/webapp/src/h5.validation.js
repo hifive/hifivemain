@@ -470,6 +470,8 @@
 
 		this._nameToRuleSetMap = result.nameToRuleSetMap;
 
+		this._disabledProperties = result.disabledProperties;
+
 		this.addEventListener(EVENT_VALIDATE, validateEventListener);
 
 		// abort()が呼ばれていたらdispatchEventを動作させない
@@ -511,9 +513,24 @@
 							var newInvalidProperties = [];
 							var newValidProperties = [];
 
+							var newProperties = [];
+
+							//result.propertiesには、今回のバリデーションでdisableになっていたプロパティは含まれていない
+
 							//前回バリデーション対象だったプロパティについて、
 							for (var i = 0, len = this.properties.length; i < len; i++) {
 								var prop = this.properties[i];
+
+								if ($.inArray(prop, result._disabledProperties) !== -1) {
+									//今回のバリデーションでdisabledだった場合は、そのプロパティのバリデーション結果および関連情報は削除する
+									delete this.invalidReason[prop];
+									delete this._validPropertyToRulesMap[prop];
+									delete this._nameToRuleSetMap[prop];
+									continue;
+								}
+
+								newProperties.push(prop);
+
 								if (!this._has(prop, result.properties)) {
 									//今回バリデーション対象にならなかったプロパティの結果はそのまま引き継ぐ
 
@@ -639,7 +656,8 @@
 							}
 
 							//最終的にチェックしたプロパティリストは単純にユニークマージすればよい
-							this.properties = uniqMerge(this.properties, result.properties);
+							//newPropertiesは、今回disabledだったプロパティを除いた、前回バリデーション実行時に対象になったプロパティが含まれている
+							this.properties = uniqMerge(newProperties, result.properties);
 
 							//バリデート中のプロパティリストは単純にユニークマージすればよい
 							this.validatingProperties = uniqMerge(this.validatingProperties,
@@ -1564,7 +1582,11 @@
 			//バリデーション結果OKだったルールの、プロパティ名 -> rule名配列のマップ
 			var validPropertyToRulesMap = {};
 
+			//name -> それに対して適用されるRuleのSet、のMap
 			var nameToRuleSetMap = {};
+
+			//現在disabledなプロパティの配列
+			var disabledProperties = this._disableProperties.slice(0);
 
 			for ( var prop in this._rule) {
 				if (names && $.inArray(prop, targetNames) === -1
@@ -1764,7 +1786,8 @@
 				isAllValid: isValid ? (isAsync ? null : true) : false,
 				violationCount: violationCount,
 				validPropertyToRulesMap: validPropertyToRulesMap,
-				nameToRuleSetMap: nameToRuleSetMap
+				nameToRuleSetMap: nameToRuleSetMap,
+				disabledProperties: disabledProperties
 			});
 
 			if (isAsync) {

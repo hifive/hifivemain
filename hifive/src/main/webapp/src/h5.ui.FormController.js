@@ -3647,7 +3647,8 @@
 				isAllValid: true,
 				violationCount: 0,
 				validPropertyToRulesMap: {},
-				nameToRuleSetMap: {}
+				nameToRuleSetMap: {},
+				disabledProperties: []
 			});
 			return ret;
 		}
