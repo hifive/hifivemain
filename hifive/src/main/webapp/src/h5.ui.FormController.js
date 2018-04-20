@@ -103,9 +103,11 @@
 	 * @param {string} name
 	 * @param {Object} reason
 	 * @param {Object} setting
+	 * @param {Array} rules
 	 * @returns {string} メッセージ
 	 */
-	function createValidateErrorMessage(name, reason, setting, violationIndex, defaultMessageMap) {
+	function createValidateErrorMessage(name, reason, setting, violationIndex, defaultMessageMap,
+			rules) {
 		var displayName = (setting && setting.displayName) || name;
 		var msg = setting && setting.message;
 
@@ -115,7 +117,8 @@
 		}
 
 		var param = $.extend({}, reason, {
-			displayName: displayName
+			displayName: displayName,
+			rules: rules
 		});
 		param.targetViolation = reason.violation[violationIndex];
 
@@ -327,13 +330,36 @@
 			if (!invalidReason) {
 				return null;
 			}
+
+			var appliedRules = this._getAppliedRules(validationResult, name);
+
 			return h5internal.validation.createValidateErrorMessage(name, invalidReason,
-					this._setting[name], violationIndex, this._validatorDefaultMessageMap);
+					this._setting[name], violationIndex, this._validatorDefaultMessageMap,
+					appliedRules);
+		},
+
+		/**
+		 * @private
+		 * @param validationResult
+		 * @param name
+		 * @returns
+		 */
+		_getAppliedRules: function(validationResult, name) {
+			var appliedRuleSet = validationResult._nameToRuleSetMap[name];
+
+			var appliedRules = appliedRuleSet.getAll();
+			for (var i = 0, len = appliedRules.length; i < len; i++) {
+				var rule = appliedRules[i];
+				rule.message = this._validatorDefaultMessageMap[rule.name]
+						|| defaultInvalidMessage[rule.name];
+			}
+
+			return appliedRules;
 		},
 
 		getAllMessagesByValidationResult: function(validationResult, name) {
 			var invalidReason = validationResult.invalidReason[name];
-			return this._getAllMessagesForName(invalidReason, name);
+			return this._getAllMessagesForName(validationResult, invalidReason, name);
 		},
 
 		/**
@@ -342,17 +368,19 @@
 		 * @param name
 		 * @returns {Array}
 		 */
-		_getAllMessagesForName: function(invalidReason, name) {
+		_getAllMessagesForName: function(validationResult, invalidReason, name) {
 			if (!invalidReason) {
 				return [];
 			}
+
+			var appliedRules = this._getAppliedRules(validationResult, name);
 
 			var ret = [];
 
 			var violations = invalidReason.violation;
 			for (var i = 0, len = violations.length; i < len; i++) {
 				var message = h5internal.validation.createValidateErrorMessage(name, invalidReason,
-						this._setting[name], i, this._validatorDefaultMessageMap);
+						this._setting[name], i, this._validatorDefaultMessageMap, appliedRules);
 				ret.push(message);
 			}
 
@@ -3612,7 +3640,8 @@
 				isValid: true,
 				isAllValid: true,
 				violationCount: 0,
-				validPropertyToRulesMap: {}
+				validPropertyToRulesMap: {},
+				nameToRuleSetMap: {}
 			});
 			return ret;
 		}

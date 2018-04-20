@@ -233,6 +233,39 @@
 		}
 	}
 
+	function RuleSet() {
+		this._rule = {};
+	}
+	$.extend(RuleSet.prototype, {
+		get: function(ruleName) {
+			return this._rule[ruleName];
+		},
+
+		getAll: function() {
+			var ret = [];
+			for ( var key in this._rule) {
+				ret.push(this._rule[key]);
+			}
+			return ret;
+		},
+
+		_setSkipped: function(ruleName, value) {
+			var rule = this._rule[ruleName];
+			if (rule) {
+				rule.isSkipped = value;
+			}
+		},
+
+		_setRule: function(ruleName, ruleValue, message) {
+			this._rule[ruleName] = {
+				name: ruleName,
+				arg: ruleValue,
+				message: message,
+				isSkipped: false
+			};
+		}
+	});
+
 	/**
 	 * validation結果クラス
 	 * <p>
@@ -435,6 +468,8 @@
 
 		this._validPropertyToRulesMap = result.validPropertyToRulesMap;
 
+		this._nameToRuleSetMap = result.nameToRuleSetMap;
+
 		this.addEventListener(EVENT_VALIDATE, validateEventListener);
 
 		// abort()が呼ばれていたらdispatchEventを動作させない
@@ -482,6 +517,8 @@
 								if (!this._has(prop, result.properties)) {
 									//今回バリデーション対象にならなかったプロパティの結果はそのまま引き継ぐ
 
+									//適用したルールセットはそのまま（なので何もしない）
+
 									if (this._has(prop, this.validProperties)) {
 										newValidProperties.push(prop);
 									}
@@ -492,6 +529,9 @@
 									}
 								} else {
 									//今回もバリデーション対象だった場合
+
+									//適用したルールセットを更新
+									this._nameToRuleSetMap[prop] = result._nameToRuleSetMap[prop];
 
 									if (this._has(prop, this.validProperties)) {
 										//前回違反なしで
@@ -582,6 +622,10 @@
 							//今回のバリデーションでバリデーション対象、かつ前回は対象外だったプロパティについて、
 							for (var i = 0, len = result.properties.length; i < len; i++) {
 								var prop = result.properties[i];
+
+								//適用したルールセットをコピー
+								this._nameToRuleSetMap[prop] = result._nameToRuleSetMap[prop];
+
 								if (!this._has(prop, this.properties)) {
 									//今回新たに対象になったプロパティのvalid,invalidはコピーする
 									if (this._has(prop, result.validProperties)) {
@@ -1520,6 +1564,8 @@
 			//バリデーション結果OKだったルールの、プロパティ名 -> rule名配列のマップ
 			var validPropertyToRulesMap = {};
 
+			var nameToRuleSetMap = {};
+
 			for ( var prop in this._rule) {
 				if (names && $.inArray(prop, targetNames) === -1
 						|| $.inArray(prop, this._disableProperties) !== -1) {
@@ -1531,6 +1577,9 @@
 				var orgValue = obj[prop];
 				var isInvalidProp = false;
 				var isAsyncProp = false;
+
+				var ruleSet = new RuleSet();
+				nameToRuleSetMap[prop] = ruleSet;
 
 				// ルールを優先度順にソート
 				var sortedRuleNames = [];
@@ -1556,12 +1605,6 @@
 						continue;
 					}
 
-					var validator = validateRuleManager.getValidator(ruleName);
-
-					if (!this._shouldValidateWhen(prop, validator, timing, lastResult)) {
-						continue;
-					}
-
 					// validate関数呼び出し時の引数をオブジェクト形式に変換
 					var ruleValue = {};
 					var argNames = validateRuleManager.getValidateArgNames(ruleName);
@@ -1571,6 +1614,15 @@
 						for (var j = 0, len = argNames.length; j < len; j++) {
 							ruleValue[argNames[j]] = ruleArgs[j];
 						}
+					}
+
+					ruleSet._setRule(ruleName, ruleValue);
+
+					var validator = validateRuleManager.getValidator(ruleName);
+
+					if (!this._shouldValidateWhen(prop, validator, timing, lastResult)) {
+						ruleSet._setSkipped(ruleName, true);
+						continue;
 					}
 
 					//preValidationフック
@@ -1594,6 +1646,7 @@
 
 						if (validationContext._isSkipped) {
 							//フック関数でskip()が呼び出されいたら、この項目のバリデーションはスキップ
+							ruleSet._setSkipped(ruleName, true);
 							continue;
 						}
 					}
@@ -1710,7 +1763,8 @@
 				// 非同期でvalidateしているものがあって現時点でisValid=falseでない(=全部OKかどうか決まっていない)時はisAllValidはnull
 				isAllValid: isValid ? (isAsync ? null : true) : false,
 				violationCount: violationCount,
-				validPropertyToRulesMap: validPropertyToRulesMap
+				validPropertyToRulesMap: validPropertyToRulesMap,
+				nameToRuleSetMap: nameToRuleSetMap
 			});
 
 			if (isAsync) {
