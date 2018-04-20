@@ -107,9 +107,16 @@
 	 * @returns {string} メッセージ
 	 */
 	function createValidateErrorMessage(name, reason, setting, violationIndex, defaultMessageMap,
-			rules) {
-		var displayName = (setting && setting.displayName) || name;
+			rules, outputPluginDefaultMessage, outputPluginDefaultDisplayName) {
+		var displayName = (setting && setting.displayName) || outputPluginDefaultDisplayName
+				|| name;
 		var msg = setting && setting.message;
+
+		if (msg == null && outputPluginDefaultMessage != null) {
+			//プロパティごとのメッセージが未定義の場合、
+			//出力プラグイン共通のメッセージがセットされていればそれを使用する
+			msg = outputPluginDefaultMessage;
+		}
 
 		// 違反のインデックスが指定されていない場合は一番最初の違反から作成する
 		if (violationIndex == null) {
@@ -176,6 +183,22 @@
 		_setting: {},
 
 		_validatorDefaultMessageMap: {},
+
+		_outputPluginDefaultMessage: null,
+
+		_outputPluginDefaultDisplayName: null,
+
+		/**
+		 * @private
+		 * @param message
+		 */
+		_setOutputDefaultMessage: function(message) {
+			this._outputPluginDefaultMessage = message;
+		},
+
+		_setOutputDefaultDisplayName: function(displayName) {
+			this._outputPluginDefaultDisplayName = displayName;
+		},
 
 		/**
 		 * @private
@@ -301,7 +324,7 @@
 					msgElement.text(message);
 				} else {
 					// 'span'のような指定ならcreateElementでエレメント生成
-					msgElement = $(document.createElement(wrapper)).html(message);
+					msgElement = $(document.createElement(wrapper)).text(message);
 				}
 			} else {
 				// wrapper未設定ならテキストノード
@@ -335,7 +358,8 @@
 
 			return h5internal.validation.createValidateErrorMessage(name, invalidReason,
 					this._setting[name], violationIndex, this._validatorDefaultMessageMap,
-					appliedRules);
+					appliedRules, this._outputPluginDefaultMessage,
+					this._outputPluginDefaultDisplayName);
 		},
 
 		/**
@@ -380,7 +404,8 @@
 			var violations = invalidReason.violation;
 			for (var i = 0, len = violations.length; i < len; i++) {
 				var message = h5internal.validation.createValidateErrorMessage(name, invalidReason,
-						this._setting[name], i, this._validatorDefaultMessageMap, appliedRules);
+						this._setting[name], i, this._validatorDefaultMessageMap, appliedRules,
+						this._outputPluginDefaultMessage, this._outputPluginDefaultDisplayName);
 				ret.push(message);
 			}
 
@@ -1003,13 +1028,21 @@
 				this._updateVisible();
 			}
 
+			if ('message' in setting) {
+				this._messageOutputController._setOutputDefaultMessage(setting.message);
+			}
+
+			if ('displayName' in setting) {
+				this._messageOutputController._setOutputDefaultDisplayName(setting.displayName);
+			}
+
 			// 各プロパティ毎のメッセージ設定をする
 			var property = setting.property;
 			var messageSetting = {};
 			for ( var p in property) {
 				messageSetting[p] = {
-					displayName: property[p].displayName || setting.displayName,
-					message: property[p].message || setting.message
+					displayName: property[p].displayName,
+					message: property[p].message
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
@@ -1196,10 +1229,12 @@
 		 * @memberOf h5.ui.validation.ErrorBalloon
 		 */
 		reset: function() {
-			$(this._balloonTargets).each(this.own(function(el) {
-				this._hideBalloon(el);
-			}));
+			for (var i = 0, len = this._balloonTargets.length; i < len; i++) {
+				var balloonTarget = this._balloonTargets[i];
+				this._hideBalloon(balloonTarget);
+			}
 			this._balloonTargets = [];
+			this._nameToTargetMap = {};
 		},
 
 		/**
@@ -1240,8 +1275,16 @@
 			var replaceElement = propSetting.replaceElement;
 
 			if (isFunction(replaceElement)) {
-				target = replaceElement(element);
+				var replacer = replaceElement(element);
+				//jQueryオブジェクトが返された場合はDOM要素を取り出す
+				target = h5.u.obj.isJQueryObject(replacer) ? replacer[0] : replacer;
+			} else if (isString(replaceElement)) {
+				target = document.querySelector(replaceElement);
+			} else if (h5.u.obj.isJQueryObject(replaceElement)) {
+				//BalloonControllerのoption.targetはDOM要素でなければならないので、jQueryオブジェクトから取り出す
+				target = replaceElement[0];
 			} else if (replaceElement != null) {
+				//replaceElementが文字列でもjQueryオブジェクトでなく非nullの場合は生のDOM要素が指定されたとみなす
 				target = replaceElement;
 			} else if (groupContainerTarget) {
 				target = groupContainerTarget;
@@ -1259,8 +1302,8 @@
 					: target;
 
 			if (type === 'blur'
-					|| (hideTargetElement !== document.activeElement && !$(document.activeElement)
-							.closest(hideTargetElement).length)) {
+					&& (hideTargetElement !== document.activeElement && $(document.activeElement)
+							.closest(hideTargetElement).length === 0)) {
 				// フォーカスが外れた時、該当要素または該当要素内の要素にフォーカスが当たっていない場合は非表示にする
 				this._hideBalloon(hideTargetElement, name);
 				return;
@@ -1378,13 +1421,21 @@
 				}
 			}
 
+			if ('message' in setting) {
+				this._messageOutputController._setOutputDefaultMessage(setting.message);
+			}
+
+			if ('displayName' in setting) {
+				this._messageOutputController._setOutputDefaultDisplayName(setting.displayName);
+			}
+
 			// 各プロパティ毎のメッセージ設定をする
 			var property = setting.property;
 			var messageSetting = {};
 			for ( var p in property) {
 				messageSetting[p] = {
-					displayName: property[p].displayName || setting.displayName,
-					message: property[p].message || setting.message
+					displayName: property[p].displayName,
+					message: property[p].message
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
@@ -1539,7 +1590,7 @@
 	 * <td>string</td>
 	 * <td>メッセージを出力する要素のタグ名またはタグ生成文字列。'li'や、'&lt;span
 	 * class="error-msg"&gt;'のような指定ができ、指定された文字列から生成した要素が各メッセージ要素になります。</td>
-	 * <td>なし(テキストノードとして表示)</td>
+	 * <td>&lt;span class=&quot;h5-message&quot;(ここにエラーメッセージがテキストとして出力される)&gt;&lt;/span&gt;</td>
 	 * </tr>
 	 * </tbody></table>
 	 * <p>
@@ -1566,6 +1617,13 @@
 		 * @private
 		 */
 		_updateOn: null,
+
+		/**
+		 * メッセージ出力時のラッパータグ文字列
+		 *
+		 * @private
+		 */
+		_wrapper: null,
 
 		/**
 		 * プラグイン設定を行う
@@ -1724,7 +1782,7 @@
 				return;
 			}
 
-			// 既存のエラーメッセージを削除
+			// 既存のエラーメッセージを一旦削除
 			this._removeMessage(name);
 
 			if ($.inArray(name, validationResult.invalidProperties) === -1) {
@@ -1737,14 +1795,26 @@
 			var target = isFunction(replaceElement) ? replaceElement(element)
 					: (replaceElement || element);
 
-			var $errorMsg = this._messageElementMap[name];
-			if (!$errorMsg) {
-				// TODO タグやクラスを設定できるようにする
-				$errorMsg = $('<span class="message"></span>');
-				this._messageElementMap[name] = $errorMsg;
+			var rawMsg = this._messageOutputController.getMessageByValidationResult(
+					validationResult, name);
+
+			var $errorMsg;
+			if (this._wrapper != null) {
+				if (h5.u.str.startsWith($.trim(this._wrapper), '<')) {
+					// '<span class="hoge">'のような指定ならその文字列でDOM生成
+					$errorMsg = $(this._wrapper);
+				} else {
+					// 'span'のような指定ならcreateElementでエレメント生成
+					$errorMsg = $(document.createElement(this._wrapper));
+				}
+			} else {
+				$errorMsg = $('<span class="h5-message"></span>');
 			}
-			$errorMsg.html(this._messageOutputController.getMessageByValidationResult(
-					validationResult, name));
+
+			$errorMsg.text(rawMsg);
+
+			this._messageElementMap[name] = $errorMsg;
+
 			if (appendMessage) {
 				appendMessage($errorMsg[0], target, name);
 			} else if (target) {
@@ -1763,7 +1833,7 @@
 			//messageElementMapにはjQueryインスタンスが入っているので、
 			//単に存在チェックをする以下のif文でよい($message[0]とはしない)
 			if ($message) {
-				$mesage.remove();
+				$message.remove();
 				delete this._messageElementMap[name];
 			}
 		},
@@ -1778,7 +1848,7 @@
 			var setting = this._setting;
 
 			if (setting.updateOn == null) {
-				this._updateOn = ['focus', 'blur', 'validate'];
+				this._updateOn = ['change', 'validate'];
 			} else {
 				var updateOn = setting.updateOn;
 				if (isArray(updateOn)) {
@@ -1789,7 +1859,15 @@
 			}
 
 			if ('wrapper' in setting) {
-				this._messageOutputController.setWrapper(setting.wrapper);
+				this._wrapper = setting.wrapper;
+			}
+
+			if ('message' in setting) {
+				this._messageOutputController._setOutputDefaultMessage(setting.message);
+			}
+
+			if ('displayName' in setting) {
+				this._messageOutputController._setOutputDefaultDisplayName(setting.displayName);
 			}
 
 			// 各プロパティ毎のメッセージ設定をする
@@ -1797,8 +1875,8 @@
 			var messageSetting = {};
 			for ( var p in property) {
 				messageSetting[p] = {
-					displayName: property[p].displayName || setting.displayName,
-					message: property[p].message || setting.message
+					displayName: property[p].displayName,
+					message: property[p].message
 				};
 			}
 			this._messageOutputController.addMessageSetting(messageSetting);
@@ -2743,7 +2821,9 @@
 		 * @param {Object} ruleObj ルールオブジェクト(オブジェクトの形式は{@link h5.validation.FormValidationLogic.addRule}参照)
 		 */
 		addRule: function(ruleObj) {
-			this._validationLogic.addRule(ruleObj);
+			if (ruleObj) {
+				this._validationLogic.addRule(ruleObj);
+			}
 		},
 
 		/**
@@ -3063,6 +3143,8 @@
 			for ( var pluginName in plugins) {
 				this._resetPlugin(pluginName, plugins[pluginName]);
 			}
+
+			this._fireValidationUpdateEvent('reset');
 		},
 
 		/**
