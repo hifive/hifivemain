@@ -386,6 +386,10 @@ $(function() {
 					html += '<input name="b" type="checkbox" checked>';
 					html += '<textarea name="c"></textarea>';
 					html += '<select name="d"><option selected value="selectA"><option value="selectB"></select>';
+					html += '<input name="e" type="checkbox">';
+					html += '<input name="f" type="radio" checked>';
+					html += '<input name="g" type="radio">';
+					html += '<input name="h" type="file">';
 					html += '</form>';
 					$fixture.append(html);
 					$fixture.append('<form><input name="z"></form>');
@@ -423,6 +427,18 @@ $(function() {
 		ok(result.hasOwnProperty('b'), 'キー名が各部品のname属性値となっていること');
 		ok(result.hasOwnProperty('c'), 'キー名が各部品のname属性値となっていること');
 		ok(result.hasOwnProperty('d'), 'キー名が各部品のname属性値となっていること');
+	});
+
+	test('各name属性の値を取得できること', function() {
+		var result = this.formController.getValue();
+		strictEqual(result['a'], '', 'valueを取得できること');
+		strictEqual(result['b'], 'on', 'checkboxがcheckedの場合はvalueを取得できること');
+		strictEqual(result['c'], '', 'textareaのvalueを取得できること');
+		strictEqual(result['d'], 'selectA', 'selectのvalueを取得できること');
+		strictEqual(result['e'], null, 'checkboxがcheckedでない場合はnullを取得できること');
+		strictEqual(result['f'], 'on', 'radioがcheckedの場合はvalueを取得できること');
+		strictEqual(result['g'], undefined, 'radioがcheckedでない場合は取得できないこと');
+		strictEqual(result['h'], undefined, 'fileのを取得できないこと');
 	});
 
 	//=============================
@@ -528,21 +544,14 @@ $(function() {
 			var html = '<form class="testForm"><input class="inputA" name="a" value="v">';
 			html += '<input class="inputB" name="b"></form>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
+
+			var dfd = this.dfd = h5.async.deferred();
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				formCtrl.addRule({
 					a: {
 						customFunc: function(v) {
-							var dfd = $.Deferred();
-							var promise = dfd.promise();
-							setTimeout(function() {
-								if (v === 'v') {
-									dfd.resolve();
-								} else {
-									dfd.reject();
-								}
-							}, 0);
-							return promise;
+							return dfd.promise();
 						}
 					}
 				});
@@ -557,22 +566,37 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('asyncIndicatorプラグインを有効化できること', function() {
-		this.formController.addOutput('asyncIndicator');
-		var asyncIndicatorPlugin = this.formController.getOutput('asyncIndicator');
-		ok(asyncIndicatorPlugin
-				&& asyncIndicatorPlugin.__name === 'h5.ui.validation.AsyncIndicator',
-				'asyncIndicatorプラグインが有効化されていること');
+	asyncTest('asyncIndicatorプラグインを有効化できること', function() {
+		var formCtrl = this.formController;
+		var dfd = this.dfd;
+
+		var pluginName = 'asyncIndicator';
+		formCtrl.addOutput(pluginName);
+		var asyncIndicatorPlugin = formCtrl.getOutput(pluginName);
+		asyncIndicatorPlugin.readyPromise.done(function() {
+			ok(asyncIndicatorPlugin
+					&& asyncIndicatorPlugin.__name === 'h5.ui.validation.AsyncIndicator',
+					'asyncIndicatorプラグインが有効化されていること');
+			start();
+		});
 	});
 
 	asyncTest('非同期バリデート中の項目にインジケータが表示されること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('asyncIndicator');
-		var result = formCtrl.validate();
-		result.addEventListener('validate', function(ev) {
-			start();
+		var dfd = this.dfd;
+
+		var pluginName = 'asyncIndicator';
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			// 同期バリデート
+			formCtrl.validate();
+
+			// インジケータを表示するため待つ
+			setTimeout(function() {
+				strictEqual($('form> .inputA >.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
+				start();
+			}, 0);
 		});
-		strictEqual($('form> .inputA >.h5-indicator').length, 1, '非同期バリデート対象要素にインジケータが表示されること');
 	});
 
 	//=============================
@@ -584,8 +608,8 @@ $(function() {
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
 
-			var dfd = h5.async.deferred();
-			var formCtrl = h5.core.controller('.testForm', h5.ui.FormController);
+			var dfd = this.dfd = h5.async.deferred();
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
 				var pluginName = 'asyncIndicator';
 				formCtrl.addOutput(pluginName);
@@ -607,8 +631,6 @@ $(function() {
 					}, 0);
 				});
 			});
-			this.formController = formCtrl;
-			this.dfd = dfd;
 		},
 		teardown: function() {
 			clearController();
@@ -788,8 +810,8 @@ $(function() {
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
 
-			var dfd = h5.async.deferred();
-			var formCtrl = h5.core.controller('.testForm', h5.ui.FormController);
+			var dfd = this.dfd = h5.async.deferred();
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
 				var pluginName = 'asyncIndicator';
 				formCtrl.addOutput(pluginName);
@@ -807,8 +829,6 @@ $(function() {
 					start();
 				});
 			});
-			this.formController = formCtrl;
-			this.dfd = dfd;
 		},
 		teardown: function() {
 			clearController();
@@ -988,26 +1008,22 @@ $(function() {
 			stop();
 			var html = '<form class="testForm"><input class="inputA" name="a" value="v"></form>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addOutput('asyncIndicator');
-				this.addRule({
-					a: {
-						customFunc: function(v) {
-							var dfd = $.Deferred();
-							var promise = dfd.promise();
-							setTimeout(function() {
-								if (v === 'v') {
-									dfd.resolve();
-								} else {
-									dfd.reject();
-								}
-							}, 0);
-							return promise;
+
+			var dfd = this.dfd = h5.async.deferred();
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'asyncIndicator';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							customFunc: function(v) {
+								return dfd.promise();
+							}
 						}
-					}
+					});
+					start();
 				});
-				start();
 			});
 		},
 		teardown: function() {
@@ -1049,11 +1065,11 @@ $(function() {
 			var html = '<form class="testForm"><input class="inputA" name="a"><input class="inputB" name="b"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
 				var pluginName = 'composition';
-				this.addOutput(pluginName);
-				this.getOutput(pluginName).readyPromise.done(function() {
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
 					start();
 				});
 			});
@@ -1285,15 +1301,11 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate('a');
-			$('.inputB').val('ok');
-			formCtrl.validate('b');
+		formCtrl.validate('a');
+		$('.inputB').val('ok');
+		formCtrl.validate('b');
 
-			strictEqual($('.errorContainer').text(), errorMessage + errorMessage, 'バリデートエラーが有った場合にすべてのエラーメッセージが表示されること');
-			start();
-		}, 0);
+		strictEqual($('.errorContainer').text(), errorMessage + errorMessage, 'バリデートエラーが有った場合にすべてのエラーメッセージが表示されること');
 	});
 
 	test('showAllErrors:falseを設定する場合は最後のエラーのみを出力すること', function() {
@@ -1329,15 +1341,11 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate('a');
-			$('.inputB').val('ok');
-			formCtrl.validate('b');
+		formCtrl.validate('a');
+		$('.inputB').val('ok');
+		formCtrl.validate('b');
 
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合に最後のエラーメッセージが表示されること');
-			start();
-		}, 0);
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合に最後のエラーメッセージが表示されること');
 	});
 
 	test('showAllErrors:未定義を設定する場合はこれまでに検出された全ての項目のエラーを出力すること', function() {
@@ -1373,15 +1381,11 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate('a');
-			$('.inputB').val('ok');
-			formCtrl.validate('b');
+		formCtrl.validate('a');
+		$('.inputB').val('ok');
+		formCtrl.validate('b');
 
-			strictEqual($('.errorContainer').text(), errorMessage + errorMessage, 'バリデートエラーが有った場合にすべてのエラーメッセージが表示されること');
-			start();
-		}, 0);
+		strictEqual($('.errorContainer').text(), errorMessage + errorMessage, 'バリデートエラーが有った場合にすべてのエラーメッセージが表示されること');
 	});
 
 	test('hideWhenEmpty:true、エラーが0件ならcontainerで指定された要素を非表示にすること', function() {
@@ -1409,15 +1413,11 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $input = $('.inputA');
-			$input.val('ok');
-			formCtrl.validate();
+		var $input = $('.inputA');
+		$input.val('ok');
+		formCtrl.validate();
 
-			ok($('.errorContainer').is(':hidden'), '非表示になること');
-			start();
-		}, 0);
+		ok($('.errorContainer').is(':hidden'), '非表示になること');
 	});
 
 	test('hideWhenEmpty:true、エラーが1件ならcontainerで指定された要素を表示すること', function() {
@@ -1445,13 +1445,9 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
+		formCtrl.validate();
 
-			ok($('.errorContainer').is(':visible'), '表示になること');
-			start();
-		}, 0);
+		ok($('.errorContainer').is(':visible'), '表示になること');
 	});
 
 	test('hideWhenEmpty:false、エラーが0件ならcontainerで指定された要素を表示すること', function() {
@@ -1479,15 +1475,11 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $input = $('.inputA');
-			$input.val('ok');
-			formCtrl.validate();
+		var $input = $('.inputA');
+		$input.val('ok');
+		formCtrl.validate();
 
-			ok($('.errorContainer').is(':visible'), '表示になること');
-			start();
-		}, 0);
+		ok($('.errorContainer').is(':visible'), '表示になること');
 	});
 
 	test('hideWhenEmpty:false、エラーが1件ならcontainerで指定された要素を表示すること', function() {
@@ -1515,13 +1507,9 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
+		formCtrl.validate();
 
-			ok($('.errorContainer').is(':visible'), '表示になること');
-			start();
-		}, 0);
+		ok($('.errorContainer').is(':visible'), '表示になること');
 	});
 
 	test('hideWhenEmpty:未定義、エラーが0件ならcontainerで指定された要素を非表示にすること', function() {
@@ -1549,15 +1537,11 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $input = $('.inputA');
-			$input.val('ok');
-			formCtrl.validate();
+		var $input = $('.inputA');
+		$input.val('ok');
+		formCtrl.validate();
 
-			ok($('.errorContainer').is(':visible'), '表示になること');
-			start();
-		}, 0);
+		ok($('.errorContainer').is(':visible'), '表示になること');
 	});
 
 	test('hideWhenEmpty:未定義、エラーが1件ならcontainerで指定された要素を表示すること', function() {
@@ -1585,13 +1569,9 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
+		formCtrl.validate();
 
-			ok($('.errorContainer').is(':visible'), '表示になること');
-			start();
-		}, 0);
+		ok($('.errorContainer').is(':visible'), '表示になること');
 	});
 
 	test('showAllErrors:false、hideWhenEmpty:trueの場合、1回目のvalidateでエラー1件、2回目のvalidateでエラー0件ならエラーが非表示になること', function() {
@@ -1620,20 +1600,16 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $input = $('.inputA');
+		var $input = $('.inputA');
 
-			$input.val('');
-			formCtrl.validate();
-			ok($('.errorContainer').is(':visible'), '表示になること');
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にすべてのエラーメッセージが表示されること');
+		$input.val('');
+		formCtrl.validate();
+		ok($('.errorContainer').is(':visible'), '表示になること');
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にすべてのエラーメッセージが表示されること');
 
-			$input.val('ok');
-			formCtrl.validate();
-			ok($('.errorContainer').is(':hidden'), '非表示になること');
-			start();
-		}, 0);
+		$input.val('ok');
+		formCtrl.validate();
+		ok($('.errorContainer').is(':hidden'), '非表示になること');
 	});
 
 	test('showAllErrors:false、hideWhenEmpty:trueの場合、1回目のvalidateでエラー0件、2回目のvalidateでエラー1件ならエラーが表示されていること', function() {
@@ -1662,20 +1638,16 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $input = $('.inputA');
+		var $input = $('.inputA');
 
-			$input.val('ok');
-			formCtrl.validate();
-			ok($('.errorContainer').is(':hidden'), '非表示になること');
+		$input.val('ok');
+		formCtrl.validate();
+		ok($('.errorContainer').is(':hidden'), '非表示になること');
 
-			$input.val('');
-			formCtrl.validate();
-			ok($('.errorContainer').is(':visible'), '表示になること');
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にすべてのエラーメッセージが表示されること');
-			start();
-		}, 0);
+		$input.val('');
+		formCtrl.validate();
+		ok($('.errorContainer').is(':visible'), '表示になること');
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にすべてのエラーメッセージが表示されること');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:blurで指定できること', function() {
@@ -1703,34 +1675,30 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// blurの場合
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), errorMessage, 'blurでバリデートエラーが有った場合にエラーメッセージが表示されること');
+		// blurの場合
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), errorMessage, 'blurでバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			// blur以外の場合
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
+		// blur以外の場合
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:validateで指定できること', function() {
@@ -1758,34 +1726,30 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// validateの場合
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), errorMessage, 'validateでバリデートエラーが有った場合にエラーメッセージが表示されること');
+		// validateの場合
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), errorMessage, 'validateでバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			// validate以外の場合
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
+		// validate以外の場合
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:changeで指定できること', function() {
@@ -1813,34 +1777,30 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// changeの場合
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), errorMessage, 'changeでバリデートエラーが有った場合にエラーメッセージが表示されること');
+		// changeの場合
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), errorMessage, 'changeでバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			// change以外の場合
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
+		// change以外の場合
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:focusで指定できること', function() {
@@ -1868,34 +1828,30 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// focusの場合
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), errorMessage, 'focusでバリデートエラーが有った場合にエラーメッセージが表示されること');
+		// focusの場合
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), errorMessage, 'focusでバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			// focus以外の場合
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
+		// focus以外の場合
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:keyupで指定できること', function() {
@@ -1923,34 +1879,30 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// keyupの場合
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), errorMessage, 'keyupでバリデートエラーが有った場合にエラーメッセージが表示されること');
+		// keyupの場合
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), errorMessage, 'keyupでバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			// keyup以外の場合
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
+		// keyup以外の場合
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:未定義で指定できること', function() {
@@ -1978,34 +1930,30 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// validateの場合
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), errorMessage, 'validateでバリデートエラーが有った場合にエラーメッセージが表示されること');
+		// validateの場合
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), errorMessage, 'validateでバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			// validate以外の場合
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
+		// validate以外の場合
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:長さ0配列で指定できること', function() {
@@ -2033,32 +1981,28 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), '', 'blurでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:長さ1配列で指定できること', function() {
@@ -2086,34 +2030,30 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// blurの場合
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), errorMessage, 'blurバリデートエラーが有った場合にエラーメッセージが表示されること');
+		// blurの場合
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), errorMessage, 'blurバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			// blur以外の場合
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
+		// blur以外の場合
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), '', 'validateでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
 	});
 
 	test('出力プラグインの更新タイミングをupdateOn:長さ2配列で指定できること', function() {
@@ -2141,34 +2081,30 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// blur、validateの場合
-			$errorContainer.text('');
-			$input.blur();
-			strictEqual($errorContainer.text(), errorMessage, 'blurでバリデートエラーが有った場合にエラーメッセージが表示されること');
+		// blur、validateの場合
+		$errorContainer.text('');
+		$input.blur();
+		strictEqual($errorContainer.text(), errorMessage, 'blurでバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			$errorContainer.text('');
-			formCtrl.validate('a');
-			strictEqual($errorContainer.text(), errorMessage, 'validateでバリデートエラーが有った場合にエラーメッセージが表示されること');
+		$errorContainer.text('');
+		formCtrl.validate('a');
+		strictEqual($errorContainer.text(), errorMessage, 'validateでバリデートエラーが有った場合にエラーメッセージが表示されること');
 
-			// blur、validate以外の場合
-			$errorContainer.text('');
-			$input.change();
-			strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
+		// blur、validate以外の場合
+		$errorContainer.text('');
+		$input.change();
+		strictEqual($errorContainer.text(), '', 'changeでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.focus();
-			strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
+		$errorContainer.text('');
+		$input.focus();
+		strictEqual($errorContainer.text(), '', 'focusでエラーメッセージが表示されないこと');
 
-			$errorContainer.text('');
-			$input.keyup();
-			strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$errorContainer.text('');
+		$input.keyup();
+		strictEqual($errorContainer.text(), '', 'keyupでエラーメッセージが表示されないこと');
 	});
 
 	asyncTest('同期・非同期のバリデーションが混在する場合、validateの直後に同期のメッセージが、validateComplete発火時に非同期のメッセージが表示されること', function() {
@@ -2261,6 +2197,37 @@ $(function() {
 		ok($('.errorContainer').is(':hidden'), 'リセット後は非表示になること');
 	});
 
+	test('エラーを表示した状態で要素をバリデーション対象から外して再バリデートするとエラー表示がなくなること', function() {
+		var formCtrl = this.formController;
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer')
+				}
+			},
+		});
+
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), 'aは必須項目です。', '事前にエラーメッセージが表示されること');
+
+		// name="a" の要素をバリデーション対象から除外
+		formCtrl.disableRule('a');
+		strictEqual($('.errorContainer').text(), 'aは必須項目です。', 'disbaleRule後にエラーメッセージが表示されること');
+
+		var result = formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', '再バリデート後にエラーメッセージが表示されないこと');
+
+		strictEqual(result.properties.length, 0 , 'propertiesの長さが0であること');
+		strictEqual(result.invalidProperties.length,  0, 'invalidPropertiesの長さが0であること');
+		ok(!result.invalidReason.hasOwnProperty('a'), 'invalidReasonnにaというプロパティが存在しないこと');
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -2293,6 +2260,8 @@ $(function() {
 							}
 						}
 					});
+
+					// 全体バリデートを行う
 					formCtrl.validate();
 					start();
 				});
@@ -2435,6 +2404,8 @@ $(function() {
 							}
 						}
 					});
+
+					// 全体バリデートを行わない
 					start();
 				});
 			});
@@ -2538,11 +2509,11 @@ $(function() {
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
 				var pluginName = 'message';
-				this.addOutput(pluginName);
-				this.getOutput(pluginName).readyPromise.done(function() {
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
 					start();
 				});
 			});
@@ -2598,8 +2569,8 @@ $(function() {
 		formCtrl.setSetting({
 			output: {
 				message: {
-					appendMessage: function(messageElem, propName, target) {
-						$(target).append('<span class="errorMessageWrapper">');
+					appendMessage: function(messageElem, target, propName) {
+						$(target).after('<span class="errorMessageWrapper">' + messageElem.textContent + '</span>');
 					},
 					message: errorMessage
 				}
@@ -2771,6 +2742,8 @@ $(function() {
 							}
 						}
 					});
+
+					// 全体バリデートを行う
 					formCtrl.validate();
 					start();
 				});
@@ -2797,7 +2770,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			// FIXME #530 setSetting()で各プロパティ毎のプラグイン設定でメッセージを指定しない場合、
 			// プラグイン設定のmessageではなくバリデーションルールのデフォルトメッセージが表示される。
@@ -2818,7 +2792,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').focus();
 			gate({
@@ -2861,7 +2836,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').keyup();
 			gate({
@@ -2888,7 +2864,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').change();
 			gate({
@@ -2915,7 +2892,8 @@ $(function() {
 		gate({
 			func: function() {
 				return $container.length === 0;
-			}
+			},
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').click();
 			gate({
@@ -2941,25 +2919,29 @@ $(function() {
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
-			var formCtrl = this.formController = h5.core.controller('.testForm',
-					h5.ui.FormController);
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
-				});
-				this.addOutput('message');
-				// FIXME #529
-				formCtrl.setSetting({
-					output: {
-						message: {
-							message: that.errorMessage,
-							wrapper: '<span class="errorMessageWrapper">'
+				var pluginName = 'message';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
 						}
-					}
+					});
+
+					formCtrl.setSetting({
+						output: {
+							message: {
+								message: that.errorMessage,
+								wrapper: '<span class="errorMessageWrapper">'
+							}
+						}
+					});
+
+					// 全体バリデートを行わない
+					start();
 				});
-				start();
 			});
 		},
 		teardown: function() {
@@ -3057,11 +3039,11 @@ $(function() {
 			var html = '<form class="testForm"><div class="testBalloonContainer">';
 			html += '<input class="inputA" name="a"><input class="inputB" name="b"></div></form>';
 			$('body').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
 				var pluginName = 'balloon';
-				this.addOutput(pluginName);
-				this.getOutput(pluginName).readyPromise.done(function() {
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
 					start();
 				});
 			});
@@ -3091,8 +3073,17 @@ $(function() {
 			}
 		});
 		formCtrl.validate();
-		strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
-		start();
+
+		gate({
+			func: function() {
+				return $('.validation-balloon').length === 1;
+			},
+			maxWait: 1000
+		}).done(function() {
+			ok(false, 'バルーンが表示される');
+		}).fail(function() {
+			strictEqual($('.validation-balloon').length, 0, 'バルーンが表示されないこと');
+		}).always(start);
 	});
 
 	asyncTest('バルーンを表示する位置を文字列で指定できること', function() {
@@ -3229,24 +3220,22 @@ $(function() {
 			dfd.reject({
 				valid: false
 			});
-			// 非同期のバリデーションの後に実行するために処理を遅らせる
-			stop();
-			setTimeout(function() {
-				gate({
-					func: function() {
-						return $('.validation-balloon').length === 1;
-					},
-					maxWait: 1000
-				}).done(function() {
-					// 非同期のメッセージ確認
-					strictEqual($('.validation-balloon').text(), asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
-				}).fail(function() {
-					ok(false, '非同期時にballoonが表示されない');
-				}).always(start);
-			}, 0);
+
+			gate({
+				func: function() {
+					return $('.validation-balloon').length === 1;
+				},
+				maxWait: 1000
+			}).done(function() {
+				// 非同期のメッセージ確認
+				strictEqual($('.validation-balloon').text(), asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+			}).fail(function() {
+				ok(false, '非同期時にballoonが表示されない');
+			}).always(start);
 		}).fail(function() {
 			ok(false, '同期時にballoonが表示されない');
-		}).always(start);
+			start();
+		});
 	});
 
 	//=============================
@@ -3262,14 +3251,19 @@ $(function() {
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
+				var pluginName = 'balloon';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+
+					// 全体バリデートを行う
+					formCtrl.validate();
+					start();
 				});
-				this.addOutput('balloon');
-				formCtrl.validate();
-				start();
 			});
 		},
 		teardown: function() {
@@ -3302,7 +3296,8 @@ $(function() {
 			func: function() {
 				return $('.validation-balloon').length === 1;
 			},
-			failMsg: 'バルーンが表示されない'
+			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			strictEqual($('.validation-balloon').length, 1, 'バルーンが表示されること');
 		}).always(start);
@@ -3315,6 +3310,7 @@ $(function() {
 				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').blur();
 			gate({
@@ -3337,6 +3333,7 @@ $(function() {
 				return $('.validation-balloon').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').keyup();
 			gate({
@@ -3389,7 +3386,7 @@ $(function() {
 			this.errorMessage = 'errorMessage';
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			$('body').append(html);
-			var formCtrl = h5.core.controller('.testForm', h5.ui.FormController);
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
 				var pluginName = 'balloon';
 				formCtrl.addOutput(pluginName);
@@ -3399,10 +3396,11 @@ $(function() {
 							required: true
 						}
 					});
+
+					// 全体バリデートを行わない
 					start();
 				});
 			});
-			this.formController = formCtrl;
 		},
 		teardown: function() {
 			clearController();
@@ -3507,16 +3505,18 @@ $(function() {
 			var html = '<form class="testForm"><div style="text-align: center">';
 			html += '<input class="inputA" name="a"></div></form>';
 			$('body').append(html);
-			var formCtrl = this.formController = h5.core.controller('.testForm',
-					h5.ui.FormController);
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
+				var pluginName = 'balloon';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+					start();
 				});
-				this.addOutput('balloon');
-				start();
 			});
 		},
 		teardown: function() {
@@ -3659,11 +3659,11 @@ $(function() {
 				var html = '<form class="testForm"><div class="testBalloonContainer">';
 				html += '<input class="inputA" name="a"><input class="inputB" name="b"></div></form>';
 				$('body').append(html);
-				that.formController = h5.core.controller('.testForm', h5.ui.FormController);
-				that.formController.readyPromise.done(function() {
+				var formCtrl = that.formController = h5.core.controller('.testForm', h5.ui.FormController);
+				formCtrl.readyPromise.done(function() {
 					var pluginName = 'bsBalloon';
-					this.addOutput(pluginName);
-					this.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addOutput(pluginName);
+					formCtrl.getOutput(pluginName).readyPromise.done(function() {
 						start();
 					});
 				});
@@ -3841,24 +3841,22 @@ $(function() {
 			dfd.reject({
 				valid: false
 			});
-			// 非同期のバリデーションの後に実行するために処理を遅らせる
-			stop();
-			setTimeout(function() {
-				gate({
-					func: function() {
-						return $('.tooltip').length === 1;
-					},
-					maxWait: 1000
-				}).done(function() {
-					// 非同期のメッセージ確認
-					strictEqual($('.tooltip>.tooltip-inner').text(), asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
-				}).fail(function() {
-					ok(false, '非同期時にballoonが表示されない');
-				}).always(start);
-			}, 0);
+
+			gate({
+				func: function() {
+					return $('.tooltip').length === 1;
+				},
+				maxWait: 1000
+			}).done(function() {
+				// 非同期のメッセージ確認
+				strictEqual($('.tooltip>.tooltip-inner').text(), asyncErrorMessage, '非同期時に非同期のメッセージが表示されること');
+			}).fail(function() {
+				ok(false, '非同期時にballoonが表示されない');
+			}).always(start);
 		}).fail(function() {
 			ok(false, '同期時にballoonが表示されない');
-		}).always(start);
+			start();
+		});
 	});
 
 	//=============================
@@ -3881,14 +3879,19 @@ $(function() {
 						var formCtrl = that.formController = h5.core.controller('.testForm',
 								h5.ui.FormController);
 						formCtrl.readyPromise.done(function() {
-							this.addRule({
-								a: {
-									required: true
-								}
+							var pluginName = 'bsBalloon';
+							formCtrl.addOutput(pluginName);
+							formCtrl.getOutput(pluginName).readyPromise.done(function() {
+								formCtrl.addRule({
+									a: {
+										required: true
+									}
+								});
+
+								// 全体バリデートを行う
+								formCtrl.validate();
+								start();
 							});
-							this.addOutput('bsBalloon');
-							this.validate();
-							start();
 						});
 					}).fail(start);
 		},
@@ -3924,7 +3927,8 @@ $(function() {
 			func: function() {
 				return $('.tooltip').length === 1;
 			},
-			failMsg: 'バルーンが表示されない'
+			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			strictEqual($('.tooltip').length, 1, 'バルーンが表示されること');
 		}).always(start);
@@ -3937,6 +3941,7 @@ $(function() {
 				return $('.tooltip').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').blur();
 			gate({
@@ -3958,6 +3963,7 @@ $(function() {
 				return $('.tooltip').length === 1;
 			},
 			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			$('.inputA').keyup();
 			gate({
@@ -4007,7 +4013,8 @@ $(function() {
 			func: function() {
 				return $('.tooltip').length === 1;
 			},
-			failMsg: 'バルーンが表示されない'
+			failMsg: 'バルーンが表示されない',
+			maxWait: 1000
 		}).done(function() {
 			strictEqual($('.tooltip-inner').text(), 'aは必須項目です。', 'title属性を指定しても正しくメッセージが表示されること');
 		}).always(start);
@@ -4037,24 +4044,26 @@ $(function() {
 										html += '<input class="inputA" name="a"><input class="inputB" name="b">';
 										html += '</div></form>';
 										$('body').append(html);
-										var formCtrl = that.formController = h5.core.controller(
-												'.testForm', h5.ui.FormController);
+										var formCtrl = that.formController = h5.core.controller('.testForm', h5.ui.FormController);
 										formCtrl.readyPromise.done(function() {
-											this.addRule({
-												a: {
-													required: true
-												},
-												testGroup: {
-													customFunc: function(group) {
-														var a = group.a;
-														var b = group.b;
-														return (a && b);
+											var pluginName = 'bsBalloon';
+											formCtrl.addOutput(pluginName);
+											formCtrl.getOutput(pluginName).readyPromise.done(function() {
+												formCtrl.addRule({
+													a: {
+														required: true
+													},
+													testGroup: {
+														customFunc: function(group) {
+															var a = group.a;
+															var b = group.b;
+															return (a && b);
+														}
 													}
-												}
+												});
+												formCtrl.validate();
+												start();
 											});
-											this.addOutput('bsBalloon');
-											this.validate();
-											start();
 										});
 									}).fail(start);
 				},
@@ -4069,26 +4078,17 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	asyncTest('keyup時にバルーンが非表示になること', function() {
+	asyncTest('focus時にバルーンが表示になること', function() {
 		$('.inputA').focus();
 		gate({
 			func: function() {
 				return $('.tooltip').length === 2;// inputA,グループの2つのバルーンが表示される
 			},
+			failMsg: 'バルーンが表示されない',
 			maxWait: 1000
 		}).done(function() {
-			$('.inputA').val('hoge');
-			$('.inputB').val('fuga');
-			$('.inputA').keyup();
-			gate({
-				func: function() {
-					return $('.tooltip').length === 0;
-				},
-				maxWait: 1000
-			}).done(function() {
-				strictEqual($('.tooltip').length === 0, true, 'keyupしたinput要素のバルーンが非表示になること');
-			}).always(start);
-		}).fail(start);
+			ok(true, 'focusしたinput要素のバルーンが表示になること');
+		}).always(start);
 	});
 
 	asyncTest('blur時にバルーンが非表示になること', function() {
@@ -4133,13 +4133,18 @@ $(function() {
 						var formCtrl = that.formController = h5.core.controller('.testForm',
 								h5.ui.FormController);
 						formCtrl.readyPromise.done(function() {
-							this.addRule({
-								a: {
-									required: true
-								}
+							var pluginName = 'bsBalloon';
+							formCtrl.addOutput(pluginName);
+							formCtrl.getOutput(pluginName).readyPromise.done(function() {
+								formCtrl.addRule({
+									a: {
+										required: true
+									}
+								});
+
+								// 全体バリデートを行わない
+								start();
 							});
-							this.addOutput('bsBalloon');
-							start();
 						});
 					}).fail(start);
 		},
@@ -4248,11 +4253,11 @@ $(function() {
 			var html = '<form class="testForm"><div class="testBalloonContainer">';
 			html += '<input class="inputA" name="a"><input class="inputB" name="b"><input class="inputC" name="c"><input class="inputD" name="d"></div></form>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
 				var pluginName = 'style';
-				this.addOutput(pluginName);
-				this.getOutput(pluginName).readyPromise.done(function() {
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
 					start();
 				});
 			});
@@ -4479,25 +4484,30 @@ $(function() {
 			html += '<input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
 
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
-				});
-				this.addOutput('style');
-				this.setSetting({
-					output: {
-						style: {
-							successClassName: that.successClassName,
-							errorClassName: that.errorClassName,
-							validatingClassName: that.validatingClassName
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'style';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
 						}
-					}
+					});
+					formCtrl.setSetting({
+						output: {
+							style: {
+								successClassName: that.successClassName,
+								errorClassName: that.errorClassName,
+								validatingClassName: that.validatingClassName
+							}
+						}
+					});
+
+					// 全体バリデートを行う
+					formCtrl.validate();
+					start();
 				});
-				this.validate();
-				start();
 			});
 		},
 		teardown: function() {
@@ -4620,24 +4630,29 @@ $(function() {
 			html += '<input class="inputA" name="a"></form>';
 			$('#qunit-fixture').append(html);
 
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
-				});
-				this.addOutput('style');
-				this.setSetting({
-					output: {
-						style: {
-							successClassName: that.successClassName,
-							errorClassName: that.errorClassName,
-							validatingClassName: that.validatingClassName
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'style';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
 						}
-					}
+					});
+					formCtrl.setSetting({
+						output: {
+							style: {
+								successClassName: that.successClassName,
+								errorClassName: that.errorClassName,
+								validatingClassName: that.validatingClassName
+							}
+						}
+					});
+
+					// 全体バリデートを行わない
+					start();
 				});
-				start();
 			});
 		},
 		teardown: function() {
@@ -4746,8 +4761,7 @@ $(function() {
 			html += '<input class="inputA" name="a"></form>';
 			$('body').append(html);
 
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			var formCtrl = this.formController;
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
 				var pluginNames = ['asyncIndicator', 'composition', 'message', 'balloon', 'bsBalloon', 'style'];
 				formCtrl.addOutput(pluginNames);
@@ -4859,15 +4873,18 @@ $(function() {
 			html += '<input class="inputA" name="a"></form>';
 			$('body').append(html);
 
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+					start();
 				});
-				this.addOutput('composition');
-				start();
 			});
 		},
 		teardown: function() {
@@ -4964,15 +4981,9 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, '関数が呼び出されたこと');
-				ok(targetViolation, 'targetViolationプロパティを持つこと');
-				start();
-			}, 100);
-		}, 0);
+		formCtrl.validate();
+		ok(isCalled, '関数が呼び出されたこと');
+		ok(targetViolation, 'targetViolationプロパティを持つこと');
 	});
 
 	//=============================
@@ -4984,15 +4995,18 @@ $(function() {
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				this.addRule({
-					a: {
-						required: true
-					}
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'message';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					formCtrl.addRule({
+						a: {
+							required: true
+						}
+					});
+					start();
 				});
-				this.addOutput('message');
-				start();
 			});
 		},
 		teardown: function() {
@@ -5077,15 +5091,9 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, '関数が呼び出されたこと');
-				ok(targetViolation, 'targetViolationプロパティを持つこと');
-				start();
-			}, 100);
-		}, 0);
+		formCtrl.validate();
+		ok(isCalled, '関数が呼び出されたこと');
+		ok(targetViolation, 'targetViolationプロパティを持つこと');
 	});
 
 	//=============================
@@ -5095,11 +5103,9 @@ $(function() {
 		setup: function() {
 			stop();
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
-			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			var formCtrl = this.formController;
-			this.formController.readyPromise.done(function() {
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
 				var pluginName = 'balloon';
 				formCtrl.addOutput(pluginName);
 				formCtrl.getOutput(pluginName).readyPromise.done(function() {
@@ -5228,8 +5234,7 @@ $(function() {
 			html += '<input class="inputA" name="a"></form>';
 			$('body').append(html);
 
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			var formCtrl = this.formController;
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
 				var pluginName = 'style';
 				formCtrl.addOutput(pluginName);
@@ -5346,8 +5351,7 @@ $(function() {
 			html += '<input class="inputA" name="a"></form>';
 			$('body').append(html);
 
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			var formCtrl = this.formController;
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
 				var pluginName = 'message';
 				formCtrl.addOutput('message');
@@ -5458,8 +5462,7 @@ $(function() {
 					html += '<div class="replaceContainer" style="height:10px; width: 100px; border: solid 1px;"></div>';
 					$('#qunit-fixture').append(html);
 
-					this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-					var formCtrl = this.formController;
+					var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 					formCtrl.readyPromise.done(function() {
 						var pluginName = 'balloon';
 						formCtrl.addOutput(pluginName);
@@ -5622,8 +5625,7 @@ $(function() {
 					html += '<input class="inputA" name="a"></form>';
 					$('body').append(html);
 
-					this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-					var formCtrl = this.formController;
+					var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 					formCtrl.readyPromise.done(function() {
 						var pluginName = 'asyncIndicator';
 						formCtrl.addOutput(pluginName);
@@ -5922,6 +5924,7 @@ $(function() {
 			var html = '<form class="testForm">';
 			html += '<input type="checkbox" class="checkA" name="a" checked>';
 			html += '<input type="checkbox" class="checkB" name="a">';
+			html += '<input type="checkbox" class="checkC" name="c" checked>';
 			html += '</form>';
 			$('#qunit-fixture').append(html);
 
@@ -5943,17 +5946,63 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('デフォルトはfalseであること', function() {
-		var value = this.formController.getValue();
-		strictEqual(typeof value['a'], 'string', 'name属性が同じフォーム入力要素が複数あっても配列以外で返ってくるためfalseである');
+	test('isArrayのデフォルトはfalseなので1つしかないname属性では結果が配列以外で返ってくる', function() {
+		var formCtrl = this.formController;
+		var value = formCtrl.getValue();
+		strictEqual(typeof value['c'], 'string', '結果が配列以外で返ってくること');
 	});
 
-	test('trueを設定したプロパティは値を必ず配列で取得できること', function() {
+	test('isArrayをtrueにすると1つしかないname属性では結果が配列で返ってくる', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			property: {
+				c: {
+					isArray: true
+				}
+			}
+		});
+		var value = formCtrl.getValue();
+		ok($.isArray(value['c']), '結果が配列で返ってくること');
+	});
+
+	test('isArrayをtrueにすると1つしかないname属性では結果が配列以外で返ってくる', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			property: {
+				c: {
+					isArray: false
+				}
+			}
+		});
+		var value = formCtrl.getValue();
+		strictEqual(typeof value['c'], 'string', '結果が配列以外で返ってくること');
+	});
+
+	test('isArrayのデフォルトはfalseなので同じname属性が複数ある場合では結果が配列で返ってくる', function() {
+		var formCtrl = this.formController;
+		var value = formCtrl.getValue();
+		ok($.isArray(value['a']), '結果が配列で返ってくること');
+	});
+
+	test('isArrayをtrueにすると同じname属性が複数ある場合では結果が配列で返ってくる', function() {
 		var formCtrl = this.formController;
 		formCtrl.setSetting({
 			property: {
 				a: {
 					isArray: true
+				}
+			}
+		});
+		var value = formCtrl.getValue();
+		ok($.isArray(value['a']), '結果が配列で返ってくること');
+	});
+
+	test('isArrayをfalseにすると同じname属性が複数ある場合では結果が配列で返ってくる', function() {
+		var formCtrl = this.formController;
+		formCtrl.setSetting({
+			property: {
+				a: {
+					isArray: false
 				}
 			}
 		});
@@ -6459,6 +6508,31 @@ $(function() {
 		strictEqual(message, null, '第2引数で指定したプロパティがエラーではない場合はnullを返すこと');
 	});
 
+	test('全てのプロパティがエラーではない場合はnullを返すこと', function() {
+		var msgOutputCtrl = this.messageOutputCtrl;
+		var logic = this.validateLogic;
+		msgOutputCtrl.addMessageSetting({
+			a: {
+				displayName: '入力要素A',
+				message: '{displayName}が違反しています'
+			}
+		});
+		logic.addRule({
+			a: {
+				required: true
+			},
+			b: {
+				required: true
+			}
+		});
+		var result = logic.validate({
+			a: 'valueA',
+			b: 'valueB'
+		});
+		var message = msgOutputCtrl.getMessageByValidationResult(result, 'b');
+		strictEqual(message, null, '全てのプロパティがエラーではない場合はnullを返すこと');
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -6906,9 +6980,13 @@ $(function() {
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
 
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				start();
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -6927,7 +7005,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -6948,15 +7026,10 @@ $(function() {
 			isCalled = true;
 		});
 
-		stop();
-		setTimeout(function() {
-			$('.inputA').val('ok').change();
-			setTimeout(function() {
-				ok(isCalled, 'validationUpdateイベントが発生すること');
-				strictEqual($('.errorContainer').text(), '', 'バリデートエラーがないこと');
-				start();
-			}, 100);
-		}, 0);
+		$('.inputA').val('ok').change();
+
+		ok(isCalled, 'validationUpdateイベントが発生すること');
+		strictEqual($('.errorContainer').text(), '', 'バリデートエラーがないこと');
 	});
 
 	test('validate()が呼ばれた場合はvalidationUpdateイベントが発生すること', function() {
@@ -6967,7 +7040,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -6988,15 +7061,10 @@ $(function() {
 			isCalled = true;
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, 'validationUpdateイベントが発生すること');
-				strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-				start();
-			}, 100);
-		}, 0);
+		formCtrl.validate();
+
+		ok(isCalled, 'validationUpdateイベントが発生すること');
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	//=============================
@@ -7008,9 +7076,13 @@ $(function() {
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				start();
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -7029,7 +7101,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			isAllRulesEnabledWhenEmpty: true,
 			ruleDefault: {
@@ -7051,12 +7123,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること', function() {
@@ -7067,7 +7135,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			isAllRulesEnabledWhenEmpty: false,
 			ruleDefault: {
@@ -7089,12 +7157,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること', function() {
@@ -7105,7 +7169,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			// isAllRulesEnabledWhenEmpty未定義
 			ruleDefault: {
@@ -7127,12 +7191,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	test('isAllRulesEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
@@ -7143,7 +7203,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			isAllRulesEnabledWhenEmpty: true,
 			ruleDefault: {
@@ -7165,12 +7225,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
 	});
 
 	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
@@ -7181,7 +7237,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			isAllRulesEnabledWhenEmpty: false,
 			ruleDefault: {
@@ -7203,12 +7259,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
 	});
 
 	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと', function() {
@@ -7219,7 +7271,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			// isAllRulesEnabledWhenEmpty未定義
 			ruleDefault: {
@@ -7241,12 +7293,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
 	});
 
 	test('isAllRulesEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること', function() {
@@ -7257,7 +7305,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			isAllRulesEnabledWhenEmpty: true,
 			// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
@@ -7275,12 +7323,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること', function() {
@@ -7291,7 +7335,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			isAllRulesEnabledWhenEmpty: false,
 			// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
@@ -7309,12 +7353,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'エラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'エラーメッセージが表示されないこと');
 	});
 
 	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること', function() {
@@ -7325,7 +7365,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			// isAllRulesEnabledWhenEmpty未定義
 			// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
@@ -7343,12 +7383,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'エラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'エラーメッセージが表示されないこと');
 	});
 
 	//=============================
@@ -7360,9 +7396,13 @@ $(function() {
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				start();
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -7380,7 +7420,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -7394,14 +7434,9 @@ $(function() {
 			isCalled = true;
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
-				start();
-			}, 100);
-		}, 0);
+		formCtrl.validate();
+
+		ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
 	});
 
 	test('設定した関数に与えられる引数がvalidationContextオブジェクトであること', function() {
@@ -7411,7 +7446,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -7430,14 +7465,9 @@ $(function() {
 			isCalled = true;
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
-				start();
-			}, 100);
-		}, 0);
+		formCtrl.validate();
+
+		ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
 	});
 
 	test('validationContextオブジェクトのskip()を呼び出す場合はその項目のバリデーションをスキップすること', function() {
@@ -7448,7 +7478,7 @@ $(function() {
 				required: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			output: {
 				composition: {
@@ -7466,15 +7496,11 @@ $(function() {
 			isCalled = true;
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
-				strictEqual($('.errorContainer').text(), errorMessage, 'バリデーションをスキップすること');
-				start();
-			}, 100);
-		}, 0);
+
+		formCtrl.validate();
+
+		ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデーションをスキップすること');
 	});
 
 	//=============================
@@ -7497,28 +7523,29 @@ $(function() {
 		stop();
 		formCtrl.readyPromise.done(function() {
 			var errorMessage = 'バリデートに失敗しました';
-			formCtrl.addOutput('composition');
-			formCtrl.setSetting({
-				output: {
-					composition: {
-						container: $('.errorContainer')
-					}
-				},
-				property: {
-					a: {
+			var pluginName = 'composition';
+			formCtrl.addOutput(pluginName);
+			formCtrl.getOutput(pluginName).readyPromise.done(function() {
+				formCtrl.setSetting({
+					output: {
 						composition: {
-							message: errorMessage
+							container: $('.errorContainer')
+						}
+					},
+					property: {
+						a: {
+							composition: {
+								message: errorMessage
+							}
 						}
 					}
-				}
-			});
+				});
 
-			setTimeout(function() {
 				$('.inputA').val('1234');
 				formCtrl.validate();
 				strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 				start();
-			}, 0);
+			});
 		});
 	});
 
@@ -7530,28 +7557,29 @@ $(function() {
 		stop();
 		formCtrl.readyPromise.done(function() {
 			var errorMessage = 'バリデートに失敗しました';
-			formCtrl.addOutput('composition');
-			formCtrl.setSetting({
-				output: {
-					composition: {
-						container: $('.errorContainer')
-					}
-				},
-				property: {
-					a: {
+			var pluginName = 'composition';
+			formCtrl.addOutput(pluginName);
+			formCtrl.getOutput(pluginName).readyPromise.done(function() {
+				formCtrl.setSetting({
+					output: {
 						composition: {
-							message: errorMessage
+							container: $('.errorContainer')
+						}
+					},
+					property: {
+						a: {
+							composition: {
+								message: errorMessage
+							}
 						}
 					}
-				}
-			});
+				});
 
-			setTimeout(function() {
 				$('.inputA').val('1234');
 				formCtrl.validate();
 				strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
 				start();
-			}, 0);
+			});
 		});
 	});
 
@@ -7564,9 +7592,13 @@ $(function() {
 			var html = '<form class="testForm"><input class="inputA" name="a"></form>';
 			html += '<div class="errorContainer"></div>';
 			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				start();
+			var formCtrl = this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			formCtrl.readyPromise.done(function() {
+				var pluginName = 'composition';
+				formCtrl.addOutput(pluginName);
+				formCtrl.getOutput(pluginName).readyPromise.done(function() {
+					start();
+				});
 			});
 		},
 		teardown: function() {
@@ -7586,7 +7618,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7603,13 +7635,9 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			$('.inputA').val('ok');
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		$('.inputA').val('ok');
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
 	});
 
 	test('funcのチェック関数がfalseを返す場合エラーメッセージを表示すること', function() {
@@ -7620,7 +7648,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7637,13 +7665,9 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			$('.inputA').val('ng');
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			start();
-		}, 0);
+		$('.inputA').val('ng');
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	test('funcのチェック関数を設定できること', function() {
@@ -7655,7 +7679,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7674,15 +7698,10 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			$('.inputA').val('ok');
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, '設定した関数が呼び出されること');
-				start();
-			}, 100);
-		}, 0);
+		$('.inputA').val('ok');
+		formCtrl.validate();
+
+		ok(isCalled, '設定した関数が呼び出されること');
 	});
 
 	test('messageにデフォルトのエラー文字列を設定できること', function() {
@@ -7693,7 +7712,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7710,13 +7729,9 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			$('.inputA').val('ok');
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			start();
-		}, 0);
+		$('.inputA').val('ok');
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	test('messageにデフォルトのエラー文字列を返す関数を設定できること', function() {
@@ -7729,7 +7744,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7750,15 +7765,10 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			$('.inputA').val('ok');
-			formCtrl.validate();
-			setTimeout(function() {
-				ok(isCalled, '設定した関数が呼び出されること');
-				start();
-			}, 100);
-		}, 0);
+		$('.inputA').val('ok');
+		formCtrl.validate();
+
+		ok(isCalled, '設定した関数が呼び出されること');
 	});
 
 	test('messageにデフォルトのエラー文字列を返す関数を設定するとエラーメッセージに反映されること', function() {
@@ -7769,7 +7779,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7790,15 +7800,10 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			$('.inputA').val('ok');
-			formCtrl.validate();
-			setTimeout(function() {
-				strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-				start();
-			}, 100);
-		}, 0);
+		$('.inputA').val('ok');
+		formCtrl.validate();
+
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	test('isForceEnabledWhenEmpty:trueの場合は値が空でもルールを適用すること', function() {
@@ -7809,7 +7814,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7827,12 +7832,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	test('isForceEnabledWhenEmpty:falseの場合は値が空だとルールを適用しないこと', function() {
@@ -7843,7 +7844,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7861,12 +7862,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
 	});
 
 	test('isForceEnabledWhenEmpty:未定義の場合は値が空だとルールを適用しないこと', function() {
@@ -7877,7 +7874,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7895,12 +7892,8 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			formCtrl.validate();
-			strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
-			start();
-		}, 0);
+		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
 	});
 
 	test('validateOnにエラー検出のタイミングを長さ0の配列で設定できること', function() {
@@ -7911,7 +7904,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7932,42 +7925,38 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-			$input.val('ng');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
+		$input.val('ng');
 
-			var validationResult;
+		var validationResult;
 
-			// すべての場合、バリデート検証は行われないのでエラーがでることはないはず
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーがないこと');
+		// すべての場合、バリデート検証は行われないのでエラーがでることはないはず
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーがないこと');
 
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーがないこと');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーがないこと');
 
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーがないこと');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーがないこと');
 
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーがないこと');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーがないこと');
 
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーがないこと');
-			start();
-		}, 0);
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーがないこと');
 	});
 
 	test('validateOnにエラー検出のタイミングを長さ1の配列で設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -7985,37 +7974,33 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-			$input.val('ng');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
+		$input.val('ng');
 
-			var validationResult;
+		var validationResult;
 
-			// blur以外の場合、バリデート検証は行われないのでエラーがでることはないはず
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーがないこと');
+		// blur以外の場合、バリデート検証は行われないのでエラーがでることはないはず
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーがないこと');
 
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーがないこと');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーがないこと');
 
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーがないこと');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーがないこと');
 
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーがないこと');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーがないこと');
 
-			// blurの場合
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurでバリデートエラーがあること');
-			start();
-		}, 0);
+		// blurの場合
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurでバリデートエラーがあること');
 	});
 
 	test('validateOnにエラー検出のタイミングを長さ2の配列で設定できること', function() {
@@ -8026,7 +8011,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8039,37 +8024,33 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-			$input.val('ng');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
+		$input.val('ng');
 
-			var validationResult;
+		var validationResult;
 
-			// blur、validate以外の場合
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーがないこと');
+		// blur、validate以外の場合
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーがないこと');
 
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーがないこと');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーがないこと');
 
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーがないこと');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーがないこと');
 
-			// blur、validateの場合
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurでバリデートエラーがあること');
+		// blur、validateの場合
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurでバリデートエラーがあること');
 
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーがあること');
-			start();
-		}, 0);
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーがあること');
 	});
 
 	test('validateOn:未定義の場合すべてのタイミングでエラー検出を行うこと', function() {
@@ -8080,7 +8061,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8093,35 +8074,31 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-			$input.val('ng');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
+		$input.val('ng');
 
-			var validationResult;
+		var validationResult;
 
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurでバリデートエラーがあること');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurでバリデートエラーがあること');
 
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーがあること');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーがあること');
 
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーがあること');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーがあること');
 
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーがあること');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーがあること');
 
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーがあること');
-			start();
-		}, 0);
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーがあること');
 	});
 
 	test('validateOn:nullの場合すべてのタイミングでエラー検出を行うこと', function() {
@@ -8132,7 +8109,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8145,35 +8122,31 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-			$input.val('ng');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
+		$input.val('ng');
 
-			var validationResult;
+		var validationResult;
 
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurでバリデートエラーがあること');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurでバリデートエラーがあること');
 
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーがあること');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーがあること');
 
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーがあること');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーがあること');
 
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーがあること');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーがあること');
 
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーがあること');
-			start();
-		}, 0);
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーがあること');
 	});
 
 	test('resolveOnにエラー解消のタイミングを長さ0の配列で設定できること', function() {
@@ -8184,7 +8157,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8197,64 +8170,60 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// エラーが出ていることを確認
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
+		// エラーが出ていることを確認
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
 
-			// エラーが出ていないことを確認
-			$input.val('ok');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
+		// エラーが出ていないことを確認
+		$input.val('ok');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーが解消されること');
+		$input.val('ok');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーが解消されること');
+		$input.val('ok');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーが解消されること');
+		$input.val('ok');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーが解消されること');
-			start();
-		}, 0);
+		$input.val('ok');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーが解消されること');
 	});
 
 	test('resolveOnにエラー解消のタイミングを長さ1の配列で設定できること', function() {
@@ -8265,7 +8234,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8280,58 +8249,54 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// blurの場合
-			// エラーが出ていることを確認
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
+		// blurの場合
+		// エラーが出ていることを確認
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
 
-			// エラーが解消されていることを確認
-			$input.val('ok');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
+		// エラーが解消されていることを確認
+		$input.val('ok');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
 
-			// blur以外の場合
-			// エラーが出ていることを確認
-			$input.val('ng');
-			$input.blur();
+		// blur以外の場合
+		// エラーが出ていることを確認
+		$input.val('ng');
+		$input.blur();
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
-			$input.val('ok');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
+		$input.val('ok');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
-			$input.val('ok');
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
+		$input.val('ok');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
-			$input.val('ok');
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
+		$input.val('ok');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
-			$input.val('ok');
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが解消されないこと');
-			start();
-		}, 0);
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
+		$input.val('ok');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが解消されないこと');
 	});
 
 	test('resolveOnにエラー解消のタイミングを長さ2の配列で設定できること', function() {
@@ -8342,7 +8307,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8356,61 +8321,57 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// blurの場合
-			// エラーが出ていることを確認
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
+		// blurの場合
+		// エラーが出ていることを確認
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
 
-			// エラーが解消されていることを確認
-			$input.val('ok');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
+		// エラーが解消されていることを確認
+		$input.val('ok');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
 
-			// validateの場合
-			$input.val('ng');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
+		// validateの場合
+		$input.val('ng');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーが解消されること');
+		$input.val('ok');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーが解消されること');
 
-			// blur、validate以外の場合
-			$input.val('ng');
-			$input.blur();
+		// blur、validate以外の場合
+		$input.val('ng');
+		$input.blur();
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
-			$input.val('ok');
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
+		$input.val('ok');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
-			$input.val('ok');
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
+		$input.val('ok');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
-			$input.val('ok');
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが解消されないこと');
-			start();
-		}, 0);
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
+		$input.val('ok');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが解消されないこと');
 	});
 
 	test('resolveOn:未定義の場合、validateOnの設定と同じタイミングでエラー解消すること', function() {
@@ -8421,7 +8382,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8435,53 +8396,49 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// blurの場合
-			// エラーが出ていることを確認
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
+		// blurの場合
+		// エラーが出ていることを確認
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
 
-			// エラーが解消されていることを確認
-			$input.val('ok');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
+		// エラーが解消されていることを確認
+		$input.val('ok');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
 
-			// blur以外の場合
-			$input.val('ng');
-			$input.blur();
+		// blur以外の場合
+		$input.val('ng');
+		$input.blur();
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが解消されないこと');
-			start();
-		}, 0);
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが解消されないこと');
 	});
 
 	test('resolveOn:未定義、validateOn:未定義の場合、全てのタイミングでエラー解消すること', function() {
@@ -8492,7 +8449,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8506,64 +8463,60 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// エラーが出ていることを確認
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
+		// エラーが出ていることを確認
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
 
-			// エラーが解消されていることを確認
-			$input.val('ok');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
+		// エラーが解消されていることを確認
+		$input.val('ok');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
+		$input.val('ng');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーが解消されること');
+		$input.val('ok');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーが解消されること');
+		$input.val('ok');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーが解消されること');
+		$input.val('ok');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーが解消されること');
-			start();
-		}, 0);
+		$input.val('ok');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーが解消されること');
 	});
 
 	test('resolveOn:nullの場合、validateOnの設定と同じタイミングでエラー解消すること', function() {
@@ -8574,7 +8527,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8588,53 +8541,49 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// blurの場合
-			// エラーが出ていることを確認
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
+		// blurの場合
+		// エラーが出ていることを確認
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
 
-			// エラーが解消されていることを確認
-			$input.val('ok');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
+		// エラーが解消されていることを確認
+		$input.val('ok');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
 
-			// blur以外の場合
-			$input.val('ng');
-			$input.blur();
+		// blur以外の場合
+		$input.val('ng');
+		$input.blur();
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが解消されないこと');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusでバリデートエラーが解消されないこと');
 
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが解消されないこと');
-			start();
-		}, 0);
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupでバリデートエラーが解消されないこと');
 	});
 
 	test('resolveOn:null、validateOn:未定義の場合、全てのタイミングでエラー解消すること', function() {
@@ -8645,7 +8594,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			customRule: {
 				validator: {
@@ -8659,66 +8608,62 @@ $(function() {
 			}
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
 
-			// blurの場合
-			// エラーが出ていることを確認
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
+		// blurの場合
+		// エラーが出ていることを確認
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'blurの前にバリデートエラーが出ていること');
 
-			// エラーが解消されていることを確認
-			$input.val('ok');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
+		// エラーが解消されていることを確認
+		$input.val('ok');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'blurでバリデートエラーが解消されること');
 
-			// blur以外の場合
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
+		// blur以外の場合
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'validateの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			formCtrl.validate('a');
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーが解消されること');
+		$input.val('ok');
+		formCtrl.validate('a');
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'validateでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'changeの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.change();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーが解消されること');
+		$input.val('ok');
+		$input.change();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'changeでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'focusの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.focus();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーが解消されること');
+		$input.val('ok');
+		$input.focus();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'focusでバリデートエラーが解消されること');
 
-			$input.val('ng');
-			$input.blur();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
+		$input.val('ng');
+		$input.blur();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 1, 'keyupの前にバリデートエラーが出ていること');
 
-			$input.val('ok');
-			$input.keyup();
-			validationResult = formCtrl.getLastValidationResult();
-			strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーが解消されること');
-			start();
-		}, 0);
+		$input.val('ok');
+		$input.keyup();
+		validationResult = formCtrl.getLastValidationResult();
+		strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーが解消されること');
 	});
 
 	test('compositionにエラーメッセージが表示されること', function() {
@@ -8729,7 +8674,7 @@ $(function() {
 				validator: true
 			}
 		});
-		formCtrl.addOutput('composition');
+		// moduleのsetupでaddOutputを行っている
 		formCtrl.setSetting({
 			isAllRulesEnabledWhenEmpty: false,
 			customRule: {
@@ -8759,16 +8704,11 @@ $(function() {
 			},
 		});
 
-		stop();
-		setTimeout(function() {
-			var $errorContainer = $('.errorContainer');
-			var $input = $('.inputA');
-			$input.val('2').focus().blur();
-			setTimeout(function() {
-				strictEqual($errorContainer.text(), 'test', 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-				start();
-			}, 100);
-		}, 0);
+		var $errorContainer = $('.errorContainer');
+		var $input = $('.inputA');
+		$input.val('2').focus().blur();
+
+		strictEqual($errorContainer.text(), 'test', 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	module('addOutputPlugin', {
@@ -8967,69 +8907,67 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('textareaについてのエラー表示', function() {
+	asyncTest('textareaについてのエラー表示', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'test';
-		formCtrl.setSetting({
-			ruleDefault: {
-				size: {
+		var pluginNames = ['composition', 'balloon'];
+		formCtrl.addOutput(pluginNames);
+		h5.async.when(pluginNames.map(function(pluginName) {
+			return formCtrl.getOutput(pluginName).readyPromise;
+		})).done(function() {
+			formCtrl.setSetting({
+				ruleDefault: {
+					size: {
+					}
+				},
+				isAllRulesEnabledWhenEmpty: false,
+				customRule: {
+				},
+				property: {
+				},
+				output: {
+					balloon: {
+						placement: 'right'
+					},
+					style: {
+					},
+					asyncIndicator: {
+					},
+					composition: {
+						container: '#compositionErrors',
+						wrapper: '<li></li>',
+						updateOn: ['blur'],
+						showAllErrors: true,
+						hideWhenEmpty: true
+					}
 				}
-			},
-			isAllRulesEnabledWhenEmpty: false,
-			customRule: {
-			},
-			property: {
-			},
-			output: {
-				balloon: {
-					placement: 'right'
-				},
-				style: {
-				},
-				asyncIndicator: {
-				},
-				composition: {
-					container: '#compositionErrors',
-					wrapper: '<li></li>',
-					updateOn: ['blur'],
-					showAllErrors: true,
-					hideWhenEmpty: true
+			});
+
+			formCtrl.addRule({
+				textarea1: {
+					required: true
 				}
-			}
-		});
+			});
 
-		formCtrl.addOutput('composition');
-		formCtrl.addOutput('balloon');
-		formCtrl.addRule({
-			textarea1: {
-				required: true
-			}
-		});
-
-		stop();
-		setTimeout(function() {
 			var $compositionErrors = $('#compositionErrors');
 			var $textarea = $('.textarea1');
 
 			formCtrl.validate('textarea1');
-			setTimeout(function() {
-				// 初期状態はバリデートエラーなし
-				ok($compositionErrors.is(':hidden'), '初期状態はcompositionが非表示になっていること');
 
-				$textarea.text('').blur();
-				setTimeout(function() {
-					// requiredなのに入力がないのでバリデートエラー発生
-					ok($compositionErrors.is(':visible'), 'バリデートエラー発生時はcompositionが表示されていること');
+			// 初期状態はバリデートエラーなし
+			ok($compositionErrors.is(':hidden'), '初期状態はcompositionが非表示になっていること');
 
-					$textarea.text('fuga').blur();
-					setTimeout(function() {
-						// requiredなので入力を入れるとバリデートエラーなし
-						ok($compositionErrors.is(':hidden'), 'バリデートエラー解消時はcompositionが非表示になっていること');
-						start();
-					}, 100);
-				}, 100);
-			}, 100);
-		}, 0);
+			$textarea.text('').blur();
+
+			// requiredなのに入力がないのでバリデートエラー発生
+			ok($compositionErrors.is(':visible'), 'バリデートエラー発生時はcompositionが表示されていること');
+
+			$textarea.text('fuga').blur();
+
+			// requiredなので入力を入れるとバリデートエラーなし
+			ok($compositionErrors.is(':hidden'), 'バリデートエラー解消時はcompositionが非表示になっていること');
+			start();
+		});
 	});
 
 });
