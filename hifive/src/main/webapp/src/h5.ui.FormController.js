@@ -1727,8 +1727,8 @@
 			// 既存のエラーメッセージを削除
 			this._removeMessage(name);
 
-			if ($.inArray(name, validationResult.validProperties) !== -1) {
-				//このプロパティが今回validになった場合、エラー出力しないのでここで終了
+			if ($.inArray(name, validationResult.invalidProperties) === -1) {
+				//このプロパティが今回invalidでない場合、エラー出力しないのでここで終了
 				return;
 			}
 
@@ -1937,7 +1937,10 @@
 				return;
 			}
 
-			this._showIndicator(element, name, validationResult);
+			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
+				// バリデート中ならインジケータ表示
+				this._showIndicator(element, name, validationResult);
+			}
 		},
 
 		/**
@@ -1951,7 +1954,10 @@
 				return;
 			}
 
-			this._showIndicator(element, name, validationResult);
+			if ($.inArray(name, validationResult.validatingProperties) !== -1) {
+				// バリデート中ならインジケータ表示
+				this._showIndicator(element, name, validationResult);
+			}
 		},
 
 		/**
