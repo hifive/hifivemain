@@ -321,14 +321,14 @@
 				if (h5.u.str.startsWith($.trim(wrapper), '<')) {
 					// '<span class="hoge">'のような指定ならその文字列でDOM生成
 					msgElement = $(wrapper);
-					msgElement.text(message);
+					msgElement.html(message);
 				} else {
 					// 'span'のような指定ならcreateElementでエレメント生成
-					msgElement = $(document.createElement(wrapper)).text(message);
+					msgElement = $(document.createElement(wrapper)).html(message);
 				}
 			} else {
 				// wrapper未設定ならテキストノード
-				msgElement = document.createTextNode(message);
+				msgElement = $.parseHTML(message);
 			}
 			$container.append(msgElement);
 		},
@@ -1811,7 +1811,7 @@
 				$errorMsg = $('<span class="h5-message"></span>');
 			}
 
-			$errorMsg.text(rawMsg);
+			$errorMsg.html(rawMsg);
 
 			this._messageElementMap[name] = $errorMsg;
 
