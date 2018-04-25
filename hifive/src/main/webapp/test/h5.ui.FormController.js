@@ -2289,6 +2289,34 @@ $(function() {
 		ok(!result.invalidReason.hasOwnProperty('a'), 'invalidReasonnにaというプロパティが存在しないこと');
 	});
 
+	test('メッセージがHTMLとして解釈されて<span></span>が正しくタグとして解釈されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'errorMessage';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer'),
+					message: '&lt;span&gt;' + errorMessage + '&lt;/span&gt;'
+				}
+			}
+		});
+
+		formCtrl.validate();
+
+		var $errorContainer = $('.errorContainer');
+		strictEqual($errorContainer.text(), '', '設定したmessageが文字列として出力されていないこと');
+
+		var $span = $errorContainer.children('span');
+		strictEqual($span.length, 1, '&lt;span&gt;が正しくタグとして解釈されること');
+		strictEqual($span.text(), errorMessage, 'spanにエラーメッセージが表示されること');
+	});
+
 	//=============================
 	// Definition
 	//=============================
@@ -2782,6 +2810,33 @@ $(function() {
 							start();
 						}, 0);
 			});
+
+	test('メッセージがHTMLとして解釈されて<span></span>が正しくタグとして解釈されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'errorMessage';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				message: {
+					message: '&lt;span&gt;' + errorMessage + '&lt;/span&gt;'
+				}
+			}
+		});
+
+		formCtrl.validate();
+
+		var $message = $('.inputA').next();
+		strictEqual($message.text(), '', '設定したmessageが文字列として出力されていないこと');
+
+		var $span = $message.children('span');
+		strictEqual($span.length, 1, '&lt;span&gt;が正しくタグとして解釈されること');
+		strictEqual($span.text(), errorMessage, 'spanにエラーメッセージが表示されること');
+	});
 
 	//=============================
 	// Definition
@@ -3277,6 +3332,41 @@ $(function() {
 					start();
 				});
 			});
+
+	asyncTest('メッセージがHTMLとして解釈されて<span></span>が正しくタグとして解釈されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'errorMessage';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				balloon: {
+					message: '&lt;span&gt;' + errorMessage + '&lt;/span&gt;'
+				}
+			}
+		});
+
+		$('.inputA').focus();
+
+		gate({
+			func: function() {
+				return $('.validation-balloon').length === 1;
+			},
+			maxWait: 1000,
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			var $balloon = $('.validation-balloon');
+			strictEqual($balloon.text(), '', '設定したmessageが文字列として出力されていないこと');
+
+			var $span = $balloon.children('span');
+			strictEqual($span.length, 1, '&lt;span&gt;が正しくタグとして解釈されること');
+			strictEqual($span.text(), errorMessage, 'spanにエラーメッセージが表示されること');
+		}).always(start);
+	});
 
 	//=============================
 	// Definition
@@ -3931,6 +4021,41 @@ $(function() {
 					start();
 				});
 			});
+
+	asyncTest('メッセージがHTMLとして解釈されて<span></span>が正しくタグとして解釈されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'errorMessage';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				bsBalloon: {
+					message: '&lt;span&gt;' + errorMessage + '&lt;/span&gt;'
+				}
+			}
+		});
+
+		$('.inputA').focus();
+
+		gate({
+			func: function() {
+				return $('.tooltip').length === 1;
+			},
+			maxWait: 1000,
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			var $balloon = $('.tooltip>.tooltip-inner');
+			strictEqual($balloon.text(), '', '設定したmessageが文字列として出力されていないこと');
+
+			var $span = $balloon.children('span');
+			strictEqual($span.length, 1, '&lt;span&gt;が正しくタグとして解釈されること');
+			strictEqual($span.text(), errorMessage, 'spanにエラーメッセージが表示されること');
+		}).always(start);
+	});
 
 	//=============================
 	// Definition
