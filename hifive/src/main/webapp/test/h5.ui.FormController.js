@@ -2289,7 +2289,33 @@ $(function() {
 		ok(!result.invalidReason.hasOwnProperty('a'), 'invalidReasonnにaというプロパティが存在しないこと');
 	});
 
-	test('メッセージがHTMLとして解釈されて<span></span>が正しくタグとして解釈されること', function() {
+	test('メッセージがHTMLとして解釈されて<span></span>がタグとして解釈されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'errorMessage';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer'),
+					message: '<span>' + errorMessage + '</span>'
+				}
+			}
+		});
+
+		formCtrl.validate();
+
+		var $errorContainer = $('.errorContainer');
+		var $span = $errorContainer.children('span');
+		strictEqual($span.length, 1, '<span>がタグとして解釈されること');
+		strictEqual($span.text(), errorMessage, 'span要素にエラーメッセージが表示されること');
+	});
+
+	test('メッセージをエスケープして<span></span>が文字列として解釈されること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'errorMessage';
 		formCtrl.addRule({
@@ -2310,11 +2336,10 @@ $(function() {
 		formCtrl.validate();
 
 		var $errorContainer = $('.errorContainer');
-		strictEqual($errorContainer.text(), '', '設定したmessageが文字列として出力されていないこと');
-
 		var $span = $errorContainer.children('span');
-		strictEqual($span.length, 1, '&lt;span&gt;が正しくタグとして解釈されること');
-		strictEqual($span.text(), errorMessage, 'spanにエラーメッセージが表示されること');
+		strictEqual($span.length, 0, '<span>がタグとして解釈されないこと');
+		strictEqual($errorContainer.text(), '<span>' + errorMessage + '</span>',
+				'<span>が文字列として表示されること');
 	});
 
 	//=============================
@@ -2811,7 +2836,32 @@ $(function() {
 						}, 0);
 			});
 
-	test('メッセージがHTMLとして解釈されて<span></span>が正しくタグとして解釈されること', function() {
+	test('メッセージがHTMLとして解釈されて<span></span>がタグとして解釈されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'errorMessage';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				message: {
+					message: '<span>' + errorMessage + '</span>'
+				}
+			}
+		});
+
+		formCtrl.validate();
+
+		var $message = $('.inputA').next();
+		var $span = $message.children('span');
+		strictEqual($span.length, 1, '<span>がタグとして解釈されること');
+		strictEqual($span.text(), errorMessage, 'span要素にエラーメッセージが表示されること');
+	});
+
+	test('メッセージをエスケープして<span></span>が文字列として解釈されること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'errorMessage';
 		formCtrl.addRule({
@@ -2831,11 +2881,9 @@ $(function() {
 		formCtrl.validate();
 
 		var $message = $('.inputA').next();
-		strictEqual($message.text(), '', '設定したmessageが文字列として出力されていないこと');
-
 		var $span = $message.children('span');
-		strictEqual($span.length, 1, '&lt;span&gt;が正しくタグとして解釈されること');
-		strictEqual($span.text(), errorMessage, 'spanにエラーメッセージが表示されること');
+		strictEqual($span.length, 0, '<span>がタグとして解釈されないこと');
+		strictEqual($message.text(), '<span>' + errorMessage + '</span>', '<span>が文字列として表示されること');
 	});
 
 	//=============================
@@ -3333,7 +3381,40 @@ $(function() {
 				});
 			});
 
-	asyncTest('メッセージがHTMLとして解釈されて<span></span>が正しくタグとして解釈されること', function() {
+	asyncTest('メッセージがHTMLとして解釈されて<span></span>がタグとして解釈されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'errorMessage';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				balloon: {
+					message: '<span>' + errorMessage + '</span>'
+				}
+			}
+		});
+
+		$('.inputA').focus();
+
+		gate({
+			func: function() {
+				return $('.validation-balloon').length === 1;
+			},
+			maxWait: 1000,
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			var $balloon = $('.validation-balloon');
+			var $span = $balloon.children('span');
+			strictEqual($span.length, 1, '<span>がタグとして解釈されること');
+			strictEqual($span.text(), errorMessage, 'span要素にエラーメッセージが表示されること');
+		}).always(start);
+	});
+
+	asyncTest('メッセージをエスケープして<span></span>が文字列として解釈されること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'errorMessage';
 		formCtrl.addRule({
@@ -3358,14 +3439,14 @@ $(function() {
 			},
 			maxWait: 1000,
 			failMsg: 'バルーンが表示されない'
-		}).done(function() {
-			var $balloon = $('.validation-balloon');
-			strictEqual($balloon.text(), '', '設定したmessageが文字列として出力されていないこと');
-
-			var $span = $balloon.children('span');
-			strictEqual($span.length, 1, '&lt;span&gt;が正しくタグとして解釈されること');
-			strictEqual($span.text(), errorMessage, 'spanにエラーメッセージが表示されること');
-		}).always(start);
+		}).done(
+				function() {
+					var $balloon = $('.validation-balloon');
+					var $span = $balloon.children('span');
+					strictEqual($span.length, 0, '<span>がタグとして解釈されないこと');
+					strictEqual($balloon.text(), '<span>' + errorMessage + '</span>',
+							'<span>が文字列として表示されること');
+				}).always(start);
 	});
 
 	//=============================
@@ -4022,7 +4103,40 @@ $(function() {
 				});
 			});
 
-	asyncTest('メッセージがHTMLとして解釈されて<span></span>が正しくタグとして解釈されること', function() {
+	asyncTest('メッセージがHTMLとして解釈されて<span></span>がタグとして解釈されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'errorMessage';
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+		// moduleのsetupでaddOutputを行っている
+		formCtrl.setSetting({
+			output: {
+				bsBalloon: {
+					message: '<span>' + errorMessage + '</span>'
+				}
+			}
+		});
+
+		$('.inputA').focus();
+
+		gate({
+			func: function() {
+				return $('.tooltip').length === 1;
+			},
+			maxWait: 1000,
+			failMsg: 'バルーンが表示されない'
+		}).done(function() {
+			var $balloon = $('.tooltip>.tooltip-inner');
+			var $span = $balloon.children('span');
+			strictEqual($span.length, 1, '<span>がタグとして解釈されること');
+			strictEqual($span.text(), errorMessage, 'span要素にエラーメッセージが表示されること');
+		}).always(start);
+	});
+
+	asyncTest('メッセージをエスケープして<span></span>が文字列として解釈されること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'errorMessage';
 		formCtrl.addRule({
@@ -4047,14 +4161,14 @@ $(function() {
 			},
 			maxWait: 1000,
 			failMsg: 'バルーンが表示されない'
-		}).done(function() {
-			var $balloon = $('.tooltip>.tooltip-inner');
-			strictEqual($balloon.text(), '', '設定したmessageが文字列として出力されていないこと');
-
-			var $span = $balloon.children('span');
-			strictEqual($span.length, 1, '&lt;span&gt;が正しくタグとして解釈されること');
-			strictEqual($span.text(), errorMessage, 'spanにエラーメッセージが表示されること');
-		}).always(start);
+		}).done(
+				function() {
+					var $balloon = $('.tooltip>.tooltip-inner');
+					var $span = $balloon.children('span');
+					strictEqual($span.length, 0, '<span>がタグとして解釈されないこと');
+					strictEqual($balloon.text(), '<span>' + errorMessage + '</span>',
+							'<span>が文字列として表示されること');
+				}).always(start);
 	});
 
 	//=============================
