@@ -1554,7 +1554,9 @@
 				// 一旦animationをoffにしている
 				'data-animation': false
 			}).tooltip({
-				trigger: 'manual'
+				trigger: 'manual',
+				html: true
+			//メッセージはHTMLとして出力する（他の出力プラグインと同じように）
 			}).tooltip('show');
 
 			this._addBalloonTarget(target);
