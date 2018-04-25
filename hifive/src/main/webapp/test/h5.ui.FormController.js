@@ -1308,6 +1308,7 @@ $(function() {
 		});
 
 		formCtrl.validate();
+		strictEqual($('.errorContainer').text(), 'aは必須項目です。', 'リセット前にバリデート結果が表示されていること');
 		formCtrl.resetValidation();
 		strictEqual($('.errorContainer').text(), '', 'バリデート結果表示をリセットできること');
 	});
@@ -2770,6 +2771,7 @@ $(function() {
 			}
 		});
 		formCtrl.validate();
+		strictEqual($('.errorMessageWrapper').text(), errorMessage, 'リセット前にバリデート結果が表示されていること');
 		formCtrl.resetValidation();
 		// FIXME #530 setSetting()で各プロパティ毎のプラグイン設定でメッセージを指定しない場合、
 		// プラグイン設定のmessageではなくバリデーションルールのデフォルトメッセージが表示される。
@@ -3293,6 +3295,7 @@ $(function() {
 			},
 			maxWait: 1000
 		}).done(function() {
+			strictEqual($('.validation-balloon').length, 1, 'リセット前にバリデート結果が表示されていること');
 			formCtrl.resetValidation();
 			// TODO 要再考。Balloonプラグインのバリデート結果のリセットはどういう意味を考える
 			strictEqual($('.validation-balloon').length, 0, 'バリデート結果表示をリセットできること');
@@ -4002,6 +4005,7 @@ $(function() {
 			},
 			maxWait: 1000
 		}).done(function() {
+			strictEqual($('.tooltip').length, 1, 'リセット前にバリデート結果が表示されていること');
 			//リセットしたので、バルーンは非表示になるはず
 			formCtrl.resetValidation();
 
@@ -6532,7 +6536,6 @@ $(function() {
 		var formCtrl = this.formController;
 		$('.testForm').on('submit', function(ev) {
 			ok(false, '送信がキャンセルされない');
-			start();
 		});
 		formCtrl.validate();
 		setTimeout(function() {
@@ -6553,18 +6556,58 @@ $(function() {
 	//		$form.submit();
 	//	});
 
-	test('バリデートエラーが有った場合は有効になっているプラグインの出力がされること', function() {
+	asyncTest('バリデートエラーが有った場合は有効になっているプラグインの出力がされること', function() {
 		var formCtrl = this.formController;
-		formCtrl.addOutput('style');
-		formCtrl.setSetting({
-			output: {
-				style: {
-					errorClassName: 'failValidate'
-				}
+		var errorMessage = 'バリデートに失敗しました';
+		var isChangeCalled = false;
+		var isBlurCalled = false;
+		var isFocusCalled = false;
+		var isKeyupCalled = false;
+		var isValidateCalled = false;
+		var isAsyncValidateCalled = false;
+		// ダミーのプラグインを作成
+		var pluginName = 'testPlugin';
+		var controller = {
+			__name: 'testPluginController',
+			_setDefaultMessage: function(validatorName, message) {},
+			_onChange: function(element, name, validationResult) {
+				isChangeCalled = true;
+			},
+			_onBlur: function(element, name, validationResult) {
+				isBlurCalled = true;
+			},
+			_onFocus: function(element, name, validationResult) {
+				isFocusCalled = true;
+			},
+			_onKeyup: function(element, name, validationResult) {
+				isKeyupCalled = true;
+			},
+			_onValidate: function(validationResult) {
+				isValidateCalled = true;
+			},
+			_onAsyncValidate: function() {
+				isAsyncValidateCalled = true;
 			}
+		};
+		formCtrl._addOutputPlugin(pluginName, controller);
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			formCtrl.addRule({
+				a: {
+					required: true
+				}
+			});
+
+			$('.testForm').submit();
+			// _onValidateが呼び出されればそこで各プラグインの出力処理が行われるので出力されることの確認になる
+			ok(!isChangeCalled, '_onChangeが呼び出されていないこと');
+			ok(!isBlurCalled, '_onBlurが呼び出されていないこと');
+			ok(!isFocusCalled, '_onFocusが呼び出されていないこと');
+			ok(!isKeyupCalled, '_onKeyupが呼び出されていないこと');
+			ok(isValidateCalled, '_onValidateが呼び出されたこと');
+			ok(!isAsyncValidateCalled, '_onAsyncValidateが呼び出されていないこと');
+			start();
 		});
-		$('.testForm').submit();
-		ok($('.inputA').hasClass('failValidate'), 'プラグインの出力がされること');
 	});
 
 	//=============================
@@ -7319,11 +7362,7 @@ $(function() {
 					var formCtrl = this.formController = h5.core.controller('.testForm',
 							h5.ui.FormController);
 					formCtrl.readyPromise.done(function() {
-						var pluginName = 'composition';
-						formCtrl.addOutput(pluginName);
-						formCtrl.getOutput(pluginName).readyPromise.done(function() {
-							start();
-						});
+						start();
 					});
 				},
 				teardown: function() {
@@ -7336,25 +7375,9 @@ $(function() {
 	//=============================
 	test('入力項目を変更した場合はvalidationUpdateイベントが発生すること', function() {
 		var formCtrl = this.formController;
-		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
 			a: {
 				required: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
-			},
-			property: {
-				a: {
-					composition: {
-						message: errorMessage
-					}
-				}
 			}
 		});
 
@@ -7363,33 +7386,18 @@ $(function() {
 			isCalled = true;
 		});
 
-		$('.inputA').val('ok').change();
+		$('.inputA').change();
+		var result = formCtrl.getLastValidationResult()
 
 		ok(isCalled, 'validationUpdateイベントが発生すること');
-		strictEqual($('.errorContainer').text(), '', 'バリデートエラーがないこと');
+		strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 	});
 
 	test('validate()が呼ばれた場合はvalidationUpdateイベントが発生すること', function() {
 		var formCtrl = this.formController;
-		var errorMessage = 'バリデートに失敗しました';
 		formCtrl.addRule({
 			a: {
 				required: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
-			},
-			property: {
-				a: {
-					composition: {
-						message: errorMessage
-					}
-				}
 			}
 		});
 
@@ -7398,10 +7406,10 @@ $(function() {
 			isCalled = true;
 		});
 
-		formCtrl.validate();
+		var result = formCtrl.validate();
 
 		ok(isCalled, 'validationUpdateイベントが発生すること');
-		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+		strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 	});
 
 	//=============================
@@ -7416,11 +7424,7 @@ $(function() {
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				var pluginName = 'composition';
-				formCtrl.addOutput(pluginName);
-				formCtrl.getOutput(pluginName).readyPromise.done(function() {
-					start();
-				});
+				start();
 			});
 		},
 		teardown: function() {
@@ -7434,308 +7438,187 @@ $(function() {
 	test('isAllRulesEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
 					isAllRulesEnabledWhenEmpty: true,
 					ruleDefault: {
 						required: {
 							isForceEnabledWhenEmpty: true
 						}
-					},
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
 					}
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), errorMessage,
-						'バリデートエラーが有った場合にエラーメッセージが表示されること');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 			});
 
 	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
 					isAllRulesEnabledWhenEmpty: false,
 					ruleDefault: {
 						required: {
 							isForceEnabledWhenEmpty: true
 						}
-					},
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
 					}
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), errorMessage,
-						'バリデートエラーが有った場合にエラーメッセージが表示されること');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 			});
 
 	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:trueを設定した場合検出チェックすること',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
 					// isAllRulesEnabledWhenEmpty未定義
 					ruleDefault: {
 						required: {
 							isForceEnabledWhenEmpty: true
 						}
-					},
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
 					}
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), errorMessage,
-						'バリデートエラーが有った場合にエラーメッセージが表示されること');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 			});
 
 	test('isAllRulesEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
 					isAllRulesEnabledWhenEmpty: true,
 					ruleDefault: {
 						required: {
 							isForceEnabledWhenEmpty: false
 						}
-					},
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
 					}
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 0, 'バリデートエラーがないこと');
 			});
 
 	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
 					isAllRulesEnabledWhenEmpty: false,
 					ruleDefault: {
 						required: {
 							isForceEnabledWhenEmpty: false
 						}
-					},
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
 					}
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 0, 'バリデートエラーがないこと');
 			});
 
 	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:falseを設定した場合検出チェックしないこと',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
 					// isAllRulesEnabledWhenEmpty未定義
 					ruleDefault: {
 						required: {
 							isForceEnabledWhenEmpty: false
 						}
-					},
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
 					}
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 0, 'バリデートエラーがないこと');
 			});
 
 	test('isAllRulesEnabledWhenEmpty:true、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
-					isAllRulesEnabledWhenEmpty: true,
-					// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
-					}
+					isAllRulesEnabledWhenEmpty: true
+				// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), errorMessage,
-						'バリデートエラーが有った場合にエラーメッセージが表示されること');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 			});
 
 	test('isAllRulesEnabledWhenEmpty:false、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
-					isAllRulesEnabledWhenEmpty: false,
-					// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
-					}
+					isAllRulesEnabledWhenEmpty: false
+				// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), errorMessage, 'エラーメッセージが表示されないこと');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 			});
 
 	test('isAllRulesEnabledWhenEmpty:未定義、ルール側のisForceEnabledWhenEmpty:未定義を設定した場合検出チェックすること',
 			function() {
 				var formCtrl = this.formController;
-				var errorMessage = 'バリデートに失敗しました';
 				formCtrl.addRule({
 					a: {
 						required: true
 					}
 				});
-				// moduleのsetupでaddOutputを行っている
 				formCtrl.setSetting({
-					// isAllRulesEnabledWhenEmpty未定義
-					// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
-					}
+				// isAllRulesEnabledWhenEmpty未定義
+				// ruleDefault.required.isForceEnabledWhenEmpty未定義の場合true
 				});
 
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), errorMessage, 'エラーメッセージが表示されないこと');
+				var result = formCtrl.validate();
+
+				strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 			});
 
 	//=============================
@@ -7750,11 +7633,7 @@ $(function() {
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				var pluginName = 'composition';
-				formCtrl.addOutput(pluginName);
-				formCtrl.getOutput(pluginName).readyPromise.done(function() {
-					start();
-				});
+				start();
 			});
 		},
 		teardown: function() {
@@ -7772,23 +7651,16 @@ $(function() {
 				required: true
 			}
 		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
-			}
-		});
 
 		var isCalled = false;
 		formCtrl.setPreValidationHook(function(validationContext) {
 			isCalled = true;
 		});
 
-		formCtrl.validate();
+		var result = formCtrl.validate();
 
 		ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
+		strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 	});
 
 	test('設定した関数に与えられる引数がvalidationContextオブジェクトであること', function() {
@@ -7796,14 +7668,6 @@ $(function() {
 		formCtrl.addRule({
 			a: {
 				required: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
 			}
 		});
 
@@ -7817,25 +7681,17 @@ $(function() {
 			isCalled = true;
 		});
 
-		formCtrl.validate();
+		var result = formCtrl.validate();
 
 		ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
+		strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 	});
 
 	test('validationContextオブジェクトのskip()を呼び出す場合はその項目のバリデーションをスキップすること', function() {
 		var formCtrl = this.formController;
-		var errorMessage = '';
 		formCtrl.addRule({
 			a: {
 				required: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
 			}
 		});
 
@@ -7848,11 +7704,10 @@ $(function() {
 			isCalled = true;
 		});
 
-
-		formCtrl.validate();
+		var result = formCtrl.validate();
 
 		ok(isCalled, '設定した関数がバリデーション時に呼び出されること');
-		strictEqual($('.errorContainer').text(), errorMessage, 'バリデーションをスキップすること');
+		strictEqual(result.invalidCount, 0, 'バリデートエラーがないこと');
 	});
 
 	//=============================
@@ -7867,74 +7722,31 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test(
+	asyncTest(
 			'HTML要素にdata-h5-v-*を指定する場合は*のバリデータが指定した要素に対して実行されること',
 			function() {
 				var html = '<form class="testForm"><input class="inputA" name="a" data-h5-v-max="1"></form>';
 				html += '<div class="errorContainer"></div>';
 				$('#qunit-fixture').append(html);
 				var formCtrl = h5.core.controller('.testForm', h5.ui.FormController);
-				stop();
 				formCtrl.readyPromise.done(function() {
-					var errorMessage = 'バリデートに失敗しました';
-					var pluginName = 'composition';
-					formCtrl.addOutput(pluginName);
-					formCtrl.getOutput(pluginName).readyPromise.done(function() {
-						formCtrl.setSetting({
-							output: {
-								composition: {
-									container: $('.errorContainer')
-								}
-							},
-							property: {
-								a: {
-									composition: {
-										message: errorMessage
-									}
-								}
-							}
-						});
-
-						$('.inputA').val('1234');
-						formCtrl.validate();
-						strictEqual($('.errorContainer').text(), errorMessage,
-								'バリデートエラーが有った場合にエラーメッセージが表示されること');
-						start();
-					});
+					$('.inputA').val('1234');
+					var result = formCtrl.validate();
+					strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
+					start();
 				});
 			});
 
-	test('HTML要素にdata-h5-v-*以外を指定する場合は実行されないこと', function() {
+	asyncTest('HTML要素にdata-h5-v-*以外を指定する場合は実行されないこと', function() {
 		var html = '<form class="testForm"><input class="inputA" name="a" data-hoge="1"></form>';
 		html += '<div class="errorContainer"></div>';
 		$('#qunit-fixture').append(html);
 		var formCtrl = h5.core.controller('.testForm', h5.ui.FormController);
-		stop();
 		formCtrl.readyPromise.done(function() {
-			var errorMessage = 'バリデートに失敗しました';
-			var pluginName = 'composition';
-			formCtrl.addOutput(pluginName);
-			formCtrl.getOutput(pluginName).readyPromise.done(function() {
-				formCtrl.setSetting({
-					output: {
-						composition: {
-							container: $('.errorContainer')
-						}
-					},
-					property: {
-						a: {
-							composition: {
-								message: errorMessage
-							}
-						}
-					}
-				});
-
-				$('.inputA').val('1234');
-				formCtrl.validate();
-				strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
-				start();
-			});
+			$('.inputA').val('1234');
+			var result = formCtrl.validate();
+			strictEqual(result.invalidCount, 0, 'バリデートエラーがないこと');
+			start();
 		});
 	});
 
@@ -7950,11 +7762,7 @@ $(function() {
 			var formCtrl = this.formController = h5.core.controller('.testForm',
 					h5.ui.FormController);
 			formCtrl.readyPromise.done(function() {
-				var pluginName = 'composition';
-				formCtrl.addOutput(pluginName);
-				formCtrl.getOutput(pluginName).readyPromise.done(function() {
-					start();
-				});
+				start();
 			});
 		},
 		teardown: function() {
@@ -7965,201 +7773,261 @@ $(function() {
 	//=============================
 	// Body
 	//=============================
-	test('funcのチェック関数がtrueを返す場合エラーメッセージを表示しないこと', function() {
+	asyncTest('funcのチェック関数がtrueを返す場合エラーメッセージを表示しないこと', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
-		var funcValue = null;
-		formCtrl.addRule({
-			a: {
-				validator: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			customRule: {
-				validator: {
-					func: function(value) {
-						return value === 'ok';
-					},
-					message: errorMessage
+		// ダミーのプラグインを作成
+		var pluginName = 'testPlugin';
+		var controller = {
+			__name: 'testPluginController',
+			_setDefaultMessage: function(validatorName, message) {}
+		};
+		formCtrl._addOutputPlugin(pluginName, controller);
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			formCtrl.addRule({
+				a: {
+					validator: true
 				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
+			});
+			formCtrl.setSetting({
+				customRule: {
+					validator: {
+						// trueを返すチェック関数
+						func: function(value) {
+							return true;
+						},
+						message: errorMessage
+					}
 				}
-			}
-		});
+			});
 
-		$('.inputA').val('ok');
-		formCtrl.validate();
-		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+			// 入力がないとバリデートされない
+			$('.inputA').val('hoge');
+			var result = formCtrl.validate();
+			// invalidCountが0件ならば各プラグインでエラー表示がされないのでエラーメッセージを表示しないことの確認になる
+			strictEqual(result.validCount, 1, 'チェック関数がtrueを返すのでvalidが1件であること');
+			strictEqual(result.invalidCount, 0, 'チェック関数がtrueを返すのでinvalidCountが0件であること');
+			start();
+		});
 	});
 
-	test('funcのチェック関数がfalseを返す場合エラーメッセージを表示すること', function() {
+	asyncTest('funcのチェック関数がfalseを返す場合エラーメッセージを表示すること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
-		formCtrl.addRule({
-			a: {
-				validator: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			customRule: {
-				validator: {
-					func: function(value) {
-						return value === 'ok';
-					},
-					message: errorMessage
+		// ダミーのプラグインを作成
+		var pluginName = 'testPlugin';
+		var controller = {
+			__name: 'testPluginController',
+			_setDefaultMessage: function(validatorName, message) {}
+		};
+		formCtrl._addOutputPlugin(pluginName, controller);
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			formCtrl.addRule({
+				a: {
+					validator: true
 				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
+			});
+			formCtrl.setSetting({
+				customRule: {
+					validator: {
+						// falseを返すチェック関数
+						func: function(value) {
+							return false;
+						},
+						message: errorMessage
+					}
 				}
-			}
-		});
+			});
 
-		$('.inputA').val('ng');
-		formCtrl.validate();
-		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+			// 入力がないとバリデートされない
+			$('.inputA').val('hoge');
+			var result = formCtrl.validate();
+			// invalidCountが1件以上ならば各プラグインでエラー表示がされるのでエラーメッセージを表示することの確認になる
+			strictEqual(result.validCount, 0, 'チェック関数がfalseを返すのでvalidが0件であること');
+			strictEqual(result.invalidCount, 1, 'チェック関数がfalseを返すのでinvalidCountが1件であること');
+			start();
+		});
 	});
 
-	test('funcのチェック関数を設定できること', function() {
+	asyncTest('funcのチェック関数を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		var isCalled = false;
-		formCtrl.addRule({
-			a: {
-				validator: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			customRule: {
-				validator: {
-					func: function(value) {
-						isCalled = true;
-						ok(value, '引数valueを持つこと');
-						return true;
-					},
-					message: errorMessage
+		// ダミーのプラグインを作成
+		var pluginName = 'testPlugin';
+		var controller = {
+			__name: 'testPluginController',
+			_setDefaultMessage: function(validatorName, message) {}
+		};
+		formCtrl._addOutputPlugin(pluginName, controller);
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			formCtrl.addRule({
+				a: {
+					validator: true
 				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
+			});
+			formCtrl.setSetting({
+				customRule: {
+					validator: {
+						// falseを返すチェック関数
+						func: function(value) {
+							strictEqual(value, 'hoge', 'チェック関数が引数を持つこと');
+							isCalled = true;
+							return false;
+						},
+						message: errorMessage
+					}
 				}
-			}
+			});
+
+			// 入力がないとバリデートされない
+			$('.inputA').val('hoge');
+			formCtrl.validate();
+			ok(isCalled, 'チェック関数が呼び出されたこと');
+			start();
 		});
-
-		$('.inputA').val('ok');
-		formCtrl.validate();
-
-		ok(isCalled, '設定した関数が呼び出されること');
 	});
 
-	test('messageにデフォルトのエラー文字列を設定できること', function() {
-		var formCtrl = this.formController;
-		var errorMessage = 'バリデートに失敗しました';
-		formCtrl.addRule({
-			a: {
-				validator: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			customRule: {
-				validator: {
-					func: function(value) {
-						return false;
-					},
-					message: errorMessage
-				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
-			}
-		});
-
-		$('.inputA').val('ok');
-		formCtrl.validate();
-		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
-	});
-
-	test('messageにデフォルトのエラー文字列を返す関数を設定できること', function() {
+	asyncTest('messageにデフォルトのエラー文字列を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
 		var isCalled = false;
-		var funcParam = null;
-		formCtrl.addRule({
-			a: {
-				validator: true
+		// ダミーのプラグインを作成
+		var pluginName = 'testPlugin';
+		var controller = {
+			__name: 'testPluginController',
+			_setDefaultMessage: function(validatorName, message) {
+				isCalled = true;
+				// 各プラグインに_setDefaultMessageでデフォルトのエラー文字列を設定する処理があるので、
+				// 引数に設定したエラー文字列があればデフォルトのエラー文字列を設定できることの確認になる
+				strictEqual(validatorName, 'validator', 'カスタムルール名が設定できること');
+				strictEqual(message, errorMessage, 'メッセージが設定できること');
 			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			customRule: {
-				validator: {
-					func: function(value) {
-						return false;
-					},
-					message: function(param) {
-						isCalled = true;
-						ok(param, '引数paramを持つこと');
-						return errorMessage;
+		};
+		formCtrl._addOutputPlugin(pluginName, controller);
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			formCtrl.addRule({
+				a: {
+					validator: true
+				}
+			});
+			formCtrl.setSetting({
+				customRule: {
+					validator: {
+						func: function(value) {
+							return false;
+						},
+						// デフォルトのエラー文字列
+						message: errorMessage
 					}
 				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
-			}
+			});
+
+			// 入力がないとバリデートされない
+			$('.inputA').val('hoge');
+			formCtrl.validate();
+			ok(isCalled, 'デフォルトメッセージを設定する関数が呼び出されたこと');
+			start();
 		});
-
-		$('.inputA').val('ok');
-		formCtrl.validate();
-
-		ok(isCalled, '設定した関数が呼び出されること');
 	});
 
-	test('messageにデフォルトのエラー文字列を返す関数を設定するとエラーメッセージに反映されること', function() {
+	asyncTest('messageにデフォルトのエラー文字列を返す関数を設定できること', function() {
 		var formCtrl = this.formController;
 		var errorMessage = 'バリデートに失敗しました';
-		formCtrl.addRule({
-			a: {
-				validator: true
+		var errorMessageFunc = function(param) {
+			return errorMessage;
+		};
+		var isCalled = false;
+		// ダミーのプラグインを作成
+		var pluginName = 'testPlugin';
+		var controller = {
+			__name: 'testPluginController',
+			_setDefaultMessage: function(validatorName, message) {
+				isCalled = true;
+				// 各プラグインに_setDefaultMessageでデフォルトのエラー文字列を返す関数を設定する処理があるので、
+				// 引数に設定したエラー文字列を返す関数があればデフォルトのエラー文字列を返す関数を設定できることの確認になる
+				strictEqual(validatorName, 'validator', 'カスタムルール名が設定できること');
+				strictEqual(message, errorMessageFunc, 'メッセージを返す関数が設定できること');
 			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			customRule: {
-				validator: {
-					func: function(value) {
-						return false;
-					},
-					message: function(param) {
-						isCalled = true;
-						funcParam = param;
-						return errorMessage;
+		};
+		formCtrl._addOutputPlugin(pluginName, controller);
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			formCtrl.addRule({
+				a: {
+					validator: true
+				}
+			});
+			formCtrl.setSetting({
+				customRule: {
+					validator: {
+						func: function(value) {
+							return false;
+						},
+						// デフォルトのエラー文字列を返す関数
+						message: errorMessageFunc
 					}
 				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
-			}
+			});
+
+			// 入力がないとバリデートされない
+			$('.inputA').val('hoge');
+			formCtrl.validate();
+			ok(isCalled, 'デフォルトメッセージを設定する関数が呼び出されたこと');
+			start();
 		});
+	});
 
-		$('.inputA').val('ok');
-		formCtrl.validate();
+	asyncTest('messageにデフォルトのエラー文字列を返す関数を設定するとエラーメッセージに反映されること', function() {
+		var formCtrl = this.formController;
+		var errorMessage = 'バリデートに失敗しました';
+		var errorMessageFunc = function(param) {
+			return errorMessage;
+		};
+		var isCalled = false;
+		// ダミーのプラグインを作成
+		var pluginName = 'testPlugin';
+		var controller = {
+			__name: 'testPluginController',
+			_setDefaultMessage: function(validatorName, message) {
+				isCalled = true;
+				strictEqual(validatorName, 'validator', 'カスタムルール名が設定できること');
+				strictEqual(message, errorMessageFunc, 'メッセージを返す関数が設定できること');
+				// 各プラグインに_setDefaultMessageでデフォルトのエラー文字列を返す関数を設定する処理があるので
+				// 関数が設定したエラーメッセージを返せることで表示するエラーメッセージに反映されることの確認になる
+				strictEqual(message(), errorMessage, 'メッセージを返す関数が設定したエラーメッセージを返すこと');
+			}
+		};
+		formCtrl._addOutputPlugin(pluginName, controller);
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			formCtrl.addRule({
+				a: {
+					validator: true
+				}
+			});
+			formCtrl.setSetting({
+				customRule: {
+					validator: {
+						func: function(value) {
+							return false;
+						},
+						// デフォルトのエラー文字列を返す関数
+						message: errorMessageFunc
+					}
+				}
+			});
 
-		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+			// 入力がないとバリデートされない
+			$('.inputA').val('hoge');
+			formCtrl.validate();
+			ok(isCalled, 'デフォルトメッセージを設定する関数が呼び出されたこと');
+			start();
+		});
 	});
 
 	test('isForceEnabledWhenEmpty:trueの場合は値が空でもルールを適用すること', function() {
@@ -8180,16 +8048,11 @@ $(function() {
 					message: errorMessage,
 					isForceEnabledWhenEmpty: true
 				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
 			}
 		});
 
-		formCtrl.validate();
-		strictEqual($('.errorContainer').text(), errorMessage, 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+		var result = formCtrl.validate();
+		strictEqual(result.invalidCount, 1, 'バリデートエラーがあること');
 	});
 
 	test('isForceEnabledWhenEmpty:falseの場合は値が空だとルールを適用しないこと', function() {
@@ -8210,16 +8073,11 @@ $(function() {
 					message: errorMessage,
 					isForceEnabledWhenEmpty: false
 				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
 			}
 		});
 
-		formCtrl.validate();
-		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+		var result = formCtrl.validate();
+		strictEqual(result.invalidCount, 0, 'バリデートエラーがないこと');
 	});
 
 	test('isForceEnabledWhenEmpty:未定義の場合は値が空だとルールを適用しないこと', function() {
@@ -8240,16 +8098,11 @@ $(function() {
 					message: errorMessage,
 				// isForceEnabledWhenEmpty未定義
 				}
-			},
-			output: {
-				composition: {
-					container: $('.errorContainer')
-				}
 			}
 		});
 
-		formCtrl.validate();
-		strictEqual($('.errorContainer').text(), '', 'エラーメッセージが表示されないこと');
+		var result = formCtrl.validate();
+		strictEqual(result.invalidCount, 0, 'バリデートエラーがないこと');
 	});
 
 	test('validateOnにエラー検出のタイミングを長さ0の配列で設定できること', function() {
@@ -9022,49 +8875,54 @@ $(function() {
 		strictEqual(validationResult.invalidCount, 0, 'keyupでバリデートエラーが解消されること');
 	});
 
-	test('compositionにエラーメッセージが表示されること', function() {
+	asyncTest('compositionにエラーメッセージが表示されること', function() {
 		var formCtrl = this.formController;
-		var errorMessage = 'test';
-		formCtrl.addRule({
-			a: {
-				validator: true
-			}
-		});
-		// moduleのsetupでaddOutputを行っている
-		formCtrl.setSetting({
-			isAllRulesEnabledWhenEmpty: false,
-			customRule: {
-				validator: {
-					func: function(value) {
-						if (value === '1') {
-							return true;
-						}
-						return false;
-					},
-					message: function() {
-						return errorMessage
-					},
-					isForceEnabledWhenEmpty: true,
-					validateOn: ['blur'],
-					resolveOn: ['blur']
+		var pluginName = 'composition';
+		formCtrl.addOutput(pluginName);
+		formCtrl.getOutput(pluginName).readyPromise.done(function() {
+			var errorMessage = 'test';
+			formCtrl.addRule({
+				a: {
+					validator: true
 				}
-			},
-			output: {
-				composition: {
-					container: '.errorContainer',
-					wrapper: '<li></li>',
-					updateOn: ['blur'],
-					showAllErrors: true,
-					hideWhenEmpty: true
-				}
-			},
+			});
+			// moduleのsetupでaddOutputを行っている
+			formCtrl.setSetting({
+				isAllRulesEnabledWhenEmpty: false,
+				customRule: {
+					validator: {
+						func: function(value) {
+							if (value === '1') {
+								return true;
+							}
+							return false;
+						},
+						message: function() {
+							return errorMessage
+						},
+						isForceEnabledWhenEmpty: true,
+						validateOn: ['blur'],
+						resolveOn: ['blur']
+					}
+				},
+				output: {
+					composition: {
+						container: '.errorContainer',
+						wrapper: '<li></li>',
+						updateOn: ['blur'],
+						showAllErrors: true,
+						hideWhenEmpty: true
+					}
+				},
+			});
+
+			var $errorContainer = $('.errorContainer');
+			var $input = $('.inputA');
+			$input.val('2').focus().blur();
+
+			strictEqual($errorContainer.text(), 'test', 'バリデートエラーが有った場合にエラーメッセージが表示されること');
+			start();
 		});
-
-		var $errorContainer = $('.errorContainer');
-		var $input = $('.inputA');
-		$input.val('2').focus().blur();
-
-		strictEqual($errorContainer.text(), 'test', 'バリデートエラーが有った場合にエラーメッセージが表示されること');
 	});
 
 	module('addOutputPlugin', {
