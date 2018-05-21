@@ -2343,6 +2343,97 @@ $(function() {
 				'<span>が文字列として表示されること');
 	});
 
+	test('hideWhenEmptyをfalse->true->falseと変更していった場合、それぞれの状態で正しく挙動すること', function() {
+		var formCtrl = this.formController;
+		formCtrl.addRule({
+			a: {
+				required: true
+			}
+		});
+
+		var $inputA = $('.inputA');
+		var validationResult;
+		var $errorContainer = $('.errorContainer');
+
+		// 最初にhideWhenEmptyがfalseの場合
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer')
+				},
+				hideWhenEmpty: false
+			}
+		});
+
+		// バリデーションエラーがある状態
+		$inputA.val('');
+		validationResult = formCtrl.validate();
+		strictEqual(validationResult.invalidCount, 1, 'バリデートエラーが出ていること');
+		ok($errorContainer.is(':visible'), 'バリデートエラーが出ていて、hideWhenEmptyがfalseの場合コンテナ要素が表示されること');
+		ok($errorContainer.hasClass('h5-composition-has-error'),
+				'バリデートエラーが出ている場合、hideWhenEmptyに関係なくCSSのエラークラスが付与されていること');
+
+		// バリデーションエラーがない状態
+		$inputA.val('hoge');
+		validationResult = formCtrl.validate();
+		strictEqual(validationResult.invalidCount, 0, 'バリデートエラーが出ていないこと');
+		ok($errorContainer.is(':visible'), 'バリデートエラーが出ていなくて、hideWhenEmptyがfalseの場合コンテナ要素が表示されること');
+		ok(!$errorContainer.hasClass('h5-composition-has-error'),
+				'バリデートエラーが出ていない場合、hideWhenEmptyに関係なくCSSのエラークラスが取り除かれていること');
+
+		// hideWhenEmptyをtrueに変更した場合
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer')
+				},
+				hideWhenEmpty: true
+			}
+		});
+
+		// バリデーションエラーがある状態
+		$inputA.val('');
+		validationResult = formCtrl.validate();
+		strictEqual(validationResult.invalidCount, 1, 'バリデートエラーが出ていること');
+		ok($errorContainer.is(':visible'), 'バリデートエラーが出ていて、hideWhenEmptyがtrueの場合コンテナ要素が表示されること');
+		ok($errorContainer.hasClass('h5-composition-has-error'),
+				'バリデートエラーが出ている場合、hideWhenEmptyに関係なくCSSのエラークラスが付与されていること');
+
+		// バリデーションエラーがない状態
+		$inputA.val('hoge');
+		validationResult = formCtrl.validate();
+		strictEqual(validationResult.invalidCount, 0, 'バリデートエラーが出ていないこと');
+		ok($errorContainer.is(':visible'), 'バリデートエラーが出ていなくて、hideWhenEmptyがtrueの場合コンテナ要素が非表示になること');
+		ok(!$errorContainer.hasClass('h5-composition-has-error'),
+				'バリデートエラーが出ていない場合、hideWhenEmptyに関係なくCSSのエラークラスが取り除かれていること');
+
+		// hideWhenEmptyをfalseに変更した場合
+		formCtrl.setSetting({
+			output: {
+				composition: {
+					container: $('.errorContainer')
+				},
+				hideWhenEmpty: false
+			}
+		});
+
+		// バリデーションエラーがある状態
+		$inputA.val('');
+		validationResult = formCtrl.validate();
+		strictEqual(validationResult.invalidCount, 1, 'バリデートエラーが出ていること');
+		ok($errorContainer.is(':visible'), 'バリデートエラーが出ていて、hideWhenEmptyがfalseの場合コンテナ要素が表示されること');
+		ok($errorContainer.hasClass('h5-composition-has-error'),
+				'バリデートエラーが出ている場合、hideWhenEmptyに関係なくCSSのエラークラスが付与されていること');
+
+		// バリデーションエラーがない状態
+		$inputA.val('hoge');
+		validationResult = formCtrl.validate();
+		strictEqual(validationResult.invalidCount, 0, 'バリデートエラーが出ていないこと');
+		ok($errorContainer.is(':visible'), 'バリデートエラーが出ていなくて、hideWhenEmptyがfalseの場合コンテナ要素が表示されること');
+		ok(!$errorContainer.hasClass('h5-composition-has-error'),
+				'バリデートエラーが出ていない場合、hideWhenEmptyに関係なくCSSのエラークラスが取り除かれていること');
+	});
+
 	//=============================
 	// Definition
 	//=============================
