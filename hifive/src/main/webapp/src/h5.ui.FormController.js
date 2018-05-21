@@ -800,6 +800,8 @@
 
 		_hideWhenEmpty: null,
 
+		_hideWhenEmptyChanged: false,
+
 		_container: null,
 
 		/**
@@ -929,26 +931,39 @@
 		 * @private
 		 */
 		_updateVisible: function() {
-			if (this._hideWhenEmpty !== true) {
-				//hideWhenEmptyがtrueでない場合は非表示制御を行わない
-				return;
+			var $container = $(this._container);
+
+			if (this._hideWhenEmptyChanged) {
+				//hideWhenEmptyが変更された場合、コンテナを一度表示状態にする。
+				//（エラーがない場合下のコードで再び非表示状態になる）
+				//なお、エラーがある場合のCSSクラスの制御はhideWhenEmptyの設定に関わらず常に行う
+				this._hideWhenEmptyChanged = false;
+				$container.show();
 			}
 
-			var shouldHide = !this._lastValidationResult
-					|| this._lastValidationResult.invalidCount === 0;
+			var hasError = this._lastValidationResult
+					&& this._lastValidationResult.invalidCount > 0;
 
 			//単純にdisplay属性をnone/空文字にする方法だと、
 			//style属性でなくCSSクラスで非表示に設定されている場合などに正しく制御できない。
 			//jQueryのshow/hideは、カスケーディングの状態や、要素の
 			//デフォルトスタイル(block,inline-block等)を考慮して制御しているので、
-			//ここではjQueryのメソッドを使用する。
-			var $container = $(this._container);
-			if (shouldHide) {
-				$container.hide();
-				$container.removeClass(CSS_H5_COMPOSITION_HAS_ERROR);
-			} else {
-				$container.show();
+			//ここではjQueryのshow/hideメソッドを使用する。
+
+			if (hasError) {
+				if (this._hideWhenEmpty === true) {
+					//エラーがあるときはコンテナを表示する。
+					//ただしこの制御はhideWhenEmptyが明示的にtrueの場合のみ
+					$container.show();
+				}
 				$container.addClass(CSS_H5_COMPOSITION_HAS_ERROR);
+			} else {
+				if (this._hideWhenEmpty === true) {
+					//エラーがないときにコンテナを非表示（display:none）にする。
+					//ただしこの制御はhideWhenEmptyが明示的にtrueの場合のみ
+					$container.hide();
+				}
+				$container.removeClass(CSS_H5_COMPOSITION_HAS_ERROR);
 			}
 		},
 
@@ -1022,9 +1037,16 @@
 			this._messageOutputController.setWrapper(setting.wrapper);
 
 			//hideWhenEmpty(エラーがない場合はコンテナ要素を非表示にする)の設定
+			//hideWhenEmptyChangedプロパティは、「hideWhenEmptyプロパティが変更されたかどうか」を示すプロパティ。
+			//updateVisible()内でfalseにクリアされる。
 			if (('hideWhenEmpty' in setting) && (setting.hideWhenEmpty === true)) {
 				//trueの場合、初期状態では（エラーがないので）非表示にする
 				this._hideWhenEmpty = true;
+				this._hideWhenEmptyChanged = true;
+				this._updateVisible();
+			} else {
+				this._hideWhenEmpty = false;
+				this._hideWhenEmptyChanged = true;
 				this._updateVisible();
 			}
 
