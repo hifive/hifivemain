@@ -2359,9 +2359,9 @@ $(function() {
 		formCtrl.setSetting({
 			output: {
 				composition: {
-					container: $('.errorContainer')
-				},
-				hideWhenEmpty: false
+					container: $('.errorContainer'),
+					hideWhenEmpty: false
+				}
 			}
 		});
 
@@ -2385,9 +2385,9 @@ $(function() {
 		formCtrl.setSetting({
 			output: {
 				composition: {
-					container: $('.errorContainer')
-				},
-				hideWhenEmpty: true
+					container: $('.errorContainer'),
+					hideWhenEmpty: true
+				}
 			}
 		});
 
@@ -2403,7 +2403,7 @@ $(function() {
 		$inputA.val('hoge');
 		validationResult = formCtrl.validate();
 		strictEqual(validationResult.invalidCount, 0, 'バリデートエラーが出ていないこと');
-		ok($errorContainer.is(':visible'), 'バリデートエラーが出ていなくて、hideWhenEmptyがtrueの場合コンテナ要素が非表示になること');
+		ok($errorContainer.is(':hidden'), 'バリデートエラーが出ていなくて、hideWhenEmptyがtrueの場合コンテナ要素が非表示になること');
 		ok(!$errorContainer.hasClass('h5-composition-has-error'),
 				'バリデートエラーが出ていない場合、hideWhenEmptyに関係なくCSSのエラークラスが取り除かれていること');
 
@@ -2411,9 +2411,9 @@ $(function() {
 		formCtrl.setSetting({
 			output: {
 				composition: {
-					container: $('.errorContainer')
-				},
-				hideWhenEmpty: false
+					container: $('.errorContainer'),
+					hideWhenEmpty: false
+				}
 			}
 		});
 
