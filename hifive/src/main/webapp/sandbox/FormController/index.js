@@ -15,7 +15,7 @@
 					//明示的に指定しない場合、ルールごとのデフォルトが適用される
 					//isForceEnabledWhenEmpty: true
 
-					//message: 'sizeのデフォルトメッセージを上書きする',
+					message: 'sizeのデフォルトメッセージを<span style="font-weight:bold; font-size: 20px">上書き</span>する',
 
 					//validateOn: ['validate'],
 
@@ -55,7 +55,7 @@
 						},
 
 						//エラーメッセージ。必須。「{displayName}」と書くと、表示名に置き換わる。
-						message: '{displayName}はカスタムルール1に違反しています。',
+						message: '{displayName}はカスタムルール1に<span style="color:red">赤い色</span>&lt; 3違反しています。',
 
 						//message: function(param) {
 						//	return "test";
@@ -138,8 +138,10 @@
 			this.formController.setSetting(setting);
 
 			this.formController.addOutput('composition');
-			this.formController.addOutput('bsBalloon');
-			//this.formController.addOutput('message');
+			//this.formController.addOutput('bsBalloon');
+			this.formController.addOutput('balloon');
+
+			this.formController.addOutput('message');
 			//this.formController.addOutput('style');
 			//this.formController.addOutput('asyncIndicator');
 
@@ -161,6 +163,7 @@
 				user: {
 					validator1: true,
 					required: true,
+					future: new Date(1523258866152)
 				//digits: [3, 2],
 				//size: [2, 5]
 				},
@@ -214,8 +217,19 @@
 			console.log(this.formController.getLastValidationResult().invalidProperties.length);
 		},
 
+		//_isDisabled: false,
+
 		'.resetValidation click': function() {
 			this.formController.resetValidation();
+
+			/*
+			if(this._isDisabled) {
+				this.formController.enableRule('user');
+			} else {
+				this.formController.disableRule('user');
+			}
+			this._isDisabled = !this._isDisabled;
+			*/
 		}
 	};
 
