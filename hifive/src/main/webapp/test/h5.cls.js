@@ -159,21 +159,6 @@ $(function() {
 		}, /.*親クラスのコンストラクタ.*/, '親コンストラクタを呼び出さないとエラー。');
 	});
 
-	test('親コンストラクタ（互換）', function() {
-		var cls = h5.cls.RootClass.extend(function(_super) {
-			return {
-				name: 'TestClass',
-				method: {
-					constructor: function TestClass() {
-						TestClass._super.call(this);
-					}
-				}
-			};
-		});
-		var obj = cls.create();
-		ok(!!obj, 'コンストラクタに設定したfunctionに_superが生えていること。');
-	});
-
 	//=============================
 	// Definition
 	//=============================
@@ -1185,23 +1170,6 @@ $(function() {
 				method: {
 					constructor: function ChildClass(field, prop) {
 						_super.constructor.call(this, field, prop);
-					}
-				}
-			};
-		});
-		var obj1 = cls.create('c1', 'c2');
-		equal(obj1._field1, 'c1', '親コンストラクタでフィールドに値が設定されること。');
-		equal(obj1.prop1, 'c2', '親コンストラクタでプロパティに値が設定されること。');
-		expect(3);
-	});
-
-	test('親コンストラクタの呼び出し（互換）', function() {
-		var cls = g.ParentClass.extend(function(_super) {
-			return {
-				name: 'ChildClass',
-				method: {
-					constructor: function ChildClass(field, prop) {
-						ChildClass._super.call(this, field, prop);
 					}
 				}
 			};
