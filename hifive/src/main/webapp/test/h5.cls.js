@@ -298,6 +298,9 @@ $(function() {
 		var obj1 = cls.create();
 		var obj2 = cls.create();
 
+		equal(obj1._field1, null, 'obj1._field1のデフォルト値がnullであること。');
+		equal(obj2._field1, null, 'obj2._field1のデフォルト値がnullであること。');
+
 		obj1._field1 = 'obj1';
 		obj2._field1 = 'obj2';
 
@@ -499,6 +502,9 @@ $(function() {
 
 		var obj1 = cls.create();
 		var obj2 = cls.create();
+
+		equal(obj1.field1, null, 'obj1.field1のデフォルト値がnullであること。');
+		equal(obj2.field1, null, 'obj2.field1のデフォルト値がnullであること。');
 
 		obj1.prop1 = 'obj1';
 		obj2.prop1 = 'obj2';
@@ -1235,11 +1241,12 @@ $(function() {
 		});
 
 		var p = g.ParentClass.create();
-		throws(function() {
-			p.prop2 = 'prop2';
-		}, TypeError, 'プロパティの追加は親クラスに影響しないこと。');
-
 		var c = cls.create();
+
+		p.prop2 = 'prop2';
+		equal(p.prop2, 'prop2', '親クラスで追加したプロパティの読み書きができること。');
+		equal(c.prop2, null, 'プロパティの追加は親クラスに影響しないこと。');
+
 		c.prop2 = 'prop2';
 		equal(c.prop2, 'prop2', '子クラスで追加したプロパティの読み書きができること。');
 	});
@@ -1536,6 +1543,7 @@ $(function() {
 			var cls = h5.cls.RootClass.extend(function(_super) {
 				return {
 					name: 'NonDynamicClass',
+					isDynamic: false,
 					method: {
 						constructor: function NonDynamicClass() {
 							_super.constructor.call(this);
@@ -1548,7 +1556,7 @@ $(function() {
 		}, TypeError, 'Dynamicを明示的に指定しないとクラスは拡張出来ないこと。');
 	});
 
-	test('動的拡張ON', function() {
+	test('動的拡張ON isDynamicがtrueの場合', function() {
 		var cls = h5.cls.RootClass.extend(function(_super) {
 			return {
 				name: 'DynamicClass',
@@ -1565,11 +1573,27 @@ $(function() {
 		equal(obj.dynamicField, 'dynamic', 'Dynamicを指定したクラスは拡張できること。');
 	});
 
+	test('動的拡張ON isDynamic未指定の場合', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'DynamicClass',
+				method: {
+					constructor: function DynamicClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+		var obj = cls.create();
+		obj.dynamicField = 'dynamic';
+		equal(obj.dynamicField, 'dynamic', 'Dynamic未指定のクラスは拡張できること。');
+	});
+
 	test('Dynamicの継承', function() {
 		var dynamic = h5.cls.RootClass.extend(function(_super) {
 			return {
 				name: 'DynamicClass',
-				isDynamic: true,
+				isDynamic: false,
 				method: {
 					constructor: function DynamicClass() {
 						_super.constructor.call(this);
@@ -1589,9 +1613,34 @@ $(function() {
 		});
 
 		throws(function() {
-			var obj = nonDynamic.create();
+			var obj = dynamic.create();
 			obj.dynamicField = 'dynamic';
-		}, TypeError, 'Dynamicを明示的に指定しないとクラスは拡張出来ないこと。');
+		}, TypeError, 'isDynamicがfalseのクラスは拡張出来ないこと。');
+
+		var obj = nonDynamic.create();
+		obj.dynamicField = 'dynamic';
+		equal(obj.dynamicField, 'dynamic', '継承されたクラスはisDynamicの設定を継承せずに拡張出来ること。');
+	});
+
+	test('プロパティの動的追加', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		var value = 'testValue';
+
+		var instance = cls.create();
+		instance.dynamicProp = value;
+
+		equal(instance.dynamicProp, value, '動的に追加されたプロパティの値を読み取れる。');
+		equal(instance.hasOwnProperty('dynamicProp'), true, '動的に追加されたプロパティを持つこと。');
 	});
 
 	//=============================
