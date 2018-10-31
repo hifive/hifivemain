@@ -237,6 +237,17 @@
 						|| (accessorDesc && f in accessorDesc) || (f in methodDesc)) {
 					throw new Error(h5.u.str.format(ERR_DUPLICATE_MEMBER, f));
 				}
+
+				//インスタンスでフィールドを初期化せずに値を読みだした場合は
+				//プロトタイプチェーンをたどって「null」が返るようにする
+				//（プロトタイプオブジェクトでその名前のフィールドを(値=nullで)定義しておく）
+				var fd = fieldDesc[f];
+				var defaultValue = null;
+				if (fd && fd.defaultValue !== undefined) {
+					defaultValue = fd.defaultValue;
+				}
+
+				ctor.prototype[f] = defaultValue;
 			}
 		}
 
@@ -255,18 +266,15 @@
 				var ad = accessorDesc[propName];
 				if (ad) {
 					//アクセサとしてgetter, setter関数が書いてある場合
-					//TODO この即時関数を関数化
-					(function(pName) {
-						Object.defineProperty(ctor.prototype, pName, {
-							configurable: false,
-							enumerable: true,
-							get: ad.get,
-							set: ad.set
-						});
-					})(propName);
+					Object.defineProperty(ctor.prototype, propName, {
+						configurable: false,
+						enumerable: true,
+						get: ad.get,
+						set: ad.set
+					});
 				} else {
-					//アクセサだけ定義がある場合
-					//TODO propertyChangeイベントをあげるアクセサをデフォルトでセットする
+					//アクセサの定義だけがある（getter, setterの関数は書かれていない）場合は
+					//バッキングフィールド自動定義
 					(function(pName) {
 						Object.defineProperty(ctor.prototype, pName, {
 							configurable: false,
@@ -278,6 +286,21 @@
 								this[PROPERTY_BACKING_STORE_PREFIX + pName] = value;
 							}
 						});
+
+						var defaultValue = null;
+						if (ad && ad.defaultValue !== undefined) {
+							defaultValue = ad.defaultValue;
+						}
+
+						//バッキングストアは暗黙的に作られるものなので
+						//enumerable=falseで生成する
+						Object.defineProperty(ctor.prototype,
+								PROPERTY_BACKING_STORE_PREFIX + pName, {
+									writable: true,
+									configurable: false,
+									enumerable: false,
+									value: defaultValue
+								});
 					})(propName);
 				}
 			}
@@ -491,12 +514,27 @@
 
 			var instance = Object.create(this._ctor.prototype);
 
-			//プロパティの初期化（追加）
-			setupProperty(instance, this);
-
-			//明示的に拡張可能(dynamic)と指定されない限り、プロパティの追加・削除・設定変更を禁止
+			//明示的に拡張不可と指定された場合のみ、プロパティの追加・削除・設定変更を禁止
+			//（つまりデフォルトではtrue（拡張可能））
+			//ver.1.3.2まではデフォルト=false（拡張不能）だった。Object.seal()すると
+			//その後のプロパティの追加ができないため先にsetupProperty()で
+			//定義されたフィールドをインスタンスにown-propertyとして作成していたが、
+			//この処理に時間がかかるため、数が増えるとインスタンスの生成だけで
+			//ある程度の時間がかかるようになってしまっていた。（特にIE11では速度が劣化しやすい）
+			//そのため、ver.1.3.3にて仕様変更し、デフォルトで「拡張可能」とし
+			//その場合はsetupProperty()を行わないようにした。
+			//ただしこのため、isDynamic=trueの場合、一度も書き込みしていないフィールドは
+			// instance.hasOwnProperty('fieldName')がfalseになる、という副作用がある。
+			// (for-inループの場合は、prototypeオブジェクトにフィールドを定義してあるので列挙される
+			// (自動生成されたアクセサ用バッキングストアを除く))
 			//TODO いずれかの親クラスでisDynamicが明示的にfalseに指定されたら、再度trueにはできないようにすべきか？
-			if (this._descriptor.isDynamic !== true) {
+			if (this._descriptor.isDynamic === false) {
+				//プロパティの初期化を行う。
+				//生成したinstanceに対して、ディスクリプタで定義したフィールドを
+				//own-propertyとして定義する。
+				//Object.seal()すると後からプロパティの追加ができなくなるためこの処理が必要。
+				setupProperty(instance, this);
+
 				Object.seal(instance);
 			}
 
