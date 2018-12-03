@@ -140,34 +140,16 @@
 			}
 		};
 
-		// superObject、メソッドとアクセサを直接ぶら下げる（コピーする）。
+		// superObjectには、メソッドとアクセサを直接ぶら下げる（コピーする）。
 		// このsuperObjectは、extend(function(_super){}) のように引数で渡され、
 		// _super.constructor.call(this); _super.myMethod.call(this); のように
 		// call()（またはapply()）の形でのみ使用されることを意図したものである。
-		// 従い、下記ループ中では　superObject.myMethod = myMethodFunc; のように
-		// 単純にコピーしていけばよい。
 		// アクセサについては、superObjectを対象にdefinePropertyすればよい。
 		// これによって、 extend()時に MyClass._super.prototype.myMethod.call();
 		// が _super.myMethod.call(this, xxx); にできる。
-		// なお、直近の広報互換性のため、下記のnewClass._superの代入は残しておくこと。
 
 		var newClass = new HifiveClass(classManager, classDescriptor, ctor, parentClass,
 				superObject);
-
-		//TODO 下記コメントは古い(2017/3/9) 現在は引数でsuper_を受け取る。コメント削除予定
-		//クラスディスクリプタ記述時、constructor: function() MyClass {} のように
-		//名前付き関数で書くことが推奨であり、この場合
-		// var MyClass = Class.extend({ constructor: function MyClass(){ MyClass._super.call(this) } });
-		//のコンストラクタ内のMyClassが指すのはコンストラクタ関数自身である。
-		//しかし、コンストラクタを匿名関数にした場合、
-		//（var MyClass = Class.extend({ constructor: function(){ MyClass._super.call(this) } });
-		//のように書かれた場合をイメージ）
-		//その時にコンストラクタ内で参照されるのは変数のMyClassになる。
-		//そのような場合にも正しくスーパークラスのコンストラクタを呼び出せるよう
-		//Classインスタンスの_super変数にも親クラスのコンストラクタをセットしておく。
-
-		//後方互換コード廃止（2017/3/9）
-		//newClass._super = ctor._super;
 
 		ctor.prototype.__name = classDescriptor.name;
 		ctor.prototype._class = newClass;
