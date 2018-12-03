@@ -77,53 +77,6 @@
 	 */
 	var RESERVED_STATIC_NAMES = JS_RESERVED_NAMES.concat(H5_RESERVED_NAMES);
 
-	function setupProperty(instance, klass) {
-		var parentClass = klass.getParentClass();
-		if (parentClass) {
-			setupProperty(instance, parentClass);
-		}
-		initProperty(instance, klass.getDescriptor());
-	}
-
-	function initProperty(instance, classDescriptor) {
-		//通常のフィールドを定義
-		var fieldDesc = classDescriptor.field;
-		if (fieldDesc) {
-			for ( var fieldName in fieldDesc) {
-				var fd = fieldDesc[fieldName];
-				var defaultValue = null;
-				if (fd && fd.defaultValue !== undefined) {
-					defaultValue = fd.defaultValue;
-				}
-				instance[fieldName] = defaultValue;
-			}
-		}
-
-		//アクセサプロパティ(getter/setter)のバッキングストアを定義
-		//ただし、get, setを独自に定義している場合は作成しない
-		//(ユーザーはバッキングストアとして使用するフィールドをfieldで定義しておく必要がある)
-		var accessorDesc = classDescriptor.accessor;
-		if (accessorDesc) {
-			for ( var accessorName in accessorDesc) {
-				var ad = accessorDesc[accessorName];
-				var defaultValue = null;
-				if (ad && ad.defaultValue !== undefined) {
-					defaultValue = ad.defaultValue;
-				}
-
-				if (ad == null) {
-					//TODO バリデータセット(type, constraint)
-					Object.defineProperty(instance, PROPERTY_BACKING_STORE_PREFIX + accessorName, {
-						writable: true,
-						configurable: false,
-						enumerable: false,
-						value: defaultValue
-					});
-				}
-			}
-		}
-	}
-
 	/**
 	 * 静的メンバーの名前が使用可能かどうかをチェックします。NG名だった場合は例外を投げます。
 	 *
@@ -546,15 +499,13 @@
 
 			var instance = Object.create(this._ctor.prototype);
 
-			//明示的に拡張不可と指定された場合のみ、プロパティの追加・削除・設定変更を禁止
-			//（つまりデフォルトではtrue（拡張可能））
-			//ver.1.3.2まではデフォルト=false（拡張不能）だった。Object.seal()すると
-			//その後のプロパティの追加ができないため先にsetupProperty()で
-			//定義されたフィールドをインスタンスにown-propertyとして作成していたが、
-			//この処理に時間がかかるため、数が増えるとインスタンスの生成だけで
-			//ある程度の時間がかかるようになってしまっていた。（特にIE11では速度が劣化しやすい）
-			//そのため、ver.1.3.3にて仕様変更し、デフォルトで「拡張可能」とし
-			//その場合はsetupProperty()を行わないようにした。
+			//ver.1.3.2まで、クラス定義にisDynamic: false（デフォルト：false）を指定すると、
+			//インスタンス生成時にクラス定義で書かれているフィールドを
+			//インスタンスにown-propertyとして作成し、各インスタンスに対してObject.seal()していた。
+			//しかし、この処理に時間がかかるため、数が増えるとインスタンスの生成だけで
+			//ある程度の時間がかかるようになってしまっていた。（特にIE11とFirefoxで速度が劣化する）
+			//そのため、ver.1.3.3にて仕様変更し、isDynamicの設定は削除し、かつ、
+			//インスタンス生成時にはフィールドの初期化は行わないようにした。
 			//ただしこのため、isDynamic=trueの場合、一度も書き込みしていないフィールドは
 			// instance.hasOwnProperty('fieldName')がfalseになる、という副作用がある。
 			// (for-inループの場合は、prototypeオブジェクトにフィールドを定義してあるので列挙される
