@@ -159,21 +159,6 @@ $(function() {
 		}, /.*親クラスのコンストラクタ.*/, '親コンストラクタを呼び出さないとエラー。');
 	});
 
-	test('親コンストラクタ（互換）', function() {
-		var cls = h5.cls.RootClass.extend(function(_super) {
-			return {
-				name: 'TestClass',
-				method: {
-					constructor: function TestClass() {
-						TestClass._super.call(this);
-					}
-				}
-			};
-		});
-		var obj = cls.create();
-		ok(!!obj, 'コンストラクタに設定したfunctionに_superが生えていること。');
-	});
-
 	//=============================
 	// Definition
 	//=============================
@@ -1195,23 +1180,6 @@ $(function() {
 		expect(3);
 	});
 
-	test('親コンストラクタの呼び出し（互換）', function() {
-		var cls = g.ParentClass.extend(function(_super) {
-			return {
-				name: 'ChildClass',
-				method: {
-					constructor: function ChildClass(field, prop) {
-						ChildClass._super.call(this, field, prop);
-					}
-				}
-			};
-		});
-		var obj1 = cls.create('c1', 'c2');
-		equal(obj1._field1, 'c1', '親コンストラクタでフィールドに値が設定されること。');
-		equal(obj1.prop1, 'c2', '親コンストラクタでプロパティに値が設定されること。');
-		expect(3);
-	});
-
 	test('親コンストラクタを呼び出さない', function() {
 		throws(function() {
 			var cls = g.ParentClass.extend(function(_super) {
@@ -1267,13 +1235,12 @@ $(function() {
 		});
 
 		var p = g.ParentClass.create();
-		throws(function() {
-			p.prop2 = 'prop2';
-		}, TypeError, 'プロパティの追加は親クラスに影響しないこと。');
+
+		equal(typeof p.prop2, 'undefined', '子クラスにprop2というアクセサを追加しても、親クラスのインスタンスには存在しないこと');
 
 		var c = cls.create();
 		c.prop2 = 'prop2';
-		equal(c.prop2, 'prop2', '子クラスで追加したプロパティの読み書きができること。');
+		equal(c.prop2, 'prop2', '子クラスで追加したprop2アクセサで正しく読み書きができること。');
 	});
 
 	test('メソッドの追加', function() {
@@ -1563,55 +1530,11 @@ $(function() {
 	// Body
 	//=============================
 
-	test('動的拡張OFF', function() {
-		throws(function() {
-			var cls = h5.cls.RootClass.extend(function(_super) {
-				return {
-					name: 'NonDynamicClass',
-					method: {
-						constructor: function NonDynamicClass() {
-							_super.constructor.call(this);
-						}
-					}
-				};
-			});
-			var obj = cls.create();
-			obj.dynamicField = 'dynamic';
-		}, TypeError, 'Dynamicを明示的に指定しないとクラスは拡張出来ないこと。');
-	});
-
-	test('動的拡張ON', function() {
+	test('isDynamic=falseを指定しても機能せず、インスタンスに対して動的にプロパティを追加できること', function() {
 		var cls = h5.cls.RootClass.extend(function(_super) {
 			return {
-				name: 'DynamicClass',
-				isDynamic: true,
-				method: {
-					constructor: function DynamicClass() {
-						_super.constructor.call(this);
-					}
-				}
-			};
-		});
-		var obj = cls.create();
-		obj.dynamicField = 'dynamic';
-		equal(obj.dynamicField, 'dynamic', 'Dynamicを指定したクラスは拡張できること。');
-	});
-
-	test('Dynamicの継承', function() {
-		var dynamic = h5.cls.RootClass.extend(function(_super) {
-			return {
-				name: 'DynamicClass',
-				isDynamic: true,
-				method: {
-					constructor: function DynamicClass() {
-						_super.constructor.call(this);
-					}
-				}
-			};
-		});
-		var nonDynamic = dynamic.extend(function(_super) {
-			return {
 				name: 'NonDynamicClass',
+				isDynamic: false,
 				method: {
 					constructor: function NonDynamicClass() {
 						_super.constructor.call(this);
@@ -1619,11 +1542,12 @@ $(function() {
 				}
 			};
 		});
+		var obj = cls.create();
 
-		throws(function() {
-			var obj = nonDynamic.create();
-			obj.dynamicField = 'dynamic';
-		}, TypeError, 'Dynamicを明示的に指定しないとクラスは拡張出来ないこと。');
+		obj.dynamicField = 'dynamic';
+
+		equal(obj.dynamicField, 'dynamic',
+				'isDynamic=falseを指定したクラスのインスタンスに動的に追加したプロパティを正しく読み書きできている');
 	});
 
 	//=============================
