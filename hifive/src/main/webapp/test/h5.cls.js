@@ -298,6 +298,9 @@ $(function() {
 		var obj1 = cls.create();
 		var obj2 = cls.create();
 
+		equal(obj1._field1, null, 'obj1._field1のデフォルト値がnullであること。');
+		equal(obj2._field1, null, 'obj2._field1のデフォルト値がnullであること。');
+
 		obj1._field1 = 'obj1';
 		obj2._field1 = 'obj2';
 
@@ -499,6 +502,9 @@ $(function() {
 
 		var obj1 = cls.create();
 		var obj2 = cls.create();
+
+		equal(obj1.field1, null, 'obj1.field1のデフォルト値がnullであること。');
+		equal(obj2.field1, null, 'obj2.field1のデフォルト値がnullであること。');
 
 		obj1.prop1 = 'obj1';
 		obj2.prop1 = 'obj2';
@@ -1530,7 +1536,30 @@ $(function() {
 	// Body
 	//=============================
 
-	test('isDynamic=falseを指定しても機能せず、インスタンスに対して動的にプロパティを追加できること', function() {
+	test('プロパティの動的追加', function() {
+		var cls = h5.cls.RootClass.extend(function(_super) {
+			return {
+				name: 'TestClass',
+				method: {
+					constructor: function TestClass() {
+						_super.constructor.call(this);
+					}
+				}
+			};
+		});
+
+		var value = 'testValue';
+
+		var instance = cls.create();
+		instance.dynamicProp = value;
+
+		equal(instance.dynamicProp, value, '動的に追加されたプロパティの値を読み取れること');
+		equal(instance.hasOwnProperty('dynamicProp'), true,
+				'動的に追加されたプロパティはインスタンスのhasOwnPropertyがtrueになること');
+	});
+
+
+	test('(ver.1.3.3での仕様変更)isDynamic=falseを指定しても機能せず、インスタンスに対して動的にプロパティを追加できること', function() {
 		var cls = h5.cls.RootClass.extend(function(_super) {
 			return {
 				name: 'NonDynamicClass',
@@ -1544,9 +1573,11 @@ $(function() {
 		});
 		var obj = cls.create();
 
-		obj.dynamicField = 'dynamic';
+		var PROP_VALUE = 'dynamic';
 
-		equal(obj.dynamicField, 'dynamic',
+		obj.dynamicField = PROP_VALUE;
+
+		equal(obj.dynamicField, PROP_VALUE,
 				'isDynamic=falseを指定したクラスのインスタンスに動的に追加したプロパティを正しく読み書きできている');
 	});
 
