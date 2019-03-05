@@ -36,6 +36,7 @@
 	var ERR_CODE_DUPLICATE_PROP = 18009;
 	var ERR_CODE_DUPLICATE_STATIC_PROP = 18010;
 	var ERR_CODE_STATIC_METHOD_MUST_BE_FUNCTION = 18011;
+	var ERR_CODE_CLASS_NOT_FOUND = 18012;
 
 	//fwLoggerのメソッド呼び出しはビルド時（minify時）に呼び出しコードごと削除される
 	var fwLogger = h5.log.createLogger('h5.cls');
@@ -57,6 +58,7 @@
 	errMsgMap[ERR_CODE_DUPLICATE_PROP] = '{0}: クラス定義内でプロパティ名が重複しています。名前={1}';
 	errMsgMap[ERR_CODE_DUPLICATE_STATIC_PROP] = '{0}: クラス定義内で静的プロパティ名が重複しています。名前={1}';
 	errMsgMap[ERR_CODE_STATIC_METHOD_MUST_BE_FUNCTION] = '{0}: クラス定義の静的methodには関数以外は指定できません。メソッド名={1}';
+	errMsgMap[ERR_CODE_CLASS_NOT_FOUND] = '指定された名前のクラスが見つかりませんでした。名前＝{0}';
 	addFwErrorCodeMap(errMsgMap);
 	/* del end */
 
@@ -573,14 +575,17 @@
 
 		/**
 		 * 指定された名前のクラスオブジェクトを取得します。戻り値のクラスのインスタンスを生成する場合は ret.create() のようにします。
+		 * 指定された名前のクラスが存在しない場合は例外が発生します。
 		 *
 		 * @param fqcn 完全修飾クラス名
 		 * @returns {HifiveClass} クラスオブジェクト
 		 */
 		getClass: function(fqcn) {
 			var cls = this._classMap[fqcn];
-			//undefinedではなくnullを返す(設計ポリシー)
-			cls = cls === undefined ? null : cls;
+			if (!cls) {
+				// #599 クラスがなかった場合は例外を発生させる
+				throwFwError(ERR_CODE_CLASS_NOT_FOUND, fqcn);
+			}
 			return cls;
 		},
 
