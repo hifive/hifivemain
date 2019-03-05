@@ -2273,4 +2273,31 @@ $(function() {
 		}, Error, 'accessorとmethodの重複はエラーとなること。');
 	});
 
+	//=============================
+	// Definition
+	//=============================
+
+	module('クラスマネージャでgetClass()');
+
+	//=============================
+	// Body
+	//=============================
+
+	test('h5.cls.manager.getClass()の引数に存在しないクラスを指定', function() {
+		throws(function() {
+			h5.cls.manager.getClass('h5.NotDefinedClass');
+		}, Error, 'h5.cls.manager.getClass()でクラスが取得できない場合例外が発生すること。');
+	});
+
+	test('h5.cls.manager.getClass()の引数にnullを指定', function() {
+		throws(function() {
+			h5.cls.manager.getClass(null);
+		}, Error, 'h5.cls.manager.getClass()の引数にnullを指定した場合例外が発生すること。');
+	});
+
+	test('h5.cls.manager.getClass()の引数を未指定', function() {
+		throws(function() {
+			h5.cls.manager.getClass();
+		}, Error, 'h5.cls.manager.getClass()の引数に何も指定しなかった場合例外が発生すること。');
+	});
 });
