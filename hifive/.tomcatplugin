@@ -9,6 +9,11 @@
     <extraInfo></extraInfo>
     <webPath>/hifive</webPath>
     <webClassPathEntries>
+        <webClassPathEntry>/hifive/lib/closurecompiler/args4j-2.0.12.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/closurecompiler/closure-compiler-r1810.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/closurecompiler/guava-10.0.1.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/closurecompiler/jsr305-1.3.9.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/closurecompiler/protobuf-java-2.4.1.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/commons/commons-beanutils-1.8.0.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/commons/commons-cli-1.2.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/commons/commons-codec-1.3.jar</webClassPathEntry>
@@ -28,6 +33,7 @@
         <webClassPathEntry>/hifive/lib/etc/cglib-2.2.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/etc/javax.inject-1.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/etc/joda-time-2.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/h5Tools/rhino-1.7R3.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/log/log4j-1.2.16.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/log/slf4j-api-1.6.4.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/log/slf4j-log4j12-1.6.4.jar</webClassPathEntry>
@@ -51,6 +57,18 @@
         <webClassPathEntry>/hifive/lib/selenium/operadriver-0.13.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/selenium/platform-3.4.0.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/selenium/sac-1.3.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-android-driver-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-api-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-chrome-driver-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-firefox-driver-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-htmlunit-driver-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-ie-driver-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-iphone-driver-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-java-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-remote-driver-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-safari-driver-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-server-2.21.0.jar</webClassPathEntry>
+        <webClassPathEntry>/hifive/lib/selenium/selenium-support-2.21.0.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/selenium/serializer-2.7.1.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/selenium/snakeyaml-1.8.jar</webClassPathEntry>
         <webClassPathEntry>/hifive/lib/selenium/webbit-0.4.6.jar</webClassPathEntry>
