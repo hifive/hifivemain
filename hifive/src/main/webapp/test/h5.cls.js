@@ -2283,18 +2283,18 @@ $(function() {
 	// Body
 	//=============================
 
-	test('h5.cls.manager.getClass()の引数にクラス名を指定', function() {
-		var cls = h5.cls.RootClass.extend(function(_super) {
+	test('h5.cls.manager.getClass()の引数にクラス名を指定するとそのクラスのオブジェクトを取得できる', function() {
+		var cls = h5.cls.RootClass.extend(function(super_) {
 			return {
-				name: 'TestClass',
+				name: 'TestGetClass',
 				method: {
 					constructor: function TestClass() {
-						_super.constructor.call(this);
+						super_.constructor.call(this);
 					}
 				}
 			};
 		});
-		strictEqual(h5.cls.manager.getClass('TestClass'), cls,
+		strictEqual(h5.cls.manager.getClass('TestGetClass'), cls,
 				'h5.cls.manager.getClass()で引数に指定したクラス名のクラスオブジェクトを取得できること。');
 	});
 
@@ -2326,19 +2326,25 @@ $(function() {
 	// Body
 	//=============================
 
-	test('h5.cls.manager.getRootClass()でルートクラスを取得', function() {
-		var cls = h5.cls.RootClass.extend(function(_super) {
+	test('h5.cls.manager.getRootClass()でルートクラスを取得できる', function() {
+		equal(h5.cls.manager.getRootClass(), h5.cls.RootClass,
+				'h5.cls.manager.getRootClass()でルートクラスを取得できること。');
+	});
+
+	test('h5.cls.manager.getRootClass()でルートクラスを取得できる', function() {
+		var cls = h5.cls.RootClass.extend(function(super_) {
 			return {
-				name: 'TestClass',
+				name: 'TestGetRootClass',
 				method: {
 					constructor: function TestClass() {
-						_super.constructor.call(this);
+						super_.constructor.call(this);
 					}
 				}
 			};
 		});
+		strictEqual(cls.getManager(), h5.cls.manager, 'getManager()でh5.cls.managerを取得できること。');
 		strictEqual(cls.getManager().getRootClass(), h5.cls.RootClass,
-				'h5.cls.manager.getRootClass()でルートクラスを取得できること。');
+				'getRootClass()で定義したクラスのルートクラスを取得できること。');
 	});
 
 	//=============================
@@ -2352,36 +2358,90 @@ $(function() {
 	//=============================
 
 	test(
-			'h5.cls.manager.getNamespaceObject()の引数に名前空間を指定',
+			'h5.cls.manager.getNamespaceObject()の引数に空文字を指定すると、デフォルト空間のオブジェクトを取得して定義しておいたクラスを取得できる',
 			function() {
-				var cls = h5.cls.RootClass.extend(function(_super) {
+				var cls = h5.cls.RootClass.extend(function(super_) {
 					return {
-						name: 'ns1.ns2.TestClass',
+						name: 'TestGetNamespaceClass',
 						method: {
 							constructor: function TestClass() {
-								_super.constructor.call(this);
+								super_.constructor.call(this);
 							}
 						}
 					};
 				});
-				strictEqual(h5.cls.manager.getNamespaceObject('ns1.ns2').TestClass, cls,
+				strictEqual(h5.cls.manager.getNamespaceObject('').TestGetNamespaceClass, cls,
+						'h5.cls.manager.getNamespaceObject()の引数に空文字を指定すると、デフォルト空間のオブジェクトを取得して定義しておいたクラスを取得できること。');
+			});
+
+	test(
+			'h5.cls.manager.getNamespaceObject()の引数に名前空間を指定すると、その名前空間に属するクラスをそのクラス名をキーとして保持するオブジェクトを取得できる',
+			function() {
+				var cls = h5.cls.RootClass.extend(function(super_) {
+					return {
+						name: 'ns1.ns2.TestGetNamespaceClass2',
+						method: {
+							constructor: function TestClass() {
+								super_.constructor.call(this);
+							}
+						}
+					};
+				});
+				strictEqual(h5.cls.manager.getNamespaceObject('ns1.ns2').TestGetNamespaceClass2,
+						cls,
 						'h5.cls.manager.getNamespaceObject()で引数に名前空間を指定すると、その名前空間に属するクラスをそのクラス名をキーとして保持するオブジェクトを取得できること。');
+
+				var cls2 = h5.cls.RootClass.extend(function(super_) {
+					return {
+						name: 'ns1.ns2.TestGetNamespaceClass3',
+						method: {
+							constructor: function TestClass() {
+								super_.constructor.call(this);
+							}
+						}
+					};
+				});
+				var nsObj = h5.cls.manager.getNamespaceObject('ns1.ns2');
+				strictEqual(nsObj.TestGetNamespaceClass2, cls,
+						'同じ名前空間にクラス定義を後から追加した場合でも、getNamespaceObject()で予め定義しておいたクラスのオブジェクトを取得できること。');
+				strictEqual(nsObj.TestGetNamespaceClass3, cls2,
+						'同じ名前空間にクラス定義を後から追加した場合でも、getNamespaceObject()で後から追加で定義したクラスのオブジェクトを取得できること。');
+
+			});
+
+	test(
+			'h5.cls.manager.getNamespaceObject()の引数に名前空間を指定すると、その名前空間の階層のみに属するクラス名をキーとして保持するオブジェクトを取得できる',
+			function() {
+				var cls = h5.cls.RootClass.extend(function(super_) {
+					return {
+						name: 'ns1.TestGetNamespaceClass4',
+						method: {
+							constructor: function TestClass() {
+								super_.constructor.call(this);
+							}
+						}
+					};
+				});
+				var cls2 = h5.cls.RootClass.extend(function(super_) {
+					return {
+						name: 'ns1.ns2.TestGetNamespaceClass5',
+						method: {
+							constructor: function TestClass() {
+								super_.constructor.call(this);
+							}
+						}
+					};
+				});
+				var nsObj = h5.cls.manager.getNamespaceObject('ns1');
+				strictEqual(nsObj.TestGetNamespaceClass4, cls,
+						'getNamespaceObject()で引数に指定した名前空間の同じ階層に属するクラスのオブジェクトを取得できること。');
+				ok(nsObj.TestGetNamespaceClass5 === undefined,
+						'getNamespaceObject()で引数に指定した名前空間と同じ階層に属さないクラスのオブジェクトを取得できないため、h5.cls.manager.getNamespaceObject()の戻り値が空オブジェクトであること。');
+
 			});
 
 	test('h5.cls.manager.getNamespaceObject()の引数に存在しない名前空間を指定', function() {
-		ok(h5.cls.manager.getNamespaceObject('h5').TestClass === undefined,
-				'h5.cls.manager.getNamespaceObject()の引数に存在しない名前空間を指定した場合オブジェクトを取得できないこと。');
-	});
-
-	test('h5.cls.manager.getNamespaceObject()の引数にnullを指定', function() {
-		throws(function() {
-			h5.cls.manager.getNamespaceObject(null);
-		}, Error, 'h5.cls.manager.getNamespaceObject()の引数にnullを指定した場合エラーが発生すること。');
-	});
-
-	test('h5.cls.manager.getNamespaceObject()の引数を未指定', function() {
-		throws(function() {
-			h5.cls.manager.getNamespaceObject();
-		}, Error, 'h5.cls.manager.getNamespaceObject()の引数に何も指定しなかった場合エラーが発生すること。');
+		ok(h5.cls.manager.getNamespaceObject("notDefined").TestGetNamespaceClass6 === undefined,
+				'h5.cls.manager.getNamespaceObject()の引数に存在しない名前空間を指定した場合の戻り値が空オブジェクトであること。');
 	});
 });
