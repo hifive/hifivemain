@@ -2487,7 +2487,7 @@ $(function() {
 					};
 				});
 				var nsObj = h5.cls.manager.getNamespaceObject('ns5');
-				strictEqual("ns6" in nsObj, false, '名前空間オブジェクトは階層的ではないため、ns1.ns2の参照は未定義であること。');
+				strictEqual('ns6' in nsObj, false, '名前空間オブジェクトは階層的ではないため、ns1.ns2の参照は未定義であること。');
 
 			});
 
