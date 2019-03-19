@@ -46,8 +46,8 @@
 	var FW_LOG_ISDYNAMIC_IS_OBSOLETE = '{0}: クラス定義のisDynamic指定はver.1.3.3で廃止されました。ver.1.3.3以降、全てのクラスについて、インスタンス生成時にフレームワークによるObject.seal()は行われず、動的なプロパティ追加が可能です。';
 
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_NO_CLASS_DESC] = 'クラス定義がありません。';
-	errMsgMap[ERR_CODE_NO_CLASS_NAME] = 'クラス定義にnameがありません。クラス名は必須です。';
+	errMsgMap[ERR_CODE_NO_CLASS_DESC] = 'クラス定義がありません。extend()の引数の関数で、クラス定義を返していることを確認してください。';
+	errMsgMap[ERR_CODE_NO_CLASS_NAME] = 'クラス定義にnameがないか、空文字です。クラス名は必須です。';
 	errMsgMap[ERR_CODE_NO_CLASS_CONSTRUCTOR] = '{0}: クラスのメソッド定義にconstructorがありません。constructorは必須です。';
 	errMsgMap[ERR_CODE_CTOR_NOT_CHAINED] = '{0}: 親クラスのコンストラクタ呼び出しが途中で行われていません。継承関係のあるすべてのクラスのコンストラクタの先頭で親コンストラクタの呼び出しが行われていることを確認してください。';
 	errMsgMap[ERR_CODE_METHOD_MUST_BE_FUNCTION] = '{0}: クラス定義のmethodには関数以外は記述できません。違反しているプロパティ={1}';
@@ -98,13 +98,15 @@
 			throwFwError(ERR_CODE_NO_CLASS_DESC);
 		}
 		if (!classDescriptor.name) {
+			//クラス名は必須なので、nullやundefinedの場合に加えて空文字の場合もエラーにするのでこのif文でよい
 			throwFwError(ERR_CODE_NO_CLASS_NAME);
 		}
-		if (!classDescriptor.method || !classDescriptor.method.constructor) {
+		if (classDescriptor.method == null || !classDescriptor.method.hasOwnProperty('constructor')) {
 			throwFwError(ERR_CODE_NO_CLASS_CONSTRUCTOR, classDescriptor.name);
 		}
 
 		if (typeof classDescriptor.isDynamic !== 'undefined') {
+			//ver.1.3.3以降、isDynamicの指定は廃止され機能しなくなったので、もし使用している場合は警告を出す
 			fwLogger.warn(FW_LOG_ISDYNAMIC_IS_OBSOLETE, classDescriptor.name);
 		}
 
