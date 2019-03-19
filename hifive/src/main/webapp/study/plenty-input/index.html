@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
+
+<!-- bootstrap -->
+<link href="/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<script src="/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+<!-- hifive -->
+<link href="../../srcCss/h5.ui.indicator.css" rel="stylesheet">
+<link href="../../srcCss/h5.ui.validation.css" rel="stylesheet">
+<script src="../../src/ejs/ejs-1.0.js"></script>
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+</script>
+<script src="loadScript.js"></script>
+
+<link href="sample.css" rel="stylesheet">
+
+<script>
+	$(function() {
+		var $result = $("#form"), n = 2500;
+		var input = "";
+		for (var i = 0; i < n; i++) {
+			input += "<input name='name_" + i + "' />";
+		}
+		$result.append(input);
+
+		this.formController = h5.core.controller('.form', h5.ui.FormController);
+
+		//各inputにルールを追加
+   		for (var i = 0; i < n; i++) {
+			var name = "name_" + i;
+
+			var ruleObj = {};
+			var validateObj = {
+				required: true
+			};
+			ruleObj[name] = validateObj;
+			this.formController.addRule(ruleObj);
+		}
+
+		console.time('timer1');
+		for (var i = 0; i < n; i++) {
+			this.formController.validate("name_" + i);
+		}
+		console.timeEnd('timer1'); // 計測時間出力
+	});
+</script>
+
+<title>大量にあるinput要素のvalidateサンプル</title>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-12">
+				<ul class="globalError"></ul>
+				<form class="form">
+					<div class="form-group" id="form">
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
