@@ -51,6 +51,15 @@
 	font-size: 3em;
 }
 
+.spacer {
+	width: 30px;
+	height:30px;
+}
+
+.font-weight-bold {
+	font-weight: bold;
+}
+
 
 @keyframes switchtext {
 	from {

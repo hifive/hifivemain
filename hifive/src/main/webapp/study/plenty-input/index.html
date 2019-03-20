@@ -35,6 +35,17 @@
 </head>
 <body>
 	<div class="container">
+	<div class="spacer"></div>
+	<label for="num">入力された数値分のinput要素を生成します。</label>
+	<input id="num" type="number" name="num" step="1" required><input id="btn1" type="button" value="inputを生成" />
+
+	<div class="spacer"></div>
+	<label for="rule">入力された数値分のinput要素にバリデートルールを指定し、バリデートを行います。</label>
+	<input id="rule" type="number" name="rule" step="1" required><input id="btn2" type="button" value="バリデート" />
+	<div class="spacer"></div>
+	<div class="font-weight-bold">バリデートにかかった時間が表示されます。</div>
+	<div id="output"></div>
+
 		<div class="row">
 			<div class="col-xs-12">
 				<ul class="globalError"></ul>
