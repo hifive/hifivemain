@@ -107,7 +107,7 @@ $(function() {
 			});
 		}, function(err) {
 			return err.code === 18002;
-		}, 'クラス定義にmethod.constructerが無い場合、エラーオブジェクトのコードが18002であること');
+		}, 'クラス定義にmethod.constructorが無い場合、エラーオブジェクトのコードが18002であること');
 
 		throws(function() {
 			h5.cls.RootClass.extend(function(_super) {
