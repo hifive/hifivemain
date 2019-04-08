@@ -36,7 +36,7 @@
 <body>
 	<div class="container-1">
 		<div class="spacer"></div>
-		<div>form要素にどのような情報が入っているか</div>
+		<h3>submitを行った場合にformにどのような情報が入っているか</h3>
 		<div class="spacer"></div>
 
 		<form action="index.html"  method="post">
@@ -49,6 +49,52 @@
 		   <input type="image" name="image1" value="image1value">
 		   <input type="button" id="btn-test" name="btn-test" value="form.submit()を行うボタン">
 		</form>
+
+		<div class="spacer"></div>
+		<div class="spacer"></div>
+		<h4>調査結果 (調査日: 2019/04/05)</h4>
+		<div class="spacer"></div>
+		<div>Formに含まれるパラメータ</div>
+		<table  border="1">
+			<tr class="background-color-f7">
+				<th></th><th>Win10-Chrome73.0.3683.86</th><th>Win10-Edge</th>
+				<th>Win10-IE11</th><th>Win10-Firefox66.0</th>
+			</tr>
+			<tr>
+				<td  class="background-color-f7 font-weight-bold">submit1を押したとき</td>
+				<td>text1: text1value<br>submit1: submit1value</td>
+				<td>text1: text1value<br>submit1: submit1value</td>
+				<td>text1: text1value<br>submit1: submit1value</td>
+				<td>text1: text1value<br>submit1: submit1value</td>
+			</tr>
+			<tr>
+				<td  class="background-color-f7 font-weight-bold">submit2を押したとき</td>
+				<td>text1: text1value<br>submit2: submit2value</td>
+				<td>text1: text1value<br>submit2: submit2value</td>
+				<td>text1: text1value<br>submit2: submit2value</td>
+				<td>text1: text1value<br>submit2: submit2value</td>
+			</tr>
+			<tr>
+				<td  class="background-color-f7 font-weight-bold">form.submit(); による送信のとき</td>
+				<td>text1: text1value</td>
+				<td>text1: text1value</td>
+				<td>text1: text1value</td>
+				<td>text1: text1value</td>
+			</tr>
+
+		</table>
+		<div class="spacer"></div>
+		<div class="spacer"></div>
+		<h4>調査方法(Chromeの場合)</h4>
+		<ul>
+			<li>開発者ツールを開く</li>
+			<li>Networkタブを選択する</li>
+			<li>左上にある丸いボタンが赤くなっていなければクリックし、ネットワークの記録を開始する</li>
+			<li>formにどのような情報が入ってるのか確認したいsubmitボタンをクリックする</li>
+			<li>Nameにあるファイル名一覧の一番上にあるindex.htmlをクリックする</li>
+			<li>ファイル名一覧の隣にあるHeadersタブを選択する(デフォルトで選択されている)</li>
+			<li>Headersの中の一番下にある「Form Data」の中身を確認する</li>
+		</ul>
 	</div>
 </body>
 </html>
