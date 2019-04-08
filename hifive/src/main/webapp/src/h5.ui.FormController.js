@@ -2174,8 +2174,19 @@
 		return false;
 	}
 
+	/**
+	 * targetノードがcontainerノードの子孫要素かどうかを判定します。
+	 *
+	 * @private
+	 */
+	function containsNode(container, target) {
+		//booleanで値を返すために !! で型変換する
+		return !!(container.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_CONTAINED_BY);
+	}
+
 	//キャッシュ
 	var ValidationResult = h5internal.validation.ValidationResult;
+	var isIE = h5.env.ua.isIE;
 
 	// ログメッセージ
 	var FW_LOG_NOT_DEFINED_PLUGIN_NAME = 'プラグイン"{0}"は存在しません';
@@ -3263,6 +3274,23 @@
 		},
 
 		/**
+		 * このDOM要素がフォームの入力要素かどうかを返します。内部的には、タグ名がinput, select, textareaのいずれかの場合trueを返します。
+		 *
+		 * @private
+		 * @param element
+		 * @returns {Boolean}
+		 */
+		_isFormInputElement: function(element) {
+			if (element) {
+				var tagName = element.tagName.toLowerCase();
+				if (tagName == 'input' || tagName == 'select' || tagName == 'textarea') {
+					return true;
+				}
+			}
+			return false;
+		},
+
+		/**
 		 * このコントローラが管理するフォームに属するフォーム部品全てを取得
 		 *
 		 * @private
@@ -3270,10 +3298,28 @@
 		 * @returns {DOM[]}
 		 */
 		_getElements: function() {
+			if (this._bindedForm && !isIE) {
+				//IE11以外の現行ブラウザ(2019/4現在)はHTML5仕様に基づくform属性に対応しているので
+				//form.elementsを参照すればそのフォームに属する入力要素を取得可能。
+				//TODO reset, buttonなど送信時に含むかどうかが動的に変わる要素のフィルタ
+				return $(this._bindedForm.elements);
+			}
+
 			var $innerFormControls = this.$find('input,select,textarea').not(
 					'[type="submit"],[type="reset"],[type="image"]');
+
 			if (!this._bindedForm) {
+				//コントローラのバインド要素がフォームでない場合は
+				//バインド要素の子孫の入力要素
+				//TODO notの除外タイプが上記でよいか検討。type=buttonをどうするか
 				return $innerFormControls;
+			}
+
+			var cmap = new Map();
+
+			for (var i = 0, len = $innerFormControls.length; i < len; i++) {
+				var elem = $innerFormControls[i];
+				cmap.set(elem, elem);
 			}
 
 			var formId = $(this._bindedForm).attr('id');
@@ -3288,7 +3334,7 @@
 						// form属性がこのコントローラのフォームを指している
 						// または、このコントローラのフォーム内の要素でかつform属性指定無し
 						return (formAttr && formAttr === formId) || !formAttr
-								&& $innerFormControls.index($this) !== -1;
+								&& cmap.get(this) !== undefined;
 					}).toArray();
 		},
 
@@ -3591,8 +3637,10 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		_pluginElementEventHandler: function(ctx, eventType) {
+			//TODO セットされているプラグイン・バリデートタイミングをチェックして、特にkeyupなど
+			//バリデーションする必要がないタイミングがあればバリデーションしないようにする（高速化）
 			var target = ctx.event.target;
-			if (!this._isFormControls(target)) {
+			if (!this._isUnderControl(target)) {
 				return;
 			}
 			var name = target.name;
@@ -3727,12 +3775,41 @@
 		},
 
 		/**
+		 * このFormController（に対応するフォーム）に紐づいた入力要素かどうかを返します。
+		 * 判定条件は、(1)要素がinput,select,textareaのいずれかであること, かつ<br>
+		 * (2-1)form属性がない場合は、このコントローラのバインド要素の子孫要素であること<br>
+		 * (2-2)form属性がある場合は、このコントローラのバインド要素がform要素かつそのフォームのidと属性値が同じであること。<br>
+		 * なお、2-2において、このコントローラのバインド要素がフォームでない場合はfalseを返します。
+		 *
 		 * @private
-		 * @memberOf h5.ui.FormController
 		 */
-		_isFormControls: function(element) {
-			var $formControls = $(this._getElements());
-			return $formControls.index(element) !== -1;
+		_isUnderControl: function(element) {
+			if (!this._isFormInputElement(element)) {
+				//入力要素でない場合はfalse
+				return false;
+			}
+
+			var id = element.getAttribute('form');
+			//ここでは、id属性がセットされていない(null)場合と空文字の場合('')で同じ分岐に入りたいのでこの判定式で良い
+			if (!id) {
+				//form属性がセットされていない場合はこのコントローラのバインド要素の子孫ならtrue
+				var isContained = containsNode(this.rootElement, element);
+				return isContained;
+			}
+
+			//以下は、引数の要素にform属性がセットされていた場合
+
+			//このコントローラのバインド要素がformでない場合はfalse
+			if (!this._bindedForm) {
+				return false;
+			}
+
+			//form属性がセットされている場合はその値がバインドしているformのidと同じならtrue
+			var formId = this._bindedForm.getAttribute('id');
+			if (id === formId) {
+				return true;
+			}
+			return false;
 		},
 
 		/**
