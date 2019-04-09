@@ -2335,7 +2335,7 @@
 		_config: {},
 		_bindedForm: null,
 		_ruleCreators: [],
-		_plugins: [],
+		_plugins: {},
 
 		/**
 		 * フォームバリデーションロジック
