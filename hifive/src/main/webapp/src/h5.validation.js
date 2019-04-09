@@ -1436,13 +1436,13 @@
 		 * </tr>
 		 * <tr>
 		 * <td>future</td>
-		 * <td>なし</td>
-		 * <td>値がDate型で現在時刻より未来であること。</td>
+		 * <td>reference</td>
+		 * <td>値がDate型で現在時刻（referenceが指定された場合はその時刻）より未来であること。</td>
 		 * </tr>
 		 * <tr>
 		 * <td>past</td>
-		 * <td>なし</td>
-		 * <td>値がDate型で現在時刻より過去であること。</td>
+		 * <td>reference</td>
+		 * <td>値がDate型で現在時刻（referenceが指定された場合はその時刻）より過去であること。</td>
 		 * </tr>
 		 * <tr>
 		 * <td>digits</td>
