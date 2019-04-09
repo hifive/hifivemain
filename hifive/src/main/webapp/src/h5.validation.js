@@ -1446,7 +1446,7 @@
 		 * </tr>
 		 * <tr>
 		 * <td>digits</td>
-		 * <td>[string, fraction]</td>
+		 * <td>[integer, fraction]</td>
 		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfraction桁数以下の数値を表す文字列であること</td>
 		 * </tr>
 		 * <tr>
