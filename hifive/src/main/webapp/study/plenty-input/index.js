@@ -23,22 +23,21 @@ $(function() {
 			var ruleNum = $("#rule").val();
 
 			//各inputにルールを追加
+			var ruleObj = {};
 			for (var i = 0; i < ruleNum; i++) {
 				var name = "name_" + i;
 
-				var ruleObj = {};
 				var validateObj = {
 					required: true
 				};
 				ruleObj[name] = validateObj;
-				this._formController.addRule(ruleObj);
 			}
+			this._formController.addRule(ruleObj);
 
-			var validateNum = $("#num").val();
 			var startTime = performance.now(); // 開始時間
-			for (var i = 0; i < validateNum; i++) {
-				this._formController.validate("name_" + i);
-			}
+
+			this._formController.validate();
+
 			var endTime = performance.now(); // 終了時間
 			var pastTime = endTime - startTime;
 			$("#output").text(pastTime);
