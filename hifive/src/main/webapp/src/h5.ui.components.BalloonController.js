@@ -20,7 +20,9 @@
 	var MSG_CANNOT_CALL_METHOD_DISPOSED = 'dispose済みのBalloonは操作できません';
 
 	/** 吹き出し(三角の部分)の大きさ * */
-	var ARROW_SIZE = 34;
+	var ARROW_SIZE = 12;
+	/** 吹き出しの幅の最小値 * */
+	var MIN_WIDTH = 100;
 
 	/**
 	 * Balloonクラス
@@ -80,8 +82,6 @@
 			};
 			// $targetと$arrowboxの左上の位置を合わせる
 			if (direction === 'top' || direction === 'bottom') {
-				// 吹き出しの位置が$targetの真ん中に来るように合わせる
-				arrowboxPosition.left += (targetW - $arrowbox.outerWidth()) / 2;
 				if (direction === 'top') {
 					// 吹き出し分だけ上に移動
 					arrowboxPosition.top -= $arrowbox.outerHeight() + ARROW_SIZE;
@@ -90,8 +90,6 @@
 					arrowboxPosition.top += targetH + ARROW_SIZE;
 				}
 			} else {
-				// 吹き出しの位置が$targetの真ん中に来るように合わせる
-				arrowboxPosition.top += (targetH - $arrowbox.outerHeight()) / 2;
 				if (direction === 'left') {
 					// 吹き出し分だけ左に移動
 					arrowboxPosition.left -= $arrowbox.outerWidth() + ARROW_SIZE;
@@ -103,6 +101,26 @@
 
 			// 吹き出し位置
 			$arrowbox.css(arrowboxPosition);
+
+
+			//吹き出しの幅が100px以下の場合、100pxに設定する
+			if ($arrowbox.outerWidth() <= MIN_WIDTH || (arrowboxPosition.left <= MIN_WIDTH && direction === 'left') ) {
+				arrowboxPosition['width'] = MIN_WIDTH;
+				$arrowbox.css(arrowboxPosition);
+				if (direction === 'top') {
+						// 吹き出し分だけ上に移動
+						arrowboxPosition.top = $target.offset().top - ($arrowbox.outerHeight() + ARROW_SIZE);
+				} else {
+					if (direction === 'left') {
+						// 吹き出し分だけ左に移動
+						arrowboxPosition.left = $target.offset().left - ($arrowbox.outerWidth() + ARROW_SIZE);
+					} else if (direction === 'right') {
+						// 吹き出し分だけ右に移動
+						arrowboxPosition.left = $target.offset().left + $arrowbox.outerWidth() + ARROW_SIZE;
+					}
+				}
+				$arrowbox.css(arrowboxPosition);
+			}
 		},
 		hide: function() {
 			if (this._isDisposed) {
