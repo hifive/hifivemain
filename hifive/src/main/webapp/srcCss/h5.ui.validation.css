@@ -17,18 +17,21 @@
  */
 /* 吹き出し(共通) */
 .validation-balloon {
-	padding: 5px;
+	padding: 7px;
 	position: absolute;
-	background: #ffffee;
-	border: 1px solid #124;
+	background: #fff;
+	color: #ff0a0a;
+	border: 2px solid #ff0a0a;
 	display: none;
+	border-radius: 4px;
+	box-shadow:4px 3px 6px -1px rgba(79,72,79,0.69);
 }
 
-/* 吹き出し(上) */
+/** 吹き出し(上) **/
 .validation-balloon.top:after,.validation-balloon.top:before {
-	top: 100%;
-	left: 50%;
-	border: solid transparent;
+	left: 20px;
+	margin-left: -14px;
+	border: 9px solid transparent;
 	content: " ";
 	height: 0;
 	width: 0;
@@ -37,24 +40,22 @@
 }
 
 .validation-balloon.top:after {
-	border-color: rgba(255, 255, 238, 0);
-	border-top-color: #ffffee;
-	border-width: 30px;
-	margin-left: -30px;
+	bottom: -19px;
+	border-top: 9px solid #ff0a0a;
+	z-index: 1;
 }
 
 .validation-balloon.top:before {
-	border-color: rgba(21, 34, 66, 0);
-	border-top-color: #152242;
-	border-width: 31px;
-	margin-left: -31px;
+	bottom: -16px;
+	border-top: 9px solid #fff;
+	z-index: 2;
 }
 
 /** 吹き出し(下) **/
 .validation-balloon.bottom:after,.validation-balloon.bottom:before {
-	bottom: 100%;
-	left: 50%;
-	border: solid transparent;
+	left: 20px;
+	margin-left: -14px;
+	border: 9px solid transparent;
 	content: " ";
 	height: 0;
 	width: 0;
@@ -63,24 +64,22 @@
 }
 
 .validation-balloon.bottom:after {
-	border-color: rgba(255, 255, 238, 0);
-	border-bottom-color: #ffffee;
-	border-width: 30px;
-	margin-left: -30px;
+	top: -19px;
+	border-bottom: 9px solid #ff0a0a;
+	z-index: 1;
 }
 
 .validation-balloon.bottom:before {
-	border-color: rgba(21, 34, 66, 0);
-	border-bottom-color: #152242;
-	border-width: 31px;
-	margin-left: -31px;
+	top: -16px;
+	border-bottom: 9px solid #FFF;
+	z-index: 2;
 }
 
 /** 吹き出し(左) **/
 .validation-balloon.left:after,.validation-balloon.left:before {
-	left: 100%;
-	top: 50%;
-	border: solid transparent;
+	top: 17px;
+	margin-top: -12px;
+	border: 9px solid transparent;
 	content: " ";
 	height: 0;
 	width: 0;
@@ -89,24 +88,23 @@
 }
 
 .validation-balloon.left:after {
-	border-color: rgba(255, 255, 238, 0);
-	border-left-color: #ffffee;
-	border-width: 30px;
-	margin-top: -30px;
+  	right: -19px;
+	border-left: 9px solid #ff0a0a;
+	z-index: 1;
 }
 
 .validation-balloon.left:before {
-	border-color: rgba(21, 34, 66, 0);
-	border-left-color: #152242;
-	border-width: 31px;
-	margin-top: -31px;
+  	right: -16px;
+	border-left: 9px solid #FFF;
+	z-index: 2;
 }
+
 
 /** 吹き出し(右) **/
 .validation-balloon.right:after,.validation-balloon.right:before {
-	right: 100%;
-	top: 50%;
-	border: solid transparent;
+	top: 17px;
+	margin-top: -12px;
+	border: 9px solid transparent;
 	content: " ";
 	height: 0;
 	width: 0;
@@ -115,15 +113,13 @@
 }
 
 .validation-balloon.right:after {
-	border-color: rgba(255, 255, 238, 0);
-	border-right-color: #ffffee;
-	border-width: 30px;
-	margin-top: -30px;
+  	left: -19px;
+	border-right: 9px solid #ff0a0a;
+	z-index: 1;
 }
 
 .validation-balloon.right:before {
-	border-color: rgba(21, 34, 66, 0);
-	border-right-color: #152242;
-	border-width: 31px;
-	margin-top: -31px;
+  	left: -16px;
+	border-right: 9px solid #FFF;
+	z-index: 2;
 }
