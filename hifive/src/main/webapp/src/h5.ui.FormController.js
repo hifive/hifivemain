@@ -3363,7 +3363,8 @@
 		 * @param name
 		 */
 		_isGroupName: function(name) {
-			if (name == null || name == '') {
+			//nameはnullの場合に加え空文字の場合もfalse扱いなのでこの判定でよい
+			if (!name) {
 				return false;
 			}
 
