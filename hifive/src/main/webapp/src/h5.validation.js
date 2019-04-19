@@ -1748,6 +1748,7 @@
 								ruleValue));
 						isInvalidProp = true;
 						violationCount++;
+						invalidProperties.push(prop);
 					} else {
 						//あるプロパティについて、Validだったルールを保持しておく
 						var validRuleNames = validPropertyToRulesMap[prop];
@@ -1770,7 +1771,6 @@
 					//バリデーションを行ったプロパティとして追加
 					properties.push(prop);
 				}
-
 			}
 			var isValid = !invalidProperties.length;
 			var validationResult = new ValidationResult({
