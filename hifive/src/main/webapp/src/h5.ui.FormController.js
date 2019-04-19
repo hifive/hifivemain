@@ -2924,12 +2924,12 @@
 		 *
 		 * <pre class="sh_html"><code>
 		 * &lt;!-- data-h5-input-group-containerにグループ名を指定。子要素がそのグループになる。 --&gt;
-		 * lt;div data-h5-input-group-container=&quot;birthday&quot;&gt;
+		 * &lt;div data-h5-input-group-container=&quot;birthday&quot;&gt;
 		 * 		&lt;displayName class=&quot;control-displayName&quot;&gt;生年月日&lt;/displayName&gt;
 		 * 		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;
 		 * 		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;
 		 * 		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;
-		 * 		&lt;/div&gt;
+		 * &lt;/div&gt;
 		 * </code></pre>
 		 *
 		 * <p>
@@ -3339,7 +3339,9 @@
 		},
 
 		/**
-		 * このコントローラが管理するフォームに属するグループコンテナ要素(data-group-containerが指定されている要素)を取得
+		 * このコントローラが管理するフォームに属するグループコンテナ要素(data-group-containerが指定されている要素)を取得する。
+		 * グループコンテナ要素は、このコントローラのバインド要素の子孫要素である必要がある。
+		 * （入力要素と異なり、form属性には対応しない。すなわち、コントローラのバインド要素の子孫の外側にコンテナ要素を置いても機能しない）
 		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
