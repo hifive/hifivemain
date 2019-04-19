@@ -1748,7 +1748,6 @@
 								ruleValue));
 						isInvalidProp = true;
 						violationCount++;
-						invalidProperties.push(prop);
 					} else {
 						//あるプロパティについて、Validだったルールを保持しておく
 						var validRuleNames = validPropertyToRulesMap[prop];
@@ -1758,20 +1757,29 @@
 						}
 						pushIfNotExist(ruleName, validRuleNames);
 					}
-				}
+				} // End of foreach(ルール)
 
 				//実際に一つ以上のルールが適用された場合のみプロパティに追加
 				if (isValidatedAtLeastOnce) {
-					if (isAsyncProp) {
-						isAsync = true;
-						validatingProperties.push(prop);
-					} else {
-						(isInvalidProp ? invalidProperties : validProperties).push(prop);
-					}
-					//バリデーションを行ったプロパティとして追加
+					//バリデーションを行ったプロパティ名を追加
 					properties.push(prop);
+
+					if (isInvalidProp) {
+						//同期的にバリデーションエラーが1つ以上見つかった場合
+						invalidProperties.push(prop);
+					} else {
+						if (isAsyncProp) {
+							//同期バリデーションエラーはなかったが、非同期バリデーションで未判定のものが残っている場合＝非同期バリデーション結果待ち状態
+							isAsync = true;
+							validatingProperties.push(prop);
+						} else {
+							//同期バリデーションエラーがなく、かつ、非同期バリデーションで未判定のものもない場合＝バリデーション済み状態
+							validProperties.push(prop);
+						}
+					}
 				}
-			}
+			} // End of foreach(バリデータが1つ以上セットされているプロパティ)
+
 			var isValid = !invalidProperties.length;
 			var validationResult = new ValidationResult({
 				validProperties: validProperties,
