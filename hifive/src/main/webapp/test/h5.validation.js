@@ -1101,17 +1101,18 @@ $(function() {
 				'同期バリデートに成功しているが非同期バリデートが行われていないためvalidPropertiesにプロパティが入らない');
 		deepEqual(result.invalidProperties, [],
 				'同期バリデートに成功しているが非同期バリデートが行われていないためinvalidPropertiesにプロパティが入らない');
-		deepEqual(result.validatingProperties, ['p1'], '非同期バリデートが完了していないためプロパティが格納されている');
+		deepEqual(result.validatingProperties, ['p1'],
+				'同期バリデートに成功したが、非同期バリデートが完了していないためプロパティが格納されている');
 
 		dfd.resolve();
 
-		strictEqual(result.isValid, true, '非同期バリデートに成功したため、、isValidはtrue');
-		strictEqual(result.isAllValid, true, '同期バリデートと非同期バリデートの両方が成功したためisAllValidはtrue');
+		strictEqual(result.isValid, true, '非同期バリデートに成功したため、isValidはtrue');
+		strictEqual(result.isAllValid, true, '同期と非同期バリデートに成功したためisAllValidはtrue');
 		strictEqual(result.validCount, 1, '同期と非同期バリデートに成功したためvalidCountには1が入っている');
 		strictEqual(result.invalidCount, 0, '同期と非同期バリデートに成功したためinvalidCountには0が入っている');
 		deepEqual(result.validProperties, ['p1'], '非同期バリデートに成功したためvalidPropertiesにプロパティが入る');
 		deepEqual(result.invalidProperties, [], '非同期バリデートに成功したためinvalidPropertiesにプロパティが入らない');
-		deepEqual(result.validatingProperties, [], '非同期バリデートが完了したためプロパティが格納されていない');
+		deepEqual(result.validatingProperties, [], '全てのバリデートが完了したためプロパティが格納されていない');
 	});
 
 	test('同期バリデートに成功し非同期バリデートに失敗する場合', function() {
@@ -1139,7 +1140,8 @@ $(function() {
 				'同期バリデートに成功しているが非同期バリデートが行われていないためvalidPropertiesにプロパティが入らない');
 		deepEqual(result.invalidProperties, [],
 				'同期バリデートに成功しているが非同期バリデートが行われていないためinvalidPropertiesにプロパティが入らない');
-		deepEqual(result.validatingProperties, ['p1'], '非同期バリデートが完了していないためプロパティが格納されている');
+		deepEqual(result.validatingProperties, ['p1'],
+				'同期バリデートに成功したが、非同期バリデートが完了していないためプロパティが格納されている');
 
 		dfd.reject();
 
@@ -1149,7 +1151,7 @@ $(function() {
 		strictEqual(result.invalidCount, 1, '非同期バリデートに失敗したため、invalidCountには1が入っている');
 		deepEqual(result.validProperties, [], '非同期バリデートに失敗したため、validPropertiesにプロパティが入らない');
 		deepEqual(result.invalidProperties, ['p1'], '非同期バリデートに失敗したため、invalidPropertiesにプロパティが入る');
-		deepEqual(result.validatingProperties, [], '非同期バリデートが完了したためプロパティが格納されていない');
+		deepEqual(result.validatingProperties, [], '全てのバリデートが完了したためプロパティが格納されていない');
 	});
 
 	test('同期バリデートに失敗し非同期バリデートに成功する場合', function() {
@@ -1174,7 +1176,7 @@ $(function() {
 		strictEqual(result.invalidCount, 1, '非同期バリデートに失敗したため、invalidCountには1が入っている');
 		deepEqual(result.validProperties, [], '同期バリデートに失敗したためvalidPropertiesにプロパティが入らない');
 		deepEqual(result.invalidProperties, ['p1'], '同期バリデートに失敗したためinvalidPropertiesにプロパティが入る');
-		deepEqual(result.validatingProperties, [], '同期バリデートに失敗したためプロパティが格納されている');
+		deepEqual(result.validatingProperties, [], '同期バリデートに失敗したためプロパティが格納されていない');
 
 		dfd.resolve();
 
@@ -1186,7 +1188,7 @@ $(function() {
 				'非同期バリデートに成功したが同期バリデートに失敗したため、validPropertiesにプロパティが入らない');
 		deepEqual(result.invalidProperties, ['p1'],
 				'非同期バリデートに成功したが同期バリデートに失敗したため、invalidPropertiesにプロパティが入る');
-		deepEqual(result.validatingProperties, [], '非同期バリデートが完了したためプロパティが格納されていない');
+		deepEqual(result.validatingProperties, [], '同期バリデートに失敗したためプロパティが格納されていない');
 	});
 
 	test('同期バリデートと非同期バリデートの両方に失敗する場合', function() {
@@ -1214,13 +1216,13 @@ $(function() {
 
 		dfd.reject();
 
-		strictEqual(result.isValid, false, '非同期バリデートに失敗したため、isValidはfalse');
-		strictEqual(result.isAllValid, false, '非同期バリデートに失敗したため、isAllValidはfalse');
-		strictEqual(result.validCount, 0, '非同期バリデートに失敗したため、validCountには0が入っている');
-		strictEqual(result.invalidCount, 1, '非同期バリデートに失敗したため、invalidCountには1が入っている');
-		deepEqual(result.validProperties, [], '非同期バリデートに失敗したため、validPropertiesにプロパティが入らない');
-		deepEqual(result.invalidProperties, ['p1'], '非同期バリデートに失敗したため、invalidPropertiesにプロパティが入る');
-		deepEqual(result.validatingProperties, [], '非同期バリデートが完了したためプロパティが格納されていない');
+		strictEqual(result.isValid, false, '同期バリデートに失敗したため、isValidはfalse');
+		strictEqual(result.isAllValid, false, '同期バリデートに失敗したため、isAllValidはfalse');
+		strictEqual(result.validCount, 0, '同期バリデートに失敗したため、validCountには0が入っている');
+		strictEqual(result.invalidCount, 1, '同期バリデートに失敗したため、invalidCountには1が入っている');
+		deepEqual(result.validProperties, [], '同期バリデートに失敗したため、validPropertiesにプロパティが入らない');
+		deepEqual(result.invalidProperties, ['p1'], '同期バリデートに失敗したため、invalidPropertiesにプロパティが入る');
+		deepEqual(result.validatingProperties, [], '同期バリデートに失敗したため、プロパティが格納されていない');
 	});
 
 	//=============================
