@@ -1,8 +1,87 @@
 $(function() {
 	var REGEXP_MAIL_ADRESS = /^[-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i;
 
+	//ロジックを定義
+	sampleLogic = {
+		__name: 'sample.sampleLogic',
+
+		//ユーザIDの重複チェックを行う
+		isExistUserid: function(userid) {
+			var dfd = h5.async.deferred();
+			var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
+			setTimeout(function() {
+				// ユーザIDがhifiveだったらrejectする
+				if (userid === 'hifive') {
+					// rejectのパラメータはサーバが返すメッセージを想定
+					dfd.reject({
+						valid: false,
+						value: userid,
+						code: '1001',
+						message: 'already exist'
+					});
+					return;
+				}
+				dfd.resolve({
+					valid: true,
+					value: userid
+				});
+			}, waitingTime);
+			return dfd.promise();
+		},
+
+		//メールの重複チェックを行う
+		isExistMail: function(mail) {
+			var dfd = h5.async.deferred();
+			var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
+			setTimeout(function() {
+				// メールがhifive@hifive.comだったらrejectする
+				if (mail === 'hifive@hifive.com') {
+					// rejectのパラメータはサーバが返すメッセージを想定
+					dfd.reject({
+						valid: false,
+						value: mail,
+						code: '1001',
+						message: 'already exist'
+					});
+					return;
+				}
+				dfd.resolve({
+					valid: true,
+					value: mail
+				});
+			}, waitingTime);
+			return dfd.promise();
+		},
+
+		// メールアドレスの正規表現チェックを行う
+		isCorrectMail: function(mail) {
+			var dfd = h5.async.deferred();
+			var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
+			setTimeout(function() {
+				if (!REGEXP_MAIL_ADRESS.test(mail)) {
+					// rejectのパラメータはサーバが返すメッセージを想定
+					dfd.reject({
+						valid: false,
+						value: mail,
+						code: '1002',
+						message: 'incorrect mail'
+					});
+					return;
+				}
+				dfd.resolve({
+					valid: true,
+					value: mail
+				});
+			}, waitingTime);
+			return dfd.promise();
+		}
+	};
+
 	var pageController = {
 		__name: 'sample.PageController',
+
+		// ロジックの宣言
+		sampleLogic: sampleLogic,
 		_objIndex: 0,
 
 		// バリデーションコントローラの設定
@@ -14,77 +93,6 @@ $(function() {
 		},
 
 		__ready: function() {
-
-			//ユーザIDの重複チェックを行う
-			var isExistUserid = function(userid) {
-				var dfd = h5.async.deferred();
-				var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
-				setTimeout(function() {
-					// ユーザIDがhifiveだったらrejectする
-					if (userid === 'hifive') {
-						// rejectのパラメータはサーバが返すメッセージを想定
-						dfd.reject({
-							valid: false,
-							value: userid,
-							code: '1001',
-							message: 'already exist'
-						});
-						return;
-					}
-					dfd.resolve({
-						valid: true,
-						value: userid
-					});
-				}, waitingTime);
-				return dfd.promise();
-			};
-
-			//メールの重複チェックを行う
-			var isExistMail = function(mail) {
-				var dfd = h5.async.deferred();
-				var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
-				setTimeout(function() {
-					// メールがhifive@hifive.comだったらrejectする
-					if (mail === 'hifive@hifive.com') {
-						// rejectのパラメータはサーバが返すメッセージを想定
-						dfd.reject({
-							valid: false,
-							value: mail,
-							code: '1001',
-							message: 'already exist'
-						});
-						return;
-					}
-					dfd.resolve({
-						valid: true,
-						value: mail
-					});
-				}, waitingTime);
-				return dfd.promise();
-			};
-
-			// メールアドレスの正規表現チェックを行う
-			var isCorrectMail = function(mail) {
-				var dfd = h5.async.deferred();
-				var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
-				setTimeout(function() {
-					if (!REGEXP_MAIL_ADRESS.test(mail)) {
-						// rejectのパラメータはサーバが返すメッセージを想定
-						dfd.reject({
-							valid: false,
-							value: mail,
-							code: '1002',
-							message: 'incorrect mail'
-						});
-						return;
-					}
-					dfd.resolve({
-						valid: true,
-						value: mail
-					});
-				}, waitingTime);
-				return dfd.promise();
-			};
 
 			// 各プラグイン毎のエラー出力設定
 			var output = {
@@ -187,17 +195,17 @@ $(function() {
 			formCtrl.setSetting(sampleSetting);
 
 			// validateルール設定
-			h5.validation.defineRule('isCorrectMail', isCorrectMail);
+			h5.validation.defineRule('isCorrectMail', this.sampleLogic.isCorrectMail);
 
 			formCtrl.addRule({
 				userid: {
 					required: true,
 					size: [3, 10],
-					customFunc: isExistUserid
+					customFunc: this.sampleLogic.isExistUserid
 				},
 				mail: {
 					required: true,
-					customFunc: isExistMail,
+					customFunc: this.sampleLogic.isExistMail,
 					isCorrectMail: true,
 				}
 			});
