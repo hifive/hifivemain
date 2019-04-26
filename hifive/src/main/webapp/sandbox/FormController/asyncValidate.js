@@ -35,7 +35,7 @@ $(function() {
 			var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
 			setTimeout(function() {
 				// 入力文字列が2文字だったらrejectする
-				if (length === 2) {
+				if (userid.length === length) {
 					// rejectのパラメータはサーバが返すメッセージを想定
 					dfd.reject({
 						valid: false,
@@ -236,7 +236,7 @@ $(function() {
 			formCtrl.addRule({
 				userid: {
 					required: true,
-					size: [3, 10],
+					size: [1, 10],
 					customFunc: this.sampleLogic.isExistUserid,
 					invalidlen: 2
 				},
