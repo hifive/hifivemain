@@ -10,14 +10,38 @@ $(function() {
 			var dfd = h5.async.deferred();
 			var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
 			setTimeout(function() {
-				// ユーザIDがhifiveだったらrejectする
-				if (userid === 'hifive') {
+				// ユーザIDがaaだったらrejectする
+				if (userid === 'aa') {
 					// rejectのパラメータはサーバが返すメッセージを想定
 					dfd.reject({
 						valid: false,
 						value: userid,
 						code: '1001',
 						message: 'already exist'
+					});
+					return;
+				}
+				dfd.resolve({
+					valid: true,
+					value: userid
+				});
+			}, waitingTime);
+			return dfd.promise();
+		},
+
+		//ユーザIDの文字数チェックを行う
+		invalidlen: function(userid, length) {
+			var dfd = h5.async.deferred();
+			var waitingTime = 100 + parseInt(Math.random() * 10) * 100;
+			setTimeout(function() {
+				// 入力文字列が2文字だったらrejectする
+				if (length === 2) {
+					// rejectのパラメータはサーバが返すメッセージを想定
+					dfd.reject({
+						valid: false,
+						value: userid,
+						code: '1002',
+						message: 'incorrect length'
 					});
 					return;
 				}
@@ -74,7 +98,7 @@ $(function() {
 				});
 			}, waitingTime);
 			return dfd.promise();
-		}
+		},
 	};
 
 	var pageController = {
@@ -82,10 +106,12 @@ $(function() {
 
 		// ロジックの宣言
 		sampleLogic: sampleLogic,
+
 		_objIndex: 0,
 
 		// バリデーションコントローラの設定
 		_formController: h5.ui.FormController,
+
 		__meta: {
 			_formController: {
 				rootElement: '#form1'
@@ -147,6 +173,15 @@ $(function() {
 												'{displayName}:"{value}"は既に登録されています。(code={1.code}) "{1.message}"',
 												param, serverMessage);
 							}
+						case 'invalidlen':
+							var serverMessage = param.violation[0].reason[0];
+							switch (serverMessage.code) {
+							case '1002':
+								return h5.u.str
+										.format(
+												'{displayName}:"{value}"は正しい文字数ではありません。(code={1.code}) "{1.message}"',
+												param, serverMessage);
+							}
 						}
 					},
 					composition: {
@@ -196,12 +231,14 @@ $(function() {
 
 			// validateルール設定
 			h5.validation.defineRule('isCorrectMail', this.sampleLogic.isCorrectMail);
+			h5.validation.defineRule('invalidlen', this.sampleLogic.invalidlen, ['length']);
 
 			formCtrl.addRule({
 				userid: {
 					required: true,
 					size: [3, 10],
-					customFunc: this.sampleLogic.isExistUserid
+					customFunc: this.sampleLogic.isExistUserid,
+					invalidlen: 2
 				},
 				mail: {
 					required: true,
@@ -213,7 +250,7 @@ $(function() {
 
 		'{.resetValidation} click': function() {
 			this._formController.resetValidation();
-		}
+		},
 	};
 	h5.core.controller(document.body, pageController);
 });
