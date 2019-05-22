@@ -3505,7 +3505,7 @@
 				//validateイベント時にそのValidationResultとこのマップに保存したResultが一致するかどうかをチェックして
 				//反映させるかどうかを決定する。マップに保持したものととevent.targetのインスタンスが一致しないということは
 				//そのtargetは古いバリデーションなので、画面に反映させない。
-				var properties = result.validatingProperties;
+				var properties = result._asyncWaitingProperties;
 				for (var i = 0, l = properties.length; i < l; i++) {
 					var p = properties[i];
 					this._waitingValidationResultMap[p] = result;
@@ -3643,14 +3643,18 @@
 			//TODO セットされているプラグイン・バリデートタイミングをチェックして、特にkeyupなど
 			//バリデーションする必要がないタイミングがあればバリデーションしないようにする（高速化）
 			var target = ctx.event.target;
+
 			if (!this._isUnderControl(target)) {
+				//このコントローラがバインドされているフォームに紐づいていない入力要素で起きたイベントの場合は無視
 				return;
 			}
+
 			var name = target.name;
 			if (!name) {
 				// name無しの要素は対象外
 				return;
 			}
+
 			// グループに属していればそのグループに対してvalidate
 			// タグにグループの指定が無くグループコンテナに属している場合
 			var groupName;
@@ -3834,7 +3838,8 @@
 				violationCount: 0,
 				validPropertyToRulesMap: {},
 				nameToRuleSetMap: {},
-				disabledProperties: []
+				disabledProperties: [],
+				_asyncWaitingProperties: []
 			});
 			return ret;
 		}

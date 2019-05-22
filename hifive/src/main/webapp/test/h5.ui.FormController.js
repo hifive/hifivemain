@@ -9272,4 +9272,58 @@ $(function() {
 		});
 	});
 
+	module('同一プロパティに非同期のバリデーションが2つある場合のValidationResult.isAsyncの評価', {
+		setup: function() {
+			stop();
+			var html = '<form class="testForm"><input name="a"></form>';
+			$('#qunit-fixture').append(html);
+			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			this.formController.readyPromise.done(function() {
+				start();
+			});
+		},
+	});
+
+	test('結果待ちの非同期バリデーションが残っている間はisAsyncがtrueで、すべての非同期バリデーションの結果が判明したらfalseになること', function() {
+		var dfd = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		this.formController.addRule({
+			a: {
+				customFunc: function(value) {
+					return dfd.promise();
+				},
+				validator: true
+			}
+		});
+
+		this.formController.setSetting({
+			customRule: {
+				validator: {
+					func: function(value) {
+						return dfd2.promise();
+					},
+					isForceEnabledWhenEmpty: true,
+					message: "errorMessage"
+				}
+			}
+		});
+
+		dfd.resolve({
+			valid: true
+		});
+		var result = this.formController.validate('a');
+		strictEqual(result.isAsync, true, '結果待ちの非同期バリデートが存在するため、isAsyncはtrue');
+		ok($.inArray('a', result.validatingProperties) !== -1,
+				'結果待ちの非同期バリデートが存在するため、validatingPropertiesにプロパティが格納されている');
+
+		dfd2.resolve({
+			valid: true
+		});
+
+		strictEqual(result.isAsync, false, '全ての非同期バリデートが完了したため、isAsyncはfalse');
+		ok($.inArray('a', result.validatingProperties) == -1,
+				'全ての非同期バリデートが完了したため、validatingPropertiesにプロパティが格納されていない');
+		ok($.inArray('a', result.validProperties) == !-1,
+				'全ての非同期バリデートが成功したため、validPropertiesにプロパティが格納されている');
+	});
 });

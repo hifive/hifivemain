@@ -294,6 +294,9 @@
 				}
 			},
 			method: {
+				/**
+				 * @memberOf h5.event.PropertyChangeEvent
+				 */
 				constructor: function PropertyChangeEvent(propertyName, oldValue, newValue) {
 					super_.constructor.call(this, EVENT_NAME_PROPERTY_CHANGE);
 
