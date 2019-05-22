@@ -8,6 +8,7 @@
 		'src/h5.js',
 		'src/h5.env.js',
 		'src/h5.async.js',
+		'src/h5.cls.js',
 		'src/h5.res.js',
 		'src/h5.ui.js',
 		'src/h5.ui.jqm.manager.js',

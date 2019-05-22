@@ -497,6 +497,12 @@
 
 		this._disabledProperties = result.disabledProperties;
 
+		//同期バリデーションでエラーがあったかどうかにかかわらず、
+		//結果待ちの非同期バリデーションが1つ以上存在する場合にそのプロパティ名を保持する配列。
+		//validatingPropertiesは同期バリデーションでエラーがあったプロパティは含まないが、
+		//こちらは非同期待ちがあれば常にそのプロパティを含む。
+		this._asyncWaitingProperties = result._asyncWaitingProperties;
+
 		this.addEventListener(EVENT_VALIDATE, validateEventListener);
 
 		// abort()が呼ばれていたらdispatchEventを動作させない
@@ -1601,6 +1607,7 @@
 			var invalidReason = {};
 			var targetNames = names && (isArray(names) ? names : [names]);
 			var isAsyncResultWaitingAtLeastOnce = false;
+			var _asyncWaitingProperties = [];
 
 			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
 			var propertyWaitingPromsies = {};
@@ -1803,6 +1810,18 @@
 							validProperties.push(prop);
 						}
 					}
+
+					//同期的にエラーが見つかったかどうかにかかわらず、
+					//このプロパティに対して結果が確定していない非同期バリデーションがセットされていたら
+					//asyncWaitingPropertiesに含める
+					//この配列は、FormControllerで
+					//「あるプロパティに対する非同期バリデーションについて、どのValidationResultインスタンスに対応するものが有効か」を
+					//チェックするために使用されている。
+					//TODO プライベートでなくPublicなAPIとして定義するか、役割分担を変えるなどしたほうが良い
+					//（現在の仕組みだと、FormControllerのための特別な処理をValidationLogicで行っている）
+					if (isAsyncProp) {
+						_asyncWaitingProperties.push(prop);
+					}
 				}
 			} // End of foreach(バリデータが1つ以上セットされているプロパティ)
 
@@ -1821,7 +1840,8 @@
 				violationCount: violationCount,
 				validPropertyToRulesMap: validPropertyToRulesMap,
 				nameToRuleSetMap: nameToRuleSetMap,
-				disabledProperties: disabledProperties
+				disabledProperties: disabledProperties,
+				_asyncWaitingProperties: _asyncWaitingProperties
 			});
 
 			if (isAsyncResultWaitingAtLeastOnce) {
