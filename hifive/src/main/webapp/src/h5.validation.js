@@ -1436,17 +1436,17 @@
 		 * </tr>
 		 * <tr>
 		 * <td>future</td>
-		 * <td>なし</td>
-		 * <td>値がDate型で現在時刻より未来であること。</td>
+		 * <td>reference</td>
+		 * <td>値がDate型で現在時刻（referenceが指定された場合はその時刻）より未来であること。</td>
 		 * </tr>
 		 * <tr>
 		 * <td>past</td>
-		 * <td>なし</td>
-		 * <td>値がDate型で現在時刻より過去であること。</td>
+		 * <td>reference</td>
+		 * <td>値がDate型で現在時刻（referenceが指定された場合はその時刻）より過去であること。</td>
 		 * </tr>
 		 * <tr>
 		 * <td>digits</td>
-		 * <td>[string, fraction]</td>
+		 * <td>[integer, fraction]</td>
 		 * <td>数値の桁数判定。整数部分がinteger桁数以下でありかつ小数部分がfraction桁数以下の数値を表す文字列であること</td>
 		 * </tr>
 		 * <tr>
