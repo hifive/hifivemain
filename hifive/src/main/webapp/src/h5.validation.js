@@ -596,8 +596,13 @@
 									} else if (this._has(prop, this.invalidProperties)) {
 										//前回違反ありの場合
 
-										if (this._has(prop, result.validProperties)) {
+										if (this._has(prop, result.validProperties)
+												|| this._has(prop, result.validatingProperties)) {
 											//前回は違反ありだったが、今回違反なしになったプロパティについて、ルールごとに
+											//（同期ルールでエラーがない＆結果待ちの非同期ルールがある場合validatingに入っている。
+											//そのため、今回のバリデーションで（前回エラーだった）同期ルールが実行され違反なしになった場合が考えられるので
+											//propがvalidatingPropertiesに含まれている場合にもこの分岐に入れる。）
+
 											var validRuleNames = result._validPropertyToRulesMap[prop];
 											var violations = this.invalidReason[prop].violation;
 											if (validRuleNames) {

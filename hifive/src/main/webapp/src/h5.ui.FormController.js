@@ -3575,22 +3575,29 @@
 					};
 				}
 
+				var isViolationReplaced = false;
+
 				for (var i = 0, len = lastResult.invalidReason[name].violation.length; i < len; i++) {
 					var lastViolation = lastResult.invalidReason[name].violation[i];
 					if (violation.ruleName === lastViolation.ruleName) {
 						//すでにこのルールのエラーが出力されている場合、新しいViolationで置換する
 						lastResult.invalidReason[name].violation[i] = violation;
-						return;
+						isViolationReplaced = true;
+						break;
 					}
 				}
 
 				//今回新たにエラー出力する
-				lastResult.invalidReason[name].violation.push(violation);
-				lastResult.violationCount++;
+				if (!isViolationReplaced) {
+					lastResult.invalidReason[name].violation.push(violation);
+					lastResult.violationCount++;
+				}
 			}
 
-			lastResult.validatingProperties.splice(
-					$.inArray(name, lastResult.validatingProperties), 1);
+			var validatingPropIdx = lastResult.validatingProperties.indexOf(name);
+			if (validatingPropIdx !== -1) {
+				lastResult.validatingProperties.splice(validatingPropIdx, 1);
+			}
 
 			if (!lastResult.isValid || !lastResult.validatingProperties.length) {
 				lastResult.isAllValid = lastResult.isValid;
