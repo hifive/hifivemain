@@ -501,7 +501,7 @@
 		//結果待ちの非同期バリデーションが1つ以上存在する場合にそのプロパティ名を保持する配列。
 		//validatingPropertiesは同期バリデーションでエラーがあったプロパティは含まないが、
 		//こちらは非同期待ちがあれば常にそのプロパティを含む。
-		this._asyncWaitingProperties = result._asyncWaitingProperties;
+		this.asyncWaitingProperties = result.asyncWaitingProperties;
 
 		this.addEventListener(EVENT_VALIDATE, validateEventListener);
 
@@ -1612,10 +1612,10 @@
 			var invalidReason = {};
 			var targetNames = names && (isArray(names) ? names : [names]);
 			var isAsyncResultWaitingAtLeastOnce = false;
-			var _asyncWaitingProperties = [];
+			var asyncWaitingProperties = [];
 
 			// プロパティ名、プロミスのマップ。1プロパティにつき非同期チェックが複数あればプロミスは複数
-			var propertyWaitingPromsies = {};
+			var propertyWaitingPromises = {};
 			var violationCount = 0;
 			//バリデーション結果OKだったルールの、プロパティ名 -> rule名配列のマップ
 			var validPropertyToRulesMap = {};
@@ -1763,9 +1763,9 @@
 						// 結果が返ってきたらvalidateイベントをあげるようにしておく
 						isAsyncProp = true;
 						isAsyncResultWaitingAtLeastOnce = true;
-						propertyWaitingPromsies[prop] = propertyWaitingPromsies[prop] || [];
+						propertyWaitingPromises[prop] = propertyWaitingPromises[prop] || [];
 						// プロミス自体にルール名と値と引数を覚えさせておく
-						propertyWaitingPromsies[prop].push(ret.promise({
+						propertyWaitingPromises[prop].push(ret.promise({
 							ruleName: ruleName,
 							value: orgValue,
 							ruleValue: ruleValue
@@ -1817,15 +1817,12 @@
 					}
 
 					//同期的にエラーが見つかったかどうかにかかわらず、
-					//このプロパティに対して結果が確定していない非同期バリデーションがセットされていたら
-					//asyncWaitingPropertiesに含める
+					//このプロパティに対して結果が確定していない非同期バリデーションがセットされていたらasyncWaitingPropertiesに含める。
 					//この配列は、FormControllerで
 					//「あるプロパティに対する非同期バリデーションについて、どのValidationResultインスタンスに対応するものが有効か」を
 					//チェックするために使用されている。
-					//TODO プライベートでなくPublicなAPIとして定義するか、役割分担を変えるなどしたほうが良い
-					//（現在の仕組みだと、FormControllerのための特別な処理をValidationLogicで行っている）
 					if (isAsyncProp) {
-						_asyncWaitingProperties.push(prop);
+						asyncWaitingProperties.push(prop);
 					}
 				}
 			} // End of foreach(バリデータが1つ以上セットされているプロパティ)
@@ -1846,56 +1843,56 @@
 				validPropertyToRulesMap: validPropertyToRulesMap,
 				nameToRuleSetMap: nameToRuleSetMap,
 				disabledProperties: disabledProperties,
-				_asyncWaitingProperties: _asyncWaitingProperties
+				asyncWaitingProperties: asyncWaitingProperties
 			});
 
 			if (isAsyncResultWaitingAtLeastOnce) {
-				/*
-				 * validateが全て完了しているかチェックしてvalidateCompelteを上げる関数
-				 */
-				function checkValidateComplete(result) {
-					if (result.validCount + result.invalidCount === result.properties.length) {
-						result.isAllValid = result.isValid;
-						result.dispatchEvent({
-							type: EVENT_VALIDATE_COMPLETE
+				this._registerAsyncHandlers(obj, validationResult, propertyWaitingPromises);
+			}
+			return validationResult;
+		},
+
+		/**
+		 * @private
+		 */
+		_registerAsyncHandlers: function(data, validationResult, propertyWaitingPromises) {
+			var that = this;
+
+			for ( var prop in propertyWaitingPromises) {
+				var promises = propertyWaitingPromises[prop];
+
+				var doneHandler = (function(_prop, _promises) {
+					return function() {
+						validationResult.dispatchEvent({
+							type: EVENT_VALIDATE,
+							name: _prop,
+							isValid: true,
+							// validate対象のオブジェクトに指定された値
+							value: data[_prop],
+							violation: null
 						});
-					}
-				}
-				var that = this;
-				// 非同期の場合、結果が返って来次第イベントをあげる
-				for ( var prop in propertyWaitingPromsies) {
-					var promises = propertyWaitingPromsies[prop];
-					var doneHandler = (function(_prop) {
-						return function() {
-							// あるプロパティについてのすべての非同期バリデートが終了したらvalidであることを通知
-							validationResult.dispatchEvent({
-								type: EVENT_VALIDATE,
-								name: _prop,
-								isValid: true,
-								// validate対象のオブジェクトに指定された値
-								value: obj[_prop],
-								violation: null
-							});
-							checkValidateComplete(validationResult);
-						};
-					})(prop);
-					var failHandler = (function(_prop, _promises, _param) {
+
+						that._eliminateAsyncWaitingProperty(_prop, _promises, validationResult);
+						that._checkAsyncValidateComplete(validationResult);
+					};
+				})(prop, promises);
+				// あるプロパティについてのすべての非同期バリデートが成功（エラーなし）したらvalidであることを通知
+				h5.async.when(promises).done(doneHandler);
+
+				for (var pi = 0, plen = promises.length; pi < plen; pi++) {
+					var promise = promises[pi];
+
+					var failHandler = (function(_prop, _promise, _promises) {
 						return function() {
 							// 一つでも失敗したらfailCallbackが実行される
 							//同期ルールによりすでにinvalid状態になっている可能性があるが、
 							//非同期ルールについても表示するためイベントは発生させる
 
-							// どのルールのプロミスがrejectされたか
 							var ruleName, ruleValue, value;
-							for (var i = 0, l = _promises.length; i < l; i++) {
-								var p = _promises[i];
-								if (isRejected(p)) {
-									ruleName = p.ruleName;
-									ruleValue = p.ruleValue;
-									value = p.value;
-									break;
-								}
-							}
+							ruleName = _promise.ruleName;
+							ruleValue = _promise.ruleValue;
+							value = _promise.value;
+
 							validationResult.dispatchEvent({
 								type: EVENT_VALIDATE,
 								name: _prop,
@@ -1903,14 +1900,57 @@
 								value: value,
 								violation: that._createViolation(ruleName, ruleValue, arguments),
 							});
-							checkValidateComplete(validationResult);
+
+							that._eliminateAsyncWaitingProperty(_prop, _promises, validationResult);
+							that._checkAsyncValidateComplete(validationResult);
 						};
-					})(prop, promises);
-					// failハンドラでどのプロミスの失敗かを判定したいのでwaitForPromisesではなくwhenを使用している
-					$.when.apply($, promises).done(doneHandler).fail(failHandler);
+					})(prop, promise, promises);
+					//fail()の場合はバリデータごとに個別に結果を通知する。
+					promise.fail(failHandler);
 				}
 			}
-			return validationResult;
+		},
+
+		/**
+		 * 全ての非同期バリデーションが完了したかをチェックし、完了したらvalidateCompelteイベントを発火します。
+		 *
+		 * @private
+		 */
+		_checkAsyncValidateComplete: function(validationResult) {
+			if (validationResult.asyncWaitingProperties.length === 0) {
+				//全ての非同期バリデータが完了したら、その時点のisValidがisAllValidの結果になる
+				validationResult.isAllValid = validationResult.isValid;
+
+				//全ての非同期バリデータが完了したらisAsyncをfalseにする
+				validationResult.isAsync = false;
+
+				validationResult.dispatchEvent({
+					type: EVENT_VALIDATE_COMPLETE
+				});
+			}
+		},
+
+		/**
+		 * あるプロパティに対するすべての非同期バリデーションが完了しているかをチェックし、
+		 * 完了したらValidationResult.asyncWaitingPropertiesから当該プロパティを取り除きます。未完了のバリデータがある場合は何もせず終了します。
+		 *
+		 * @private
+		 */
+		_eliminateAsyncWaitingProperty: function(propertyName, promises, validationResult) {
+			for (var i = 0, len = promises.length; i < len; i++) {
+				var promise = promises[i];
+				if (promise.state() === 'pending') {
+					return;
+				}
+			}
+
+			//ここに到達したら、あるpropertyの全てのpromiseがresolveまたはrejectに確定したということなので
+			//asyncWaitingPropertiesから当該プロパティを削除する
+			var asyncWaitingProps = validationResult.asyncWaitingProperties;
+			var idx = asyncWaitingProps.indexOf(propertyName);
+			if (idx !== -1) {
+				asyncWaitingProps.splice(idx, 1);
+			}
 		},
 
 		/**

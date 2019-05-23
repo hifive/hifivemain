@@ -3505,7 +3505,7 @@
 				//validateイベント時にそのValidationResultとこのマップに保存したResultが一致するかどうかをチェックして
 				//反映させるかどうかを決定する。マップに保持したものととevent.targetのインスタンスが一致しないということは
 				//そのtargetは古いバリデーションなので、画面に反映させない。
-				var properties = result._asyncWaitingProperties;
+				var properties = result.asyncWaitingProperties;
 				for (var i = 0, l = properties.length; i < l; i++) {
 					var p = properties[i];
 					this._waitingValidationResultMap[p] = result;
@@ -3539,8 +3539,6 @@
 			this._updateByAsyncResult(event);
 
 			this._callPluginForAsyncValidation(name, result);
-
-			delete this._waitingValidationResultMap[name];
 
 			this._fireValidationUpdateEvent('asyncResult');
 		},
@@ -3846,7 +3844,7 @@
 				validPropertyToRulesMap: {},
 				nameToRuleSetMap: {},
 				disabledProperties: [],
-				_asyncWaitingProperties: []
+				asyncWaitingProperties: []
 			});
 			return ret;
 		}
