@@ -9327,19 +9327,30 @@ $(function() {
 				'全ての非同期バリデートが成功したため、validPropertiesにプロパティが格納されている');
 	});
 
-	module('同期、非同期のバリデーションが混在している場合のviolationの中身', {
+	module('同期、非同期のバリデーションが混在している場合のviolationの中身を確認する', {
 		setup: function() {
 			stop();
-			var html = '<form class="testForm"><input name="a"></form>';
+			var html = '<form class="testForm"><input name="a"><input name="b"></form>';
 			$('#qunit-fixture').append(html);
 			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
 			this.formController.readyPromise.done(function() {
 				start();
 			});
 		},
+		assertInvalid: function(result, property, invalidReason) {
+			strictEqual(result.isValid, false, 'バリデートに失敗するのでisValid=false');
+			strictEqual(result.isAllValid, false, 'バリデートに失敗するのでisAllValid=false');
+			strictEqual(result.violationCount, 1, 'バリデートに失敗するのでviolationCount=1');
+			strictEqual(result.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
+			ok($.inArray(property, result.validProperties) == -1, 'validPropertiesにプロパティが格納されていない');
+			ok($.inArray(property, result.invalidProperties) !== -1, 'invalidPropertiesにプロパティが格納されている');
+			ok($.inArray(property, result.validatingProperties) == -1, 'validatingPropertiesにプロパティが格納されていない');
+			strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つであること');
+			strictEqual(property in invalidReason, true, 'invalidReasonが持つキーはaであること');
+		}
 	});
 
-	test('同期ルール1つに失敗する場合', function() {
+	test('入力値が変化していく場合のviolationの中身を確認する', function() {
 		var dfd1 = h5.async.deferred();
 		var dfd2 = h5.async.deferred();
 		this.formController.addRule({
@@ -9372,21 +9383,25 @@ $(function() {
 		// 空文字を入力
 		$('input[name="a"]').val("");
 		var result = this.formController.validate('a');
-		var invalidRules = result.invalidReason.a.violation;
-		strictEqual(result.isValid, false, 'バリデートに失敗する');
+		var invalidReason = result.invalidReason;
+		var invalidRules = invalidReason.a.violation;
+		var property = 'a';
+		this.assertInvalid(result, property, invalidReason);
+
 		strictEqual(invalidRules.length, 1, 'エラーのルール数は１つである');
-		strictEqual(invalidRules[0].ruleName, 'required', 'requiredのエラーのみが出ている');
+		strictEqual(invalidRules[0].ruleName, 'required', 'requiredのエラーのみが格納されている');
 
 		// abを入力
 		$('input[name="a"]').val("ab");
-		var result = this.formController.validate('a');
+		this.formController.validate('a');
 
-		var lastResult = this.formController.getLastValidationResult();
-		var lastInvalidRules = lastResult.invalidReason.a.violation;
-		strictEqual(lastResult.isValid, false, 'バリデートに失敗するのでisValid=false');
-		strictEqual(lastResult.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
-		strictEqual(lastInvalidRules.length, 1, 'エラーのルール数は1つである');
-		strictEqual(lastInvalidRules[0].ruleName, 'size', 'sizeのエラーのみが出ている');
+		var lastResultAb = this.formController.getLastValidationResult();
+		var lastInvalidReasonAb = lastResultAb.invalidReason;
+		var lastInvalidRulesAb = lastInvalidReasonAb.a.violation;
+		this.assertInvalid(lastResultAb, property, lastInvalidReasonAb);
+
+		strictEqual(lastInvalidRulesAb.length, 1, 'エラーのルール数は1つである');
+		strictEqual(lastInvalidRulesAb[0].ruleName, 'size', 'sizeのエラーのみが格納されている');
 
 		dfd1.resolve({
 			valid: true
@@ -9395,38 +9410,93 @@ $(function() {
 			valid: true
 		});
 
-		var lastResult2 = this.formController.getLastValidationResult();
-		var lastInvalidRules = lastResult.invalidReason.a.violation;
-		strictEqual(lastResult.isValid, false, 'バリデートに失敗するのでisValid=false');
-		strictEqual(lastResult.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
-		strictEqual(lastInvalidRules.length, 1, 'エラーのルール数は1つである');
-		strictEqual(lastInvalidRules[0].ruleName, 'size', 'sizeのエラーのみが出ている');
+		var lastResultAb2 = this.formController.getLastValidationResult();
+		var lastInvalidReasonAb2 = lastResultAb2.invalidReason;
+		var lastInvalidRulesAb2 = lastInvalidReasonAb2.a.violation;
+		this.assertInvalid(lastResultAb2, property, lastInvalidReasonAb2);
+
+		strictEqual(lastInvalidRulesAb2.length, 1, 'エラーのルール数は1つである');
+		strictEqual(lastInvalidRulesAb2[0].ruleName, 'size', 'sizeのエラーのみが格納されている');
+
+
+		// abcdeを入力
+		$('input[name="a"]').val("abcde");
+		this.formController.validate('a');
+
+		var lastResultAbcde = this.formController.getLastValidationResult();
+		var lastInvalidReasonAbcde = lastResultAbcde.invalidReason;
+		this.assertInvalid(lastResultAbcde, property, lastInvalidReasonAbcde);
+
+		strictEqual(lastResultAbcde.isValid, true, 'バリデートに成功するのでisValid=true');
+		strictEqual(lastResultAbcde.isAllValid, true, 'バリデートが完了していないのでisAllValidはtrue');
+		strictEqual(lastResultAbcde.violationCount, 0, 'バリデートに成功するのでviolationCount=0');
+		strictEqual(lastResultAbcde.invalidCount, 0, 'バリデートに成功するのでinvalidCount=0');
+		strictEqual(Object.keys(lastInvalidReasonAbcde).length, 0, 'invalidReasonが持つオブジェクトは0であること');
+		ok($.inArray('a', lastResultAbcde.validProperties) !== -1, 'validPropertiesにプロパティが格納されている');
+		ok($.inArray('a', lastResultAbcde.invalidProperties) == -1, 'invalidPropertiesにプロパティが格納されていない');
+		ok($.inArray('a', lastResultAbcde.validatingProperties) !== -1, 'validatingPropertiesにプロパティが格納されている');
+
+		dfd1.reject({
+			valid: false
+		});
+		dfd2.reject({
+			valid: false
+		});
+
+		var lastResultAbcde2 = this.formController.getLastValidationResult();
+		var lastInvalidReasonAbcde2 = lastResultAbcde2.invalidReason;
+		var lastInvalidRulesAbcde2 = lastInvalidReasonAbcde2.a.violation;
+		this.assertInvalid(lastResultAbcde2, property, lastInvalidReasonAb2);
+
+		strictEqual(lastInvalidRulesAbcde2.length, 2, 'エラーのルール数は2つである');
+		strictEqual(lastInvalidRulesAbcde2[0].ruleName, 'validator1', 'validator1のエラーが格納されている');
+		strictEqual(lastInvalidRulesAbcde2[1].ruleName, 'validator2', 'validator2のエラーが格納されている');
 
 	});
 
-	test('非同期ルール2つに失敗する場合', function() {
-		var dfd3 = h5.async.deferred();
-		var dfd4 = h5.async.deferred();
+	test('複数要素に同期・非同期ルールが混在している場合、invalidReasonに失敗したプロパティのものだけが含まれていること', function() {
+		var dfd1a = h5.async.deferred();
+		var dfd2a = h5.async.deferred();
+		var dfd1b = h5.async.deferred();
+		var dfd2b = h5.async.deferred();
 		this.formController.addRule({
 			a: {
-				required: true,
-				size: [4, 10],
-				validator3: true,
-				validator4: true
+				size: [1, 10],
+				validator1a: true,
+				validator2a: true
+			},
+			b: {
+				size: [1, 10],
+				validator1b: true,
+				validator2b: true
 			}
 		});
 		this.formController.setSetting({
 			customRule: {
-				validator3: {
+				validator1a: {
 					func: function(value) {
-						return dfd3.promise();
+						return dfd1a.promise();
 					},
 					isForceEnabledWhenEmpty: false,
 					message: "errorMessage",
 				},
-				validator4: {
+				validator2a: {
 					func: function(value) {
-						return dfd4.promise();
+						return dfd2a.promise();
+					},
+					isForceEnabledWhenEmpty: false,
+					message: "errorMessage",
+				},
+				validator1b: {
+					func: function(value) {
+						return dfd1b.promise();
+					},
+					isForceEnabledWhenEmpty: false,
+					message: "errorMessage",
+				},
+				validator2b: {
+					func: function(value) {
+						return dfd2b.promise();
 					},
 					isForceEnabledWhenEmpty: false,
 					message: "errorMessage",
@@ -9434,27 +9504,41 @@ $(function() {
 			}
 		});
 
-		// abcdeを入力
-		$('input[name="a"]').val("abcde");
-		var result = this.formController.validate('a');
+		$('input[name="a"]').val("ab");
+		$('input[name="b"]').val("ab");
+		var result = this.formController.validate();
 
-		var lastResult = this.formController.getLastValidationResult();
-		strictEqual(lastResult.isValid, true, 'バリデートに成功するのでisValid=true');
-		strictEqual(lastResult.invalidCount, 0, 'バリデートに成功するのでinvalidCount=0');
-
-		dfd3.reject({
+		dfd1a.resolve({
+			valid: true
+		});
+		dfd2a.resolve({
+			valid: true
+		});
+		dfd1b.reject({
 			valid: false
 		});
-		dfd4.reject({
+		dfd2b.reject({
 			valid: false
 		});
 
-		var lastResult = this.formController.getLastValidationResult();
-		var lastInvalidRules = lastResult.invalidReason.a.violation;
-		strictEqual(lastResult.isValid, false, 'バリデートに失敗するのでisValid=false');
-		strictEqual(lastResult.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
-		strictEqual(lastInvalidRules.length, 2, 'エラーのルール数は2つである');
-		strictEqual(lastInvalidRules[0].ruleName, 'validator3', 'validator3のエラーが出ている');
-		strictEqual(lastInvalidRules[1].ruleName, 'validator4', 'validator4のエラーが出ている');
+		strictEqual(result.isValid, false, 'バリデートに失敗するのでisValid=false');
+		strictEqual(result.isAllValid, false, 'バリデートに失敗するのでisAllValid=false');
+		strictEqual(result.violationCount, 2, '2つのプロパティがバリデートに失敗するのでviolationCount=2');
+		strictEqual(result.invalidCount, 1, 'プロパティbがバリデートに失敗するのでinvalidCount=1');
+		ok($.inArray('a', result.validProperties) !== -1, 'validPropertiesにプロパティaが格納されている');
+		ok($.inArray('b', result.validProperties) == -1, 'validPropertiesにプロパティbが格納されていない');
+		ok($.inArray('a', result.invalidProperties) == -1, 'invalidPropertiesにプロパティaが格納されていない');
+		ok($.inArray('b', result.invalidProperties) !== -1, 'invalidPropertiesにプロパティbが格納されている');
+		ok($.inArray('a', result.validatingProperties) == -1, 'validatingPropertiesにプロパティaが格納されていない');
+		ok($.inArray('b', result.validatingProperties) == -1, 'validatingPropertiesにプロパティbが格納されていない');
+
+		var invalidReason = result.invalidReason;
+		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つ値は1つである');
+		strictEqual('b' in invalidReason, true, 'invalidReasonが持つキーはbである');
+
+		var invalidRules = invalidReason.b.violation;
+		strictEqual(invalidRules.length, 2, 'エラーのルール数は2つである');
+		strictEqual(invalidRules[0].ruleName, 'validator1b', 'validator1bのエラーが格納されている');
+		strictEqual(invalidRules[1].ruleName, 'validator2b', 'validator2bのエラーが格納されている');
 	});
 });
