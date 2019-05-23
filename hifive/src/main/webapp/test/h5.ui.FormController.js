@@ -9556,17 +9556,72 @@ $(function() {
 		strictEqual(invalidRules[1].ruleName, 'validator2b', 'validator2bのエラーが格納されている');
 	});
 
-	module('validationResultのasyncWaitingProperties', {
-		setup: function() {
-			stop();
-			var html = '<form class="testForm"><input name="a"><input name="b"></form>';
-			$('#qunit-fixture').append(html);
-			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
-			this.formController.readyPromise.done(function() {
-				start();
+	module('validationResultのasyncWaitingProperties',
+			{
+				setup: function() {
+					stop();
+					var html = '<form class="testForm"><input name="a"><input name="b"></form>';
+					$('#qunit-fixture').append(html);
+					this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+					this.formController.readyPromise.done(function() {
+						start();
+					});
+				},
+				assertValid: function(result) {
+					strictEqual(result.isValid, true, 'バリデートに成功するのでisValid=true');
+					strictEqual(result.isAllValid, true, 'バリデートに成功するのでisAllValidはtrue');
+					strictEqual(result.violationCount, 0, 'バリデートに成功するのでviolationCount=0');
+					strictEqual(result.invalidCount, 0, 'バリデートに成功するのでinvalidCount=0');
+					strictEqual(Object.keys(result.invalidReason).length, 0,
+							'invalidReasonが持つオブジェクトは0であること');
+					strictEqual(result.asyncWaitingProperties.length, 0,
+							'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+					var invalidReason = result.invalidReason;
+					strictEqual(Object.keys(invalidReason).length, 0, 'invalidReasonが持つオブジェクトは0である');
+				},
+				assertValidProp: function(result, prop) {
+					ok($.inArray(prop, result.validProperties) !== -1,
+							'validPropertiesにプロパティが格納されている');
+					ok($.inArray(prop, result.invalidProperties) == -1,
+							'invalidPropertiesにプロパティが格納されていない');
+					ok($.inArray(prop, result.validatingProperties) == -1,
+							'validatingPropertiesにプロパティが格納されていない');
+				},
+				assertValidWaiting: function(result) {
+					strictEqual(result.isValid, true, 'バリデートが完了していないのでisValid=true');
+					strictEqual(result.isAllValid, null, 'バリデートが完了していないのでisAllValidはnull');
+					strictEqual(result.violationCount, 0, 'バリデートが完了していないのでviolationCount=0');
+					strictEqual(result.invalidCount, 0, 'バリデートが完了していないのでinvalidCount=0');
+					strictEqual(Object.keys(result.invalidReason).length, 0,
+							'invalidReasonが持つオブジェクトは0であること');
+					var invalidReason = result.invalidReason;
+					strictEqual(Object.keys(invalidReason).length, 0, 'invalidReasonが持つオブジェクトは0である');
+				},
+				assertValidWaitingProp: function(result, prop) {
+					ok($.inArray(prop, result.validProperties) == -1,
+							'validPropertiesにプロパティが格納されていない');
+					ok($.inArray(prop, result.invalidProperties) == -1,
+							'invalidPropertiesにプロパティが格納されていない');
+					ok($.inArray(prop, result.validatingProperties) !== -1,
+							'validatingPropertiesにプロパティが格納されている');
+				},
+				assertInValid: function(result) {
+					strictEqual(result.isValid, false, 'バリデートに失敗するのでisValid=false');
+					strictEqual(result.isAllValid, false, 'バリデートに失敗するのでisAllValidはfalse');
+					strictEqual(result.violationCount, 1, 'バリデートに失敗するのでviolationCount=1');
+					strictEqual(result.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
+					strictEqual(Object.keys(result.invalidReason).length, 1,
+							'invalidReasonが持つオブジェクトは1であること');
+					strictEqual(result.asyncWaitingProperties.length, 0,
+					'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+				},
+				assertInValidProp: function(result, prop) {
+					ok($.inArray(prop, result.validProperties) == -1,
+							'validPropertiesにプロパティが格納されていない');
+					ok($.inArray(prop, result.invalidProperties) !== -1,
+							'invalidPropertiesにプロパティが格納されている');
+				}
 			});
-		}
-	});
 
 	test('同期ルールのみ設定している場合', function() {
 		this.formController.addRule({
@@ -9578,8 +9633,11 @@ $(function() {
 		$('input[name="a"]').val("a");
 		var result = this.formController.validate('a');
 
-		strictEqual(result.asyncWaitingProperties.length, 0,
-				'同期ルールのみ設定しているのでasyncWaitingProperties=0');
+		var prop = 'a';
+		this.assertValid(result);
+		this.assertValidProp(result, prop);
+		var invalidReason = result.invalidReason;
+		strictEqual(Object.keys(invalidReason).length, 0, 'invalidReasonが持つオブジェクトは0である');
 	});
 
 	test('非同期ルールのみ設定(バリデート成功)',
@@ -9604,7 +9662,10 @@ $(function() {
 
 				$('input[name="a"]').val("a");
 				var result = this.formController.validate('a');
+				var prop = 'a';
 
+				this.assertValidWaiting(result, prop);
+				this.assertValidWaitingProp(result, prop);
 				strictEqual(result.asyncWaitingProperties.length, 1,
 						'バリデートが完了していない非同期ルールがあるのでasyncWaitingProperties=1');
 				strictEqual(result.asyncWaitingProperties[0], 'a',
@@ -9614,8 +9675,8 @@ $(function() {
 					valid: true
 				});
 
-				strictEqual(result.asyncWaitingProperties.length, 0,
-						'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+				this.assertValid(result);
+				this.assertValidProp(result, prop);
 			});
 
 	test('非同期ルールのみ設定(バリデート失敗)',
@@ -9640,7 +9701,10 @@ $(function() {
 
 				$('input[name="a"]').val("a");
 				var result = this.formController.validate('a');
+				var prop = 'a';
 
+				this.assertValidWaiting(result);
+				this.assertValidWaitingProp(result, prop);
 				strictEqual(result.asyncWaitingProperties.length, 1,
 						'バリデートが完了していない非同期ルールがあるのでasyncWaitingProperties=1');
 				strictEqual(result.asyncWaitingProperties[0], 'a',
@@ -9650,8 +9714,16 @@ $(function() {
 					valid: false
 				});
 
-				strictEqual(result.asyncWaitingProperties.length, 0,
-						'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+				this.assertInValid(result);
+				this.assertInValidProp(result, prop);
+				var invalidReason = result.invalidReason;
+				strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
+				strictEqual('a' in invalidReason, true, 'invalidReasonが持つキーはaである');
+
+				var invalidRules = invalidReason.a.violation;
+				strictEqual(invalidRules.length, 1, 'エラーのルール数は1つである');
+				strictEqual(invalidRules[0].ruleName, 'validator', 'validatorのエラーが格納されている');
+
 			});
 
 	test('2つの要素の内1つに同期ルール、1つに非同期ルールを設定(バリデート成功)する場合', function() {
@@ -9678,7 +9750,12 @@ $(function() {
 
 		$('input[name="a"]').val("a");
 		var result = this.formController.validate();
+		var propA = 'a';
+		var propB = 'b';
 
+		this.assertValidWaiting(result);
+		this.assertValidProp(result, propA);
+		this.assertValidWaitingProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していないプロパティbの非同期ルールがあるのでasyncWaitingProperties=1');
 		strictEqual(result.asyncWaitingProperties[0], 'b',
@@ -9688,8 +9765,9 @@ $(function() {
 			valid: true
 		});
 
-		strictEqual(result.asyncWaitingProperties.length, 0,
-				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+		this.assertValid(result);
+		this.assertValidProp(result, propA);
+		this.assertValidProp(result, propB);
 	});
 
 	test('2つの要素の内1つに同期ルール、1つに非同期ルールを設定(バリデート失敗)する場合', function() {
@@ -9716,7 +9794,12 @@ $(function() {
 
 		$('input[name="a"]').val("a");
 		var result = this.formController.validate();
+		var propA = 'a';
+		var propB = 'b';
 
+		this.assertValidWaiting(result);
+		this.assertValidProp(result, propA);
+		this.assertValidWaitingProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していないプロパティbの非同期ルールがあるのでasyncWaitingProperties=1');
 		strictEqual(result.asyncWaitingProperties[0], 'b',
@@ -9726,8 +9809,16 @@ $(function() {
 			valid: false
 		});
 
-		strictEqual(result.asyncWaitingProperties.length, 0,
-				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+		this.assertInValid(result);
+		this.assertValidProp(result, propA);
+		this.assertInValidProp(result, propB);
+		var invalidReason = result.invalidReason;
+		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
+		strictEqual('b' in invalidReason, true, 'invalidReasonが持つキーはbである');
+
+		var invalidRules = invalidReason.a.violation;
+		strictEqual(invalidRules.length, 1, 'エラーのルール数は1つである');
+		strictEqual(invalidRules[0].ruleName, 'validator', 'validatorのエラーが格納されている');
 	});
 
 	test('2つの要素に非同期ルールを設定(両方バリデート成功)する場合', function() {
@@ -9761,7 +9852,12 @@ $(function() {
 		});
 
 		var result = this.formController.validate();
+		var propA = 'a';
+		var propB = 'b';
 
+		this.assertValidWaiting(result);
+		this.assertValidWaitingProp(result, propA);
+		this.assertValidWaitingProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 2,
 				'バリデートが完了していないプロパティa,bの非同期ルールがあるのでasyncWaitingProperties=2');
 		strictEqual(result.asyncWaitingProperties[0], 'a',
@@ -9773,6 +9869,9 @@ $(function() {
 			valid: true
 		});
 
+		this.assertValidWaiting(result);
+		this.assertValidProp(result, propA);
+		this.assertValidWaitingProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していないプロパティbの非同期ルールがあるのでasyncWaitingProperties=1');
 		strictEqual(result.asyncWaitingProperties[0], 'b',
@@ -9782,8 +9881,9 @@ $(function() {
 			valid: true
 		});
 
-		strictEqual(result.asyncWaitingProperties.length, 0,
-				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+		this.assertValid(result);
+		this.assertValidProp(result, propA);
+		this.assertValidProp(result, propB);
 	});
 
 	test('2つの要素に非同期ルールを設定(両方バリデート失敗)する場合', function() {
@@ -9817,7 +9917,12 @@ $(function() {
 		});
 
 		var result = this.formController.validate();
+		var propA = 'a';
+		var propB = 'b';
 
+		this.assertValidWaiting(result);
+		this.assertValidWaitingProp(result, propA);
+		this.assertValidWaitingProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 2,
 				'バリデートが完了していないプロパティa,bの非同期ルールがあるのでasyncWaitingProperties=2');
 		strictEqual(result.asyncWaitingProperties[0], 'a',
@@ -9829,17 +9934,40 @@ $(function() {
 			valid: false
 		});
 
+		this.assertInValid(result);
+		this.assertInValidProp(result, propA);
+		this.assertInValidProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していないプロパティbの非同期ルールがあるのでasyncWaitingProperties=1');
 		strictEqual(result.asyncWaitingProperties[0], 'b',
 				'asyncWaitingPropertiesにプロパティbが格納されていること');
+		var invalidReason = result.invalidReason;
+		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
+		strictEqual('a' in invalidReason, true, 'invalidReasonが持つキーはaである');
+
+		var invalidRulesA = invalidReason.a.violation;
+		strictEqual(invalidRulesA.length, 1, 'エラーのルール数は1つである');
+		strictEqual(invalidRulesA[0].ruleName, 'validator1', 'validator1のエラーが格納されている');
 
 		dfd2.reject({
 			valid: false
 		});
 
+		this.assertInValid(result);
+		this.assertInValidProp(result, propA);
+		this.assertInValidProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 0,
 				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+		var invalidReason = result.invalidReason;
+		strictEqual(Object.keys(invalidReason).length, 2, 'invalidReasonが持つオブジェクトは2つである');
+		strictEqual('a' in invalidReason, true, 'invalidReasonが持つキーはaである');
+		strictEqual('b' in invalidReason, true, 'invalidReasonが持つキーはbである');
+
+		var invalidRulesB = invalidReason.b.violation;
+		trictEqual(invalidRulesA.length, 1, 'プロパティaのエラーのルール数は1つである');
+		strictEqual(invalidRulesB.length, 1, 'プロパティbのエラーのルール数は1つである');
+		strictEqual(invalidRulesA[0].ruleName, 'validator1', 'validator1のエラーが格納されている');
+		strictEqual(invalidRulesB[1].ruleName, 'validator2', 'validator1のエラーが格納されている');
 	});
 
 	test('2つの要素に非同期ルールを設定(1つ目のバリデート成功、2つ目のバリデート失敗)する場合', function() {
@@ -9873,6 +10001,12 @@ $(function() {
 		});
 
 		var result = this.formController.validate();
+		var propA = 'a';
+		var propB = 'b';
+
+		this.assertValidWaiting(result);
+		this.assertValidWaitingProp(result, propA);
+		this.assertValidWaitingProp(result, propB);
 
 		strictEqual(result.asyncWaitingProperties.length, 2,
 				'バリデートが完了していないプロパティa,bの非同期ルールがあるのでasyncWaitingProperties=2');
@@ -9885,6 +10019,9 @@ $(function() {
 			valid: true
 		});
 
+		this.assertValidWaiting(result);
+		this.assertValidProp(result, propA);
+		this.assertValidWaitingProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していないプロパティbの非同期ルールがあるのでasyncWaitingProperties=1');
 		strictEqual(result.asyncWaitingProperties[0], 'b',
@@ -9894,8 +10031,16 @@ $(function() {
 			valid: false
 		});
 
-		strictEqual(result.asyncWaitingProperties.length, 0,
-				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+		this.assertInValid(result);
+		this.assertInValidProp(result, propA);
+		this.assertInValidProp(result, propB);
+		var invalidReason = result.invalidReason;
+		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
+		strictEqual('b' in invalidReason, true, 'invalidReasonが持つキーはbである');
+
+		var invalidRules = invalidReason.b.violation;
+		strictEqual(invalidRules.length, 1, 'プロパティbのエラーのルール数は1つである');
+		strictEqual(invalidRules[0].ruleName, 'validator2', 'validator2のエラーが格納されている');
 	});
 
 	test('2つの要素に非同期ルールを設定(1つ目のバリデート失敗、2つ目のバリデート成功)する場合', function() {
@@ -9928,6 +10073,12 @@ $(function() {
 			}
 		});
 		var result = this.formController.validate();
+		var propA = 'a';
+		var propB = 'b';
+
+		this.assertValidWaiting(result);
+		this.assertValidWaitingProp(result, propA);
+		this.assertValidWaitingProp(result, propB);
 
 		strictEqual(result.asyncWaitingProperties.length, 2,
 				'バリデートが完了していないプロパティa,bの非同期ルールがあるのでasyncWaitingProperties=2');
@@ -9940,17 +10091,36 @@ $(function() {
 			valid: false
 		});
 
+		this.assertInValid(result);
+		this.assertInValidProp(result, propA);
+		this.assertInValidProp(result, propB);
+
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していないプロパティbの非同期ルールがあるのでasyncWaitingProperties=1');
 		strictEqual(result.asyncWaitingProperties[0], 'b',
 				'asyncWaitingPropertiesにプロパティbが格納されていること');
+		var invalidReason = result.invalidReason;
+		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
+		strictEqual('a' in invalidReason, true, 'invalidReasonが持つキーはaである');
+
+		var invalidRulesA = invalidReason.a.violation;
+		strictEqual(invalidRulesA.length, 1, 'プロパティaのエラーのルール数は1つである');
+		strictEqual(invalidRulesA[0].ruleName, 'validator1', 'validator1のエラーが格納されている');
 
 		dfd2.resolve({
 			valid: true
 		});
 
+		this.assertInValid(result);
+		this.assertInValidProp(result, propA);
+		this.assertInValidProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 0,
 				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
+		strictEqual('a' in invalidReason, true, 'invalidReasonが持つキーはaである');
+
+		strictEqual(invalidRulesA.length, 1, 'プロパティaのエラーのルール数は1つである');
+		strictEqual(invalidRulesA[0].ruleName, 'validator1', 'validator1のエラーが格納されている');
 	});
 
 	test('1つの要素に同期・非同期ルール(バリデート成功)が混在している場合', function() {
@@ -9975,6 +10145,10 @@ $(function() {
 
 		$('input[name="a"]').val("a");
 		var result = this.formController.validate();
+		var propA = 'a';
+
+		this.assertValidWaiting(result);
+		this.assertValidWaitingProp(result, propA);
 
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していない非同期ルールがあるのでasyncWaitingProperties=1');
@@ -9984,6 +10158,9 @@ $(function() {
 		dfd.resolve({
 			valid: true
 		});
+
+		this.assertValid(result);
+		this.assertValidProp(result, propA);
 
 		strictEqual(result.asyncWaitingProperties.length, 0,
 				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
@@ -10011,6 +10188,10 @@ $(function() {
 
 		$('input[name="a"]').val("a");
 		var result = this.formController.validate();
+		var propA = 'a';
+
+		this.assertValidWaiting(result);
+		this.assertValidWaitingProp(result, propA);
 
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していない非同期ルールがあるのでasyncWaitingProperties=1');
@@ -10021,7 +10202,17 @@ $(function() {
 			valid: false
 		});
 
+		this.assertInValid(result);
+		this.assertInValidProp(result, propA);
+
 		strictEqual(result.asyncWaitingProperties.length, 0,
 				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+		var invalidReason = result.invalidReason;
+		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
+		strictEqual('a' in invalidReason, true, 'invalidReasonが持つキーはaである');
+
+		var invalidRules = invalidReason.a.violation;
+		strictEqual(invalidRules.length, 1, 'エラーのルール数は1つである');
+		strictEqual(invalidRules[0].ruleName, 'validator', 'validatorのエラーが格納されている');
 	});
 });
