@@ -9326,4 +9326,135 @@ $(function() {
 		ok($.inArray('a', result.validProperties) == !-1,
 				'全ての非同期バリデートが成功したため、validPropertiesにプロパティが格納されている');
 	});
+
+	module('同期、非同期のバリデーションが混在している場合のviolationの中身', {
+		setup: function() {
+			stop();
+			var html = '<form class="testForm"><input name="a"></form>';
+			$('#qunit-fixture').append(html);
+			this.formController = h5.core.controller('.testForm', h5.ui.FormController);
+			this.formController.readyPromise.done(function() {
+				start();
+			});
+		},
+	});
+
+	test('同期ルール1つに失敗する場合', function() {
+		var dfd1 = h5.async.deferred();
+		var dfd2 = h5.async.deferred();
+		this.formController.addRule({
+			a: {
+				required: true,
+				size: [4, 10],
+				validator1: true,
+				validator2: true
+			}
+		});
+		this.formController.setSetting({
+			customRule: {
+				validator1: {
+					func: function(value) {
+						return dfd1.promise();
+					},
+					isForceEnabledWhenEmpty: false,
+					message: "errorMessage",
+				},
+				validator2: {
+					func: function(value) {
+						return dfd2.promise();
+					},
+					isForceEnabledWhenEmpty: false,
+					message: "errorMessage",
+				},
+			}
+		});
+
+		// 空文字を入力
+		$('input[name="a"]').val("");
+		var result = this.formController.validate('a');
+		var invalidRules = result.invalidReason.a.violation;
+		strictEqual(result.isValid, false, 'バリデートに失敗する');
+		strictEqual(invalidRules.length, 1, 'エラーのルール数は１つである');
+		strictEqual(invalidRules[0].ruleName, 'required', 'requiredのエラーのみが出ている');
+
+		// abを入力
+		$('input[name="a"]').val("ab");
+		var result = this.formController.validate('a');
+
+		var lastResult = this.formController.getLastValidationResult();
+		var lastInvalidRules = lastResult.invalidReason.a.violation;
+		strictEqual(lastResult.isValid, false, 'バリデートに失敗するのでisValid=false');
+		strictEqual(lastResult.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
+		strictEqual(lastInvalidRules.length, 1, 'エラーのルール数は1つである');
+		strictEqual(lastInvalidRules[0].ruleName, 'size', 'sizeのエラーのみが出ている');
+
+		dfd1.resolve({
+			valid: true
+		});
+		dfd2.resolve({
+			valid: true
+		});
+
+		var lastResult2 = this.formController.getLastValidationResult();
+		var lastInvalidRules = lastResult.invalidReason.a.violation;
+		strictEqual(lastResult.isValid, false, 'バリデートに失敗するのでisValid=false');
+		strictEqual(lastResult.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
+		strictEqual(lastInvalidRules.length, 1, 'エラーのルール数は1つである');
+		strictEqual(lastInvalidRules[0].ruleName, 'size', 'sizeのエラーのみが出ている');
+
+	});
+
+	test('非同期ルール2つに失敗する場合', function() {
+		var dfd3 = h5.async.deferred();
+		var dfd4 = h5.async.deferred();
+		this.formController.addRule({
+			a: {
+				required: true,
+				size: [4, 10],
+				validator3: true,
+				validator4: true
+			}
+		});
+		this.formController.setSetting({
+			customRule: {
+				validator3: {
+					func: function(value) {
+						return dfd3.promise();
+					},
+					isForceEnabledWhenEmpty: false,
+					message: "errorMessage",
+				},
+				validator4: {
+					func: function(value) {
+						return dfd4.promise();
+					},
+					isForceEnabledWhenEmpty: false,
+					message: "errorMessage",
+				},
+			}
+		});
+
+		// abcdeを入力
+		$('input[name="a"]').val("abcde");
+		var result = this.formController.validate('a');
+
+		var lastResult = this.formController.getLastValidationResult();
+		strictEqual(lastResult.isValid, true, 'バリデートに成功するのでisValid=true');
+		strictEqual(lastResult.invalidCount, 0, 'バリデートに成功するのでinvalidCount=0');
+
+		dfd3.reject({
+			valid: false
+		});
+		dfd4.reject({
+			valid: false
+		});
+
+		var lastResult = this.formController.getLastValidationResult();
+		var lastInvalidRules = lastResult.invalidReason.a.violation;
+		strictEqual(lastResult.isValid, false, 'バリデートに失敗するのでisValid=false');
+		strictEqual(lastResult.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
+		strictEqual(lastInvalidRules.length, 2, 'エラーのルール数は2つである');
+		strictEqual(lastInvalidRules[0].ruleName, 'validator3', 'validator3のエラーが出ている');
+		strictEqual(lastInvalidRules[1].ruleName, 'validator4', 'validator4のエラーが出ている');
+	});
 });
