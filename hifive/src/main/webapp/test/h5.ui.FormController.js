@@ -9303,7 +9303,7 @@ $(function() {
 						return dfd2.promise();
 					},
 					isForceEnabledWhenEmpty: true,
-					message: "errorMessage"
+					message: 'errorMessage'
 				}
 			}
 		});
@@ -9374,14 +9374,14 @@ $(function() {
 								return dfd1.promise();
 							},
 							isForceEnabledWhenEmpty: false,
-							message: "errorMessage",
+							message: 'errorMessage',
 						},
 						validator2: {
 							func: function(value) {
 								return dfd2.promise();
 							},
 							isForceEnabledWhenEmpty: false,
-							message: "errorMessage",
+							message: 'errorMessage',
 						},
 					}
 				});
@@ -9490,28 +9490,28 @@ $(function() {
 						return dfd1a.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				},
 				validator2a: {
 					func: function(value) {
 						return dfd2a.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				},
 				validator1b: {
 					func: function(value) {
 						return dfd1b.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				},
 				validator2b: {
 					func: function(value) {
 						return dfd2b.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				},
 			}
 		});
@@ -9556,7 +9556,8 @@ $(function() {
 		strictEqual(invalidRules[1].ruleName, 'validator2b', 'validator2bのエラーが格納されている');
 	});
 
-	module('validationResultのasyncWaitingProperties',
+	module(
+			'validationResultのasyncWaitingProperties',
 			{
 				setup: function() {
 					stop();
@@ -9613,7 +9614,7 @@ $(function() {
 					strictEqual(Object.keys(result.invalidReason).length, 1,
 							'invalidReasonが持つオブジェクトは1であること');
 					strictEqual(result.asyncWaitingProperties.length, 0,
-					'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
+							'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
 				},
 				assertInValidProp: function(result, prop) {
 					ok($.inArray(prop, result.validProperties) == -1,
@@ -9655,7 +9656,7 @@ $(function() {
 								return dfd.promise();
 							},
 							isForceEnabledWhenEmpty: false,
-							message: "errorMessage",
+							message: 'errorMessage',
 						}
 					}
 				});
@@ -9694,7 +9695,7 @@ $(function() {
 								return dfd.promise();
 							},
 							isForceEnabledWhenEmpty: false,
-							message: "errorMessage",
+							message: 'errorMessage',
 						}
 					}
 				});
@@ -9743,12 +9744,13 @@ $(function() {
 						return dfd.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				}
 			}
 		});
 
-		$('input[name="a"]').val("a");
+		$('input[name="a"]').val('a');
+		$('input[name="b"]').val('b');
 		var result = this.formController.validate();
 		var propA = 'a';
 		var propB = 'b';
@@ -9787,12 +9789,13 @@ $(function() {
 						return dfd.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				}
 			}
 		});
 
-		$('input[name="a"]').val("a");
+		$('input[name="a"]').val('a');
+		$('input[name="b"]').val('b');
 		var result = this.formController.validate();
 		var propA = 'a';
 		var propB = 'b';
@@ -9816,7 +9819,7 @@ $(function() {
 		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
 		strictEqual('b' in invalidReason, true, 'invalidReasonが持つキーはbである');
 
-		var invalidRules = invalidReason.a.violation;
+		var invalidRules = invalidReason.b.violation;
 		strictEqual(invalidRules.length, 1, 'エラーのルール数は1つである');
 		strictEqual(invalidRules[0].ruleName, 'validator', 'validatorのエラーが格納されている');
 	});
@@ -9839,18 +9842,20 @@ $(function() {
 						return dfd1.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				},
 				validator2: {
 					func: function(value) {
 						return dfd2.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				}
 			}
 		});
 
+		$('input[name="a"]').val('a');
+		$('input[name="b"]').val('b');
 		var result = this.formController.validate();
 		var propA = 'a';
 		var propB = 'b';
@@ -9904,18 +9909,20 @@ $(function() {
 						return dfd1.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				},
 				validator2: {
 					func: function(value) {
 						return dfd2.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				}
 			}
 		});
 
+		$('input[name="a"]').val('a');
+		$('input[name="b"]').val('b');
 		var result = this.formController.validate();
 		var propA = 'a';
 		var propB = 'b';
@@ -9934,9 +9941,13 @@ $(function() {
 			valid: false
 		});
 
-		this.assertInValid(result);
+		strictEqual(result.isValid, false, 'バリデートに失敗するのでisValid=false');
+		strictEqual(result.isAllValid, false, 'バリデートに失敗するのでisAllValidはfalse');
+		strictEqual(result.violationCount, 1, 'バリデートに失敗するのでviolationCount=1');
+		strictEqual(result.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
+		strictEqual(Object.keys(result.invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1であること');
+
 		this.assertInValidProp(result, propA);
-		this.assertInValidProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していないプロパティbの非同期ルールがあるのでasyncWaitingProperties=1');
 		strictEqual(result.asyncWaitingProperties[0], 'b',
@@ -9953,7 +9964,11 @@ $(function() {
 			valid: false
 		});
 
-		this.assertInValid(result);
+		strictEqual(result.isValid, false, 'バリデートに失敗するのでisValid=false');
+		strictEqual(result.isAllValid, false, 'バリデートに失敗するのでisAllValidはfalse');
+		strictEqual(result.violationCount, 2, 'バリデートに失敗するのでviolationCount=2');
+		strictEqual(result.invalidCount, 2, 'バリデートに失敗するのでinvalidCount=2');
+
 		this.assertInValidProp(result, propA);
 		this.assertInValidProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 0,
@@ -9964,10 +9979,10 @@ $(function() {
 		strictEqual('b' in invalidReason, true, 'invalidReasonが持つキーはbである');
 
 		var invalidRulesB = invalidReason.b.violation;
-		trictEqual(invalidRulesA.length, 1, 'プロパティaのエラーのルール数は1つである');
+		strictEqual(invalidRulesA.length, 1, 'プロパティaのエラーのルール数は1つである');
 		strictEqual(invalidRulesB.length, 1, 'プロパティbのエラーのルール数は1つである');
 		strictEqual(invalidRulesA[0].ruleName, 'validator1', 'validator1のエラーが格納されている');
-		strictEqual(invalidRulesB[1].ruleName, 'validator2', 'validator1のエラーが格納されている');
+		strictEqual(invalidRulesB[0].ruleName, 'validator2', 'validator1のエラーが格納されている');
 	});
 
 	test('2つの要素に非同期ルールを設定(1つ目のバリデート成功、2つ目のバリデート失敗)する場合', function() {
@@ -9988,17 +10003,20 @@ $(function() {
 						return dfd1.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				},
 				validator2: {
 					func: function(value) {
 						return dfd2.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				}
 			}
 		});
+
+		$('input[name="a"]').val('a');
+		$('input[name="b"]').val('b');
 
 		var result = this.formController.validate();
 		var propA = 'a';
@@ -10032,7 +10050,7 @@ $(function() {
 		});
 
 		this.assertInValid(result);
-		this.assertInValidProp(result, propA);
+		this.assertValidProp(result, propA);
 		this.assertInValidProp(result, propB);
 		var invalidReason = result.invalidReason;
 		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
@@ -10061,17 +10079,21 @@ $(function() {
 						return dfd1.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				},
 				validator2: {
 					func: function(value) {
 						return dfd2.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				}
 			}
 		});
+
+		$('input[name="a"]').val('a');
+		$('input[name="b"]').val('b');
+
 		var result = this.formController.validate();
 		var propA = 'a';
 		var propB = 'b';
@@ -10082,18 +10104,23 @@ $(function() {
 
 		strictEqual(result.asyncWaitingProperties.length, 2,
 				'バリデートが完了していないプロパティa,bの非同期ルールがあるのでasyncWaitingProperties=2');
-		strictEqual(result.asyncWaitingProperties[0], 'a',
+		notStrictEqual(result.asyncWaitingProperties.indexOf('a'), -1,
 				'asyncWaitingPropertiesにプロパティaが格納されていること');
-		strictEqual(result.asyncWaitingProperties[0], 'b',
+		notStrictEqual(result.asyncWaitingProperties.indexOf('b'), -1,
 				'asyncWaitingPropertiesにプロパティbが格納されていること');
 
 		dfd1.reject({
 			valid: false
 		});
 
-		this.assertInValid(result);
+		strictEqual(result.isValid, false, 'バリデートに失敗するのでisValid=false');
+		strictEqual(result.isAllValid, false, 'バリデートに失敗するのでisAllValidはfalse');
+		strictEqual(result.violationCount, 1, 'バリデートに失敗するのでviolationCount=1');
+		strictEqual(result.invalidCount, 1, 'バリデートに失敗するのでinvalidCount=1');
+		strictEqual(Object.keys(result.invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1であること');
+
 		this.assertInValidProp(result, propA);
-		this.assertInValidProp(result, propB);
+		this.assertValidWaitingProp(result, propB);
 
 		strictEqual(result.asyncWaitingProperties.length, 1,
 				'バリデートが完了していないプロパティbの非同期ルールがあるのでasyncWaitingProperties=1');
@@ -10113,7 +10140,7 @@ $(function() {
 
 		this.assertInValid(result);
 		this.assertInValidProp(result, propA);
-		this.assertInValidProp(result, propB);
+		this.assertValidProp(result, propB);
 		strictEqual(result.asyncWaitingProperties.length, 0,
 				'非同期ルールのバリデートが完了したのでasyncWaitingProperties=0');
 		strictEqual(Object.keys(invalidReason).length, 1, 'invalidReasonが持つオブジェクトは1つである');
@@ -10138,7 +10165,7 @@ $(function() {
 						return dfd.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				}
 			}
 		});
@@ -10181,7 +10208,7 @@ $(function() {
 						return dfd.promise();
 					},
 					isForceEnabledWhenEmpty: false,
-					message: "errorMessage",
+					message: 'errorMessage',
 				}
 			}
 		});
