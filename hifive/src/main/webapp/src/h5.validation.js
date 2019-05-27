@@ -503,15 +503,12 @@
 		//こちらは非同期待ちがあれば常にそのプロパティを含む。
 		this.asyncWaitingProperties = result.asyncWaitingProperties;
 
-		this.addEventListener(EVENT_VALIDATE, validateEventListener);
+		/**
+		 * 非同期バリデーションが中断されたかどうかを表します。abort()が呼ばれるとtrueになります。
+		 */
+		this.isAborted = false;
 
-		// abort()が呼ばれていたらdispatchEventを動作させない
-		this.dispatchEvent = function() {
-			if (this._aborted) {
-				return;
-			}
-			ValidationResult.prototype.dispatchEvent.apply(this, arguments);
-		};
+		this.addEventListener(EVENT_VALIDATE, validateEventListener);
 	}
 	// イベントディスパッチャ
 	h5.mixin.eventDispatcher.mix(ValidationResult.prototype);
@@ -530,11 +527,17 @@
 						 * @function
 						 */
 						abort: function() {
+							if (this.isAborted) {
+								return;
+							}
+							this.isAborted = true;
+
+							this.isAsync = false;
+							this.asyncWaitingProperties = [];
 							this.removeEventListener(EVENT_VALIDATE, validateEventListener);
 							this.dispatchEvent({
 								type: EVENT_VALIDATE_ABORT
 							});
-							this._aborted = true;
 						},
 
 						/**
@@ -1863,6 +1866,12 @@
 
 				var doneHandler = (function(_prop, _promises) {
 					return function() {
+						if (validationResult.isAborted) {
+							//非同期バリデーションがabortされていた場合はもはや何もしない
+							//なおasyncWaitingPropertiesはabort()を呼び出した時点で空になっている
+							return;
+						}
+
 						validationResult.dispatchEvent({
 							type: EVENT_VALIDATE,
 							name: _prop,
@@ -1884,6 +1893,10 @@
 
 					var failHandler = (function(_prop, _promise, _promises) {
 						return function() {
+							if (validationResult.isAborted) {
+								return;
+							}
+
 							// 一つでも失敗したらfailCallbackが実行される
 							//同期ルールによりすでにinvalid状態になっている可能性があるが、
 							//非同期ルールについても表示するためイベントは発生させる
