@@ -1357,9 +1357,11 @@
 		 * @param {Object} obj バリデート対象となるオブジェクト
 		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
 		 * @param {string} timing バリデーションタイミング。blur, validateなど。省略時は"validate"とみなす。
+		 * @param {Obj} outputUpdateTiming
+		 *            出力タイミング。バリデータの動作タイミングが明示的に設定されていない場合、このタイミングに含まれたタイミングのときのみバリデータを動作させる。
 		 * @returns {ValidationResult} バリデート結果
 		 */
-		validate: function(obj, names, timing, lastResult) {
+		validate: function(obj, names, timing, lastResult, outputUpdateTiming) {
 			// グループ対応。値がオブジェクトのものはグループとして扱う
 			var validateTarget = {};
 			var inGroupNames = [];
@@ -1383,7 +1385,8 @@
 				timing = 'validate';
 			}
 
-			return this._validate(validateTarget, validateNames, timing, lastResult);
+			return this._validate(validateTarget, validateNames, timing, lastResult,
+					outputUpdateTiming);
 		},
 
 		_preValidationHook: null,
@@ -1605,9 +1608,10 @@
 		 * @param {Object} obj バリデート対象となるオブジェクト
 		 * @param {string|string[]} [names] 第1引数オブジェクトのうち、バリデートを行うキー名またはその配列(指定無しの場合は全てのキーが対象)
 		 * @param {string} timing バリデーションタイミング。
+		 * @param {Object} outputUpdateTiming 出力更新タイミング
 		 * @returns {ValidationResult} バリデート結果
 		 */
-		_validate: function(obj, names, timing, lastResult) {
+		_validate: function(obj, names, timing, lastResult, outputUpdateTiming) {
 			var validProperties = [];
 			var invalidProperties = [];
 			var properties = [];
@@ -1683,7 +1687,8 @@
 
 					var validator = validateRuleManager.getValidator(ruleName);
 
-					if (!this._shouldValidateWhen(prop, validator, timing, lastResult)) {
+					if (!this._shouldValidateWhen(prop, validator, timing, lastResult,
+							outputUpdateTiming)) {
 						ruleSet._setSkipped(ruleName, true);
 						continue;
 					}
@@ -2042,10 +2047,16 @@
 		 * @param timing
 		 * @returns {Boolean}
 		 */
-		_shouldValidateWhen: function(prop, rule, timing, lastResult) {
-			if (rule.validateOn == null) {
+		_shouldValidateWhen: function(prop, rule, timing, lastResult, outputUpdateTiming) {
+			if (rule.validateOn == null
+					&& (timing === 'validate' || outputUpdateTiming.hasOwnProperty(timing))) {
+				//validateOnが未定義の場合、validateタイミング（フォームのsubmit()）の場合、または
+				//出力更新タイミングに含まれていた場合のみバリデーションを行う
 				return true;
 			}
+
+			//validateOnが定義されている場合は、validateOnのタイミングに従う
+			//※フォームのsubmit()時もこの指定に従うので、validateOnに'validate'が含まれていなければ実行されないので注意
 
 			var idx = $.inArray(timing, rule.validateOn);
 			var shouldValidate = idx !== -1;

@@ -825,6 +825,18 @@
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['validate'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+
 			if (this.isInit) {
 				this._setChildSetting();
 			} else {
@@ -1016,17 +1028,6 @@
 		_setChildSetting: function() {
 			var setting = this._setting;
 
-			if (setting.updateOn == null) {
-				this._updateOn = ['validate'];
-			} else {
-				var updateOn = setting.updateOn;
-				if (isArray(updateOn)) {
-					this._updateOn = updateOn;
-				} else {
-					this._updateOn = [updateOn];
-				}
-			}
-
 			//showAllErrorsはデフォルトでtrue（すべてのエラーを表示）。
 			//明示的にfalseが指定された場合のみ、最初に検出されたエラーのみ出力する。
 			this._showAllErrors = setting.showAllErrors !== false;
@@ -1138,6 +1139,18 @@
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['focus', 'blur'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+
 			if (this.isInit) {
 				this._setChildSetting();
 			} else {
@@ -1432,17 +1445,6 @@
 		_setChildSetting: function() {
 			var setting = this._setting;
 
-			if (setting.updateOn == null) {
-				this._updateOn = ['focus', 'blur'];
-			} else {
-				var updateOn = setting.updateOn;
-				if (isArray(updateOn)) {
-					this._updateOn = updateOn;
-				} else {
-					this._updateOn = [updateOn];
-				}
-			}
-
 			if ('message' in setting) {
 				this._messageOutputController._setOutputDefaultMessage(setting.message);
 			}
@@ -1658,6 +1660,18 @@
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['change', 'validate'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+
 			if (this.isInit) {
 				this._setChildSetting();
 			} else {
@@ -1870,17 +1884,6 @@
 		 */
 		_setChildSetting: function() {
 			var setting = this._setting;
-
-			if (setting.updateOn == null) {
-				this._updateOn = ['change', 'validate'];
-			} else {
-				var updateOn = setting.updateOn;
-				if (isArray(updateOn)) {
-					this._updateOn = updateOn;
-				} else {
-					this._updateOn = [updateOn];
-				}
-			}
 
 			if ('wrapper' in setting) {
 				this._wrapper = setting.wrapper;
@@ -2615,6 +2618,8 @@
 				plugin._setSetting && plugin._setSetting(this._margePluginSettings(pluginName));
 				this._setDefaultMessages(plugin);
 			}
+			//updateOnのタイミングキャッシュを更新
+			this._updateOutputTimingCache();
 
 			if (this.isInit) {
 				this._updateRuleByElement();
@@ -2661,7 +2666,7 @@
 				$.extend(propSetting, propSetting[pluginName]);
 				var propertyPluginOutput = h5.u.obj.getByPath('output.' + pluginName, propSetting);
 				delete propSetting['output'];
-				pluginSetting.property[prop] = $.extend({}, propSetting, propertyPluginOutput)
+				pluginSetting.property[prop] = $.extend({}, propSetting, propertyPluginOutput);
 			}
 			return pluginSetting;
 		},
@@ -2844,7 +2849,36 @@
 				}
 				this._addOutputPlugin(pluginName, plugin);
 			}
+
+			//updateOnのタイミングキャッシュを更新
+			this._updateOutputTimingCache();
 		},
+
+		/**
+		 * @private
+		 */
+		_updateOutputTimingCache: function() {
+			var aggrTimingMapObj = {};
+
+			for ( var pluginName in this._plugins) {
+				var plugin = this._plugins[pluginName];
+
+				var updateOn = plugin._updateOn;
+				for (var i = 0, len = updateOn.length; i < len; i++) {
+					var timing = updateOn[i];
+					aggrTimingMapObj[timing] = true;
+				}
+			}
+
+			this._outputTimingCache = aggrTimingMapObj;
+		},
+
+		/**
+		 * 現在の全ての出力プラグインでセットされているupdateOnのタイミングの集合。アップデートするタイミングをオブジェクトのキーにする。
+		 *
+		 * @private
+		 */
+		_outputTimingCache: {},
 
 		/**
 		 * ルールの追加
@@ -3492,7 +3526,8 @@
 			//				this._waitingValidationResultMap = {};
 			//			}
 
-			var result = this._validationLogic.validate(formData, names, timing, this._lastResult);
+			var result = this._validationLogic.validate(formData, names, timing, this._lastResult,
+					this._outputTimingCache);
 
 			//this._lastResultは常に存在する
 			//（construct時に初期状態のValidationResultインスタンスをセットし、その後は常にmergeし続ける）ので
