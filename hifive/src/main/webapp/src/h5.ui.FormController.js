@@ -3621,10 +3621,23 @@
 			var violation = event.violation;
 			var lastResult = this._lastResult;
 
+			//あるプロパティについて、少なくとも1つのエラーが発生したか、もしくはすべての非同期バリデータが成功したので
+			//validating状態から削除する
+			var validatingPropIdx = lastResult.validatingProperties.indexOf(name);
+			if (validatingPropIdx !== -1) {
+				//ただし、同期ルールですでにエラーがあった場合はvalidatingでなくinvalidに既に入っているので、
+				//validatingに入っていた時のみ削除
+				lastResult.validatingProperties.splice(validatingPropIdx, 1);
+			}
+
 			if (!violation) {
-				//violationがnull === この非同期ルールの結果はValidだった
-				pushIfNotExist(name, lastResult.validProperties);
-				lastResult.validCount++;
+				//violationがnull === このプロパティに対するすべての非同期ルールの結果がValidだった
+
+				if (validatingPropIdx !== -1) {
+					//validatingに入っていた＝同期ルールはすべてエラーなしだった場合のみ、validに含める
+					pushIfNotExist(name, lastResult.validProperties);
+					lastResult.validCount++;
+				}
 			} else {
 				lastResult.isValid = false;
 				var isAddedToInvalid = pushIfNotExist(name, lastResult.invalidProperties);
@@ -3659,10 +3672,6 @@
 				}
 			}
 
-			var validatingPropIdx = lastResult.validatingProperties.indexOf(name);
-			if (validatingPropIdx !== -1) {
-				lastResult.validatingProperties.splice(validatingPropIdx, 1);
-			}
 
 			if (!lastResult.isValid || !lastResult.validatingProperties.length) {
 				lastResult.isAllValid = lastResult.isValid;

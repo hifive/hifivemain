@@ -600,8 +600,11 @@
 									} else if (this._has(prop, this.invalidProperties)) {
 										//前回違反ありの場合
 
+										var isAsyncWaitingProp = this._has(prop,
+												result.validatingProperties);
+
 										if (this._has(prop, result.validProperties)
-												|| this._has(prop, result.validatingProperties)) {
+												|| isAsyncWaitingProp) {
 											//前回は違反ありだったが、今回違反なしになったプロパティについて、ルールごとに
 											//（同期ルールでエラーがない＆結果待ちの非同期ルールがある場合validatingに入っている。
 											//そのため、今回のバリデーションで（前回エラーだった）同期ルールが実行され違反なしになった場合が考えられるので
@@ -621,9 +624,14 @@
 											}
 
 											if (violations.length === 0) {
-												//すべての違反が解消されたら、Reasonから取り除き、Validなプロパティに含める
+												//同期エラーがなくなれば、この時点では一旦invalidReasonから削除する
+												//この後非同期バリデータでエラーが起きた場合再びinvalidReasonが追加される可能性はある
 												delete this.invalidReason[prop];
-												pushIfNotExist(prop, newValidProperties);
+
+												if (!isAsyncWaitingProp) {
+													//すべての違反が解消され、かつ新規の非同期待ちのバリデータがなければ、Reasonから取り除き、Validなプロパティに含める
+													pushIfNotExist(prop, newValidProperties);
+												}
 											} else {
 												//まだ他のルールの違反が残っている場合はInvalidなプロパティに含める
 												pushIfNotExist(prop, newInvalidProperties);
@@ -707,7 +715,7 @@
 									result.asyncWaitingProperties);
 
 							//Asyncかどうかは、マージ後のresultに非同期結果待ちプロパティがあるかどうかで判定
-							this.isAsync = (this.asyncWaitingProperties.length === 0);
+							this.isAsync = (this.asyncWaitingProperties.length !== 0);
 
 							this.validProperties = newValidProperties;
 							this.validCount = newValidProperties.length;
@@ -726,11 +734,15 @@
 							//マージ後、invalidなプロパティがなければvalidである
 							this.isValid = this.invalidCount === 0;
 
-							this.isAllValid = false;
-							if (!this.isAsync && this.isValid) {
-								//Asyncでなく、かつvalidならAll-valid
-								this.isAllVaid = true;
+							this.isAllValid = null;
+							if (!this.isValid) {
+								//同期ルールでエラーがある場合false
+								this.isAllValid = false;
+							} else if (!this.isAsync) {
+								//同期ルールでエラーがなく、非同期待ちがない場合はこの時点でtrue
+								this.isAllValid = true;
 							}
+							//同期ルールでエラーがなく、非同期待ちがある場合はisAllValidは現時点でnull
 						},
 
 						/**
