@@ -48,6 +48,7 @@
 	 * ValidationResultのイベント名
 	 */
 	var EVENT_VALIDATE = 'validate';
+	var EVENT_ASYNC_PROPERTY_COMPLETE = 'asyncPropertyComplete';
 	var EVENT_VALIDATE_COMPLETE = 'validateComplete';
 	var EVENT_VALIDATE_ABORT = 'abort';
 
@@ -702,8 +703,11 @@
 							this.validatingProperties = uniqMerge(this.validatingProperties,
 									result.validatingProperties);
 
-							//Asyncかどうかは、マージ後のバリデート中プロパティがあるかどうかで判定
-							this.isAsync = (this.validatingProperties.length === 0);
+							this.asyncWaitingProperties = uniqMerge(this.asyncWaitingProperties,
+									result.asyncWaitingProperties);
+
+							//Asyncかどうかは、マージ後のresultに非同期結果待ちプロパティがあるかどうかで判定
+							this.isAsync = (this.asyncWaitingProperties.length === 0);
 
 							this.validProperties = newValidProperties;
 							this.validCount = newValidProperties.length;
@@ -1886,7 +1890,16 @@
 							violation: null
 						});
 
-						that._eliminateAsyncWaitingProperty(_prop, _promises, validationResult);
+						var isPropertyCompleted = that._eliminateAsyncWaitingProperty(_prop,
+								_promises, validationResult);
+						if (isPropertyCompleted) {
+							validationResult.dispatchEvent({
+								type: EVENT_ASYNC_PROPERTY_COMPLETE,
+								name: _prop,
+								isValid: true
+							});
+						}
+
 						that._checkAsyncValidateComplete(validationResult);
 					};
 				})(prop, promises);
@@ -1919,7 +1932,17 @@
 								violation: that._createViolation(ruleName, ruleValue, arguments),
 							});
 
-							that._eliminateAsyncWaitingProperty(_prop, _promises, validationResult);
+							var isPropertyCompleted = that._eliminateAsyncWaitingProperty(_prop,
+									_promises, validationResult);
+
+							if (isPropertyCompleted) {
+								validationResult.dispatchEvent({
+									type: EVENT_ASYNC_PROPERTY_COMPLETE,
+									name: _prop,
+									isValid: false
+								});
+							}
+
 							that._checkAsyncValidateComplete(validationResult);
 						};
 					})(prop, promise, promises);
@@ -1953,12 +1976,13 @@
 		 * 完了したらValidationResult.asyncWaitingPropertiesから当該プロパティを取り除きます。未完了のバリデータがある場合は何もせず終了します。
 		 *
 		 * @private
+		 * @returns あるプロパティの全ての非同期バリデーションが完了したかどうか（プロパティを削除したかどうか）
 		 */
 		_eliminateAsyncWaitingProperty: function(propertyName, promises, validationResult) {
 			for (var i = 0, len = promises.length; i < len; i++) {
 				var promise = promises[i];
 				if (promise.state() === 'pending') {
-					return;
+					return false;
 				}
 			}
 
@@ -1968,7 +1992,9 @@
 			var idx = asyncWaitingProps.indexOf(propertyName);
 			if (idx !== -1) {
 				asyncWaitingProps.splice(idx, 1);
+				return true;
 			}
+			return false;
 		},
 
 		/**

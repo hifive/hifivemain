@@ -2705,6 +2705,9 @@
 				case 'validate':
 					that._asyncValidateListener(event);
 					break;
+				case 'asyncPropertyComplete':
+					that._asyncPropertyCompleteListener(event);
+					break;
 				case 'abort':
 					that._asyncAbortListener(event);
 					break;
@@ -3546,6 +3549,8 @@
 					this._waitingValidationResultMap[p] = result;
 				}
 				result.addEventListener('validate', this._asyncValidateResultListenerWrapper);
+				result.addEventListener('asyncPropertyComplete',
+						this._asyncValidateResultListenerWrapper);
 				result.addEventListener('validateComplete',
 						this._asyncValidateResultListenerWrapper);
 				result.addEventListener('abort', this._asyncValidateResultListenerWrapper);
@@ -3576,6 +3581,29 @@
 			this._callPluginForAsyncValidation(name, result);
 
 			this._fireValidationUpdateEvent('asyncResult');
+		},
+
+		/**
+		 * @private
+		 * @param event
+		 */
+		_asyncPropertyCompleteListener: function(event) {
+			var result = event.target;
+			var name = event.name;
+
+			if (this._waitingValidationResultMap[name] !== result) {
+				//このnameのプロパティについての最新のバリデーション結果以外の場合は何もしない
+				return;
+			}
+
+			//このnameのプロパティの全ての非同期バリデーションが完了したのでマップからエントリを削除
+			delete this._waitingValidationResultMap[name];
+
+			//マージした方の最新のResultの非同期結果待ちプロパティリストから当該プロパティを削除する
+			var idx = this._lastResult.asyncWaitingProperties.indexOf(name);
+			if (idx !== -1) {
+				this._lastResult.asyncWaitingProperties.splice(idx, 1);
+			}
 		},
 
 		/**
@@ -3669,6 +3697,8 @@
 		 */
 		_removeAllValidationResultListenerWrapper: function(validationResult) {
 			validationResult.removeEventListener('validate',
+					this._asyncValidateResultListenerWrapper);
+			validationResult.removeEventListener('asyncPropertyComplete',
 					this._asyncValidateResultListenerWrapper);
 			validationResult.removeEventListener('validateComplete',
 					this._asyncValidateResultListenerWrapper);
