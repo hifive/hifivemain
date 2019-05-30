@@ -80,21 +80,21 @@ $(function() {
 			h5.cls.RootClass.extend(function(_super) {
 				return {};
 			});
-		}, /.*name.*/, 'Descriptorにnameが無いとエラー。');
+		}, 'Descriptorにnameが無いとエラー。');
 		throws(function() {
 			h5.cls.RootClass.extend(function(_super) {
 				return {
 					name: ''
 				};
 			});
-		}, /.*name.*/, 'Descriptorのnameが空文字だとエラー。');
+		}, 'Descriptorのnameが空文字だとエラー。');
 		throws(function() {
 			h5.cls.RootClass.extend(function(_super) {
 				return {
 					name: null
 				};
 			});
-		}, /.*name.*/, 'Descriptorのnameがnullだとエラー。');
+		}, 'Descriptorのnameがnullだとエラー。');
 	});
 
 	test('constructor', function() {
@@ -168,7 +168,7 @@ $(function() {
 			ok(true, '親コンストラクタ呼び出しを書かなくても定義自体にエラーは発生しない。');
 
 			cls.create();
-		}, /.*親クラスのコンストラクタ.*/, '親コンストラクタを呼び出さないとエラー。');
+		}, '親コンストラクタを呼び出さないとエラー。');
 	});
 
 	//=============================
@@ -692,7 +692,7 @@ $(function() {
 					}
 				};
 			});
-		}, /.*method.*/, 'メソッドにnullを定義するとエラーが発生すること。');
+		}, 'メソッドにnullを定義するとエラーが発生すること。');
 		throws(function() {
 			h5.cls.RootClass.extend(function(_super) {
 				return {
@@ -705,7 +705,7 @@ $(function() {
 					}
 				};
 			});
-		}, /.*method.*/, 'メソッドにfunction以外を定義するとエラーが発生すること。');
+		}, 'メソッドに関数以外を定義するとエラーが発生すること。');
 	});
 
 	test('Objectのメソッドをオーバーライド', function() {
@@ -1211,7 +1211,7 @@ $(function() {
 				};
 			});
 			cls.create('c1', 'c2');
-		}, /.*親クラスのコンストラクタ.*/, '親コンストラクタを呼び出さないとエラーが発生すること。');
+		}, '親コンストラクタを呼び出さないとエラーが発生すること。');
 	});
 
 	test('フィールドの追加', function() {
@@ -1520,7 +1520,7 @@ $(function() {
 	test('Abstractを指定', function() {
 		throws(function() {
 			g.TestClass.create();
-		}, /.*抽象クラス.*/, 'Abstractが指定されたクラスはインスタンス化できないこと。');
+		}, 'Abstractが指定されたクラスはインスタンス化できないこと。');
 	});
 
 	test('抽象クラスの継承', function() {
