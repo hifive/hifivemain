@@ -825,6 +825,18 @@
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['validate'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+
 			if (this.isInit) {
 				this._setChildSetting();
 			} else {
@@ -1016,17 +1028,6 @@
 		_setChildSetting: function() {
 			var setting = this._setting;
 
-			if (setting.updateOn == null) {
-				this._updateOn = ['validate'];
-			} else {
-				var updateOn = setting.updateOn;
-				if (isArray(updateOn)) {
-					this._updateOn = updateOn;
-				} else {
-					this._updateOn = [updateOn];
-				}
-			}
-
 			//showAllErrorsはデフォルトでtrue（すべてのエラーを表示）。
 			//明示的にfalseが指定された場合のみ、最初に検出されたエラーのみ出力する。
 			this._showAllErrors = setting.showAllErrors !== false;
@@ -1138,6 +1139,18 @@
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['focus', 'blur'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+
 			if (this.isInit) {
 				this._setChildSetting();
 			} else {
@@ -1432,17 +1445,6 @@
 		_setChildSetting: function() {
 			var setting = this._setting;
 
-			if (setting.updateOn == null) {
-				this._updateOn = ['focus', 'blur'];
-			} else {
-				var updateOn = setting.updateOn;
-				if (isArray(updateOn)) {
-					this._updateOn = updateOn;
-				} else {
-					this._updateOn = [updateOn];
-				}
-			}
-
 			if ('message' in setting) {
 				this._messageOutputController._setOutputDefaultMessage(setting.message);
 			}
@@ -1658,6 +1660,18 @@
 		 */
 		_setSetting: function(setting) {
 			this._setting = setting;
+
+			if (setting.updateOn == null) {
+				this._updateOn = ['change', 'validate'];
+			} else {
+				var updateOn = setting.updateOn;
+				if (isArray(updateOn)) {
+					this._updateOn = updateOn;
+				} else {
+					this._updateOn = [updateOn];
+				}
+			}
+
 			if (this.isInit) {
 				this._setChildSetting();
 			} else {
@@ -1870,17 +1884,6 @@
 		 */
 		_setChildSetting: function() {
 			var setting = this._setting;
-
-			if (setting.updateOn == null) {
-				this._updateOn = ['change', 'validate'];
-			} else {
-				var updateOn = setting.updateOn;
-				if (isArray(updateOn)) {
-					this._updateOn = updateOn;
-				} else {
-					this._updateOn = [updateOn];
-				}
-			}
 
 			if ('wrapper' in setting) {
 				this._wrapper = setting.wrapper;
@@ -2174,8 +2177,19 @@
 		return false;
 	}
 
+	/**
+	 * targetノードがcontainerノードの子孫要素かどうかを判定します。
+	 *
+	 * @private
+	 */
+	function containsNode(container, target) {
+		//booleanで値を返すために !! で型変換する
+		return !!(container.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_CONTAINED_BY);
+	}
+
 	//キャッシュ
 	var ValidationResult = h5internal.validation.ValidationResult;
+	var isIE = h5.env.ua.isIE;
 
 	// ログメッセージ
 	var FW_LOG_NOT_DEFINED_PLUGIN_NAME = 'プラグイン"{0}"は存在しません';
@@ -2324,7 +2338,7 @@
 		_config: {},
 		_bindedForm: null,
 		_ruleCreators: [],
-		_plugins: [],
+		_plugins: {},
 
 		/**
 		 * フォームバリデーションロジック
@@ -2567,7 +2581,7 @@
 					var ruleDefaultSetting = setting.ruleDefault[ruleName];
 					if ('isForceEnabledWhenEmpty' in ruleDefaultSetting) {
 						this._validationLogic.setRuleForceEnabledWhenEmpty(ruleName,
-								ruleDefaultSetting.isForceEnabledWhenEmpty === true);
+								ruleDefaultSetting.isForceEnabledWhenEmpty);
 					}
 					if ('message' in ruleDefaultSetting) {
 						//既存ルールのデフォルトメッセージを上書き
@@ -2604,6 +2618,8 @@
 				plugin._setSetting && plugin._setSetting(this._margePluginSettings(pluginName));
 				this._setDefaultMessages(plugin);
 			}
+			//updateOnのタイミングキャッシュを更新
+			this._updateOutputTimingCache();
 
 			if (this.isInit) {
 				this._updateRuleByElement();
@@ -2650,7 +2666,7 @@
 				$.extend(propSetting, propSetting[pluginName]);
 				var propertyPluginOutput = h5.u.obj.getByPath('output.' + pluginName, propSetting);
 				delete propSetting['output'];
-				pluginSetting.property[prop] = $.extend({}, propSetting, propertyPluginOutput)
+				pluginSetting.property[prop] = $.extend({}, propSetting, propertyPluginOutput);
 			}
 			return pluginSetting;
 		},
@@ -2688,6 +2704,9 @@
 				switch (event.type) {
 				case 'validate':
 					that._asyncValidateListener(event);
+					break;
+				case 'asyncPropertyComplete':
+					that._asyncPropertyCompleteListener(event);
 					break;
 				case 'abort':
 					that._asyncAbortListener(event);
@@ -2833,7 +2852,40 @@
 				}
 				this._addOutputPlugin(pluginName, plugin);
 			}
+
+			//updateOnのタイミングキャッシュを更新
+			this._updateOutputTimingCache();
 		},
+
+		/**
+		 * @private
+		 */
+		_updateOutputTimingCache: function() {
+			var aggrTimingMapObj = {};
+
+			for ( var pluginName in this._plugins) {
+				var plugin = this._plugins[pluginName];
+
+				var updateOn = plugin._updateOn;
+				if (!updateOn) {
+					updateOn = ['focus', 'blur', 'change', 'keyup', 'validate'];
+				}
+
+				for (var i = 0, len = updateOn.length; i < len; i++) {
+					var timing = updateOn[i];
+					aggrTimingMapObj[timing] = true;
+				}
+			}
+
+			this._outputTimingCache = aggrTimingMapObj;
+		},
+
+		/**
+		 * 現在の全ての出力プラグインでセットされているupdateOnのタイミングの集合。アップデートするタイミングをオブジェクトのキーにする。
+		 *
+		 * @private
+		 */
+		_outputTimingCache: {},
 
 		/**
 		 * ルールの追加
@@ -2913,12 +2965,12 @@
 		 *
 		 * <pre class="sh_html"><code>
 		 * &lt;!-- data-h5-input-group-containerにグループ名を指定。子要素がそのグループになる。 --&gt;
-		 * lt;div data-h5-input-group-container=&quot;birthday&quot;&gt;
+		 * &lt;div data-h5-input-group-container=&quot;birthday&quot;&gt;
 		 * 		&lt;displayName class=&quot;control-displayName&quot;&gt;生年月日&lt;/displayName&gt;
 		 * 		&lt;input name=&quot;year&quot; type=&quot;text&quot; placeholder=&quot;年&quot;&gt;
 		 * 		&lt;input name=&quot;month&quot; type=&quot;text&quot; placeholder=&quot;月&quot;&gt;
 		 * 		&lt;input name=&quot;day&quot; type=&quot;text&quot; placeholder=&quot;日&quot;&gt;
-		 * 		&lt;/div&gt;
+		 * &lt;/div&gt;
 		 * </code></pre>
 		 *
 		 * <p>
@@ -3263,6 +3315,23 @@
 		},
 
 		/**
+		 * このDOM要素がフォームの入力要素かどうかを返します。内部的には、タグ名がinput, select, textareaのいずれかの場合trueを返します。
+		 *
+		 * @private
+		 * @param element
+		 * @returns {Boolean}
+		 */
+		_isFormInputElement: function(element) {
+			if (element) {
+				var tagName = element.tagName.toLowerCase();
+				if (tagName == 'input' || tagName == 'select' || tagName == 'textarea') {
+					return true;
+				}
+			}
+			return false;
+		},
+
+		/**
 		 * このコントローラが管理するフォームに属するフォーム部品全てを取得
 		 *
 		 * @private
@@ -3270,10 +3339,28 @@
 		 * @returns {DOM[]}
 		 */
 		_getElements: function() {
+			if (this._bindedForm && !isIE) {
+				//IE11以外の現行ブラウザ(2019/4現在)はHTML5仕様に基づくform属性に対応しているので
+				//form.elementsを参照すればそのフォームに属する入力要素を取得可能。
+				//TODO reset, buttonなど送信時に含むかどうかが動的に変わる要素のフィルタ
+				return $(this._bindedForm.elements);
+			}
+
 			var $innerFormControls = this.$find('input,select,textarea').not(
 					'[type="submit"],[type="reset"],[type="image"]');
+
 			if (!this._bindedForm) {
+				//コントローラのバインド要素がフォームでない場合は
+				//バインド要素の子孫の入力要素
+				//TODO notの除外タイプが上記でよいか検討。type=buttonをどうするか
 				return $innerFormControls;
+			}
+
+			var cmap = new Map();
+
+			for (var i = 0, len = $innerFormControls.length; i < len; i++) {
+				var elem = $innerFormControls[i];
+				cmap.set(elem, elem);
 			}
 
 			var formId = $(this._bindedForm).attr('id');
@@ -3288,12 +3375,14 @@
 						// form属性がこのコントローラのフォームを指している
 						// または、このコントローラのフォーム内の要素でかつform属性指定無し
 						return (formAttr && formAttr === formId) || !formAttr
-								&& $innerFormControls.index($this) !== -1;
+								&& cmap.get(this) !== undefined;
 					}).toArray();
 		},
 
 		/**
-		 * このコントローラが管理するフォームに属するグループコンテナ要素(data-group-containerが指定されている要素)を取得
+		 * このコントローラが管理するフォームに属するグループコンテナ要素(data-group-containerが指定されている要素)を取得する。
+		 * グループコンテナ要素は、このコントローラのバインド要素の子孫要素である必要がある。
+		 * （入力要素と異なり、form属性には対応しない。すなわち、コントローラのバインド要素の子孫の外側にコンテナ要素を置いても機能しない）
 		 *
 		 * @private
 		 * @memberOf h5.ui.FormController
@@ -3317,7 +3406,8 @@
 		 * @param name
 		 */
 		_isGroupName: function(name) {
-			if (name == null || name == '') {
+			//nameはnullの場合に加え空文字の場合もfalse扱いなのでこの判定でよい
+			if (!name) {
 				return false;
 			}
 
@@ -3443,7 +3533,8 @@
 			//				this._waitingValidationResultMap = {};
 			//			}
 
-			var result = this._validationLogic.validate(formData, names, timing, this._lastResult);
+			var result = this._validationLogic.validate(formData, names, timing, this._lastResult,
+					this._outputTimingCache);
 
 			//this._lastResultは常に存在する
 			//（construct時に初期状態のValidationResultインスタンスをセットし、その後は常にmergeし続ける）ので
@@ -3456,12 +3547,14 @@
 				//validateイベント時にそのValidationResultとこのマップに保存したResultが一致するかどうかをチェックして
 				//反映させるかどうかを決定する。マップに保持したものととevent.targetのインスタンスが一致しないということは
 				//そのtargetは古いバリデーションなので、画面に反映させない。
-				var properties = result.validatingProperties;
+				var properties = result.asyncWaitingProperties;
 				for (var i = 0, l = properties.length; i < l; i++) {
 					var p = properties[i];
 					this._waitingValidationResultMap[p] = result;
 				}
 				result.addEventListener('validate', this._asyncValidateResultListenerWrapper);
+				result.addEventListener('asyncPropertyComplete',
+						this._asyncValidateResultListenerWrapper);
 				result.addEventListener('validateComplete',
 						this._asyncValidateResultListenerWrapper);
 				result.addEventListener('abort', this._asyncValidateResultListenerWrapper);
@@ -3491,9 +3584,30 @@
 
 			this._callPluginForAsyncValidation(name, result);
 
+			this._fireValidationUpdateEvent('asyncResult');
+		},
+
+		/**
+		 * @private
+		 * @param event
+		 */
+		_asyncPropertyCompleteListener: function(event) {
+			var result = event.target;
+			var name = event.name;
+
+			if (this._waitingValidationResultMap[name] !== result) {
+				//このnameのプロパティについての最新のバリデーション結果以外の場合は何もしない
+				return;
+			}
+
+			//このnameのプロパティの全ての非同期バリデーションが完了したのでマップからエントリを削除
 			delete this._waitingValidationResultMap[name];
 
-			this._fireValidationUpdateEvent('asyncResult');
+			//マージした方の最新のResultの非同期結果待ちプロパティリストから当該プロパティを削除する
+			var idx = this._lastResult.asyncWaitingProperties.indexOf(name);
+			if (idx !== -1) {
+				this._lastResult.asyncWaitingProperties.splice(idx, 1);
+			}
 		},
 
 		/**
@@ -3507,10 +3621,23 @@
 			var violation = event.violation;
 			var lastResult = this._lastResult;
 
+			//あるプロパティについて、少なくとも1つのエラーが発生したか、もしくはすべての非同期バリデータが成功したので
+			//validating状態から削除する
+			var validatingPropIdx = lastResult.validatingProperties.indexOf(name);
+			if (validatingPropIdx !== -1) {
+				//ただし、同期ルールですでにエラーがあった場合はvalidatingでなくinvalidに既に入っているので、
+				//validatingに入っていた時のみ削除
+				lastResult.validatingProperties.splice(validatingPropIdx, 1);
+			}
+
 			if (!violation) {
-				//violationがnull === この非同期ルールの結果はValidだった
-				pushIfNotExist(name, lastResult.validProperties);
-				lastResult.validCount++;
+				//violationがnull === このプロパティに対するすべての非同期ルールの結果がValidだった
+
+				if (validatingPropIdx !== -1) {
+					//validatingに入っていた＝同期ルールはすべてエラーなしだった場合のみ、validに含める
+					pushIfNotExist(name, lastResult.validProperties);
+					lastResult.validCount++;
+				}
 			} else {
 				lastResult.isValid = false;
 				var isAddedToInvalid = pushIfNotExist(name, lastResult.invalidProperties);
@@ -3526,22 +3653,25 @@
 					};
 				}
 
+				var isViolationReplaced = false;
+
 				for (var i = 0, len = lastResult.invalidReason[name].violation.length; i < len; i++) {
 					var lastViolation = lastResult.invalidReason[name].violation[i];
 					if (violation.ruleName === lastViolation.ruleName) {
 						//すでにこのルールのエラーが出力されている場合、新しいViolationで置換する
 						lastResult.invalidReason[name].violation[i] = violation;
-						return;
+						isViolationReplaced = true;
+						break;
 					}
 				}
 
 				//今回新たにエラー出力する
-				lastResult.invalidReason[name].violation.push(violation);
-				lastResult.violationCount++;
+				if (!isViolationReplaced) {
+					lastResult.invalidReason[name].violation.push(violation);
+					lastResult.violationCount++;
+				}
 			}
 
-			lastResult.validatingProperties.splice(
-					$.inArray(name, lastResult.validatingProperties), 1);
 
 			if (!lastResult.isValid || !lastResult.validatingProperties.length) {
 				lastResult.isAllValid = lastResult.isValid;
@@ -3581,6 +3711,8 @@
 		_removeAllValidationResultListenerWrapper: function(validationResult) {
 			validationResult.removeEventListener('validate',
 					this._asyncValidateResultListenerWrapper);
+			validationResult.removeEventListener('asyncPropertyComplete',
+					this._asyncValidateResultListenerWrapper);
 			validationResult.removeEventListener('validateComplete',
 					this._asyncValidateResultListenerWrapper);
 			validationResult.removeEventListener('abort', this._asyncValidateResultListenerWrapper);
@@ -3591,15 +3723,21 @@
 		 * @memberOf h5.ui.FormController
 		 */
 		_pluginElementEventHandler: function(ctx, eventType) {
+			//TODO セットされているプラグイン・バリデートタイミングをチェックして、特にkeyupなど
+			//バリデーションする必要がないタイミングがあればバリデーションしないようにする（高速化）
 			var target = ctx.event.target;
-			if (!this._isFormControls(target)) {
+
+			if (!this._isUnderControl(target)) {
+				//このコントローラがバインドされているフォームに紐づいていない入力要素で起きたイベントの場合は無視
 				return;
 			}
+
 			var name = target.name;
 			if (!name) {
 				// name無しの要素は対象外
 				return;
 			}
+
 			// グループに属していればそのグループに対してvalidate
 			// タグにグループの指定が無くグループコンテナに属している場合
 			var groupName;
@@ -3727,12 +3865,41 @@
 		},
 
 		/**
+		 * このFormController（に対応するフォーム）に紐づいた入力要素かどうかを返します。
+		 * 判定条件は、(1)要素がinput,select,textareaのいずれかであること, かつ<br>
+		 * (2-1)form属性がない場合は、このコントローラのバインド要素の子孫要素であること<br>
+		 * (2-2)form属性がある場合は、このコントローラのバインド要素がform要素かつそのフォームのidと属性値が同じであること。<br>
+		 * なお、2-2において、このコントローラのバインド要素がフォームでない場合はfalseを返します。
+		 *
 		 * @private
-		 * @memberOf h5.ui.FormController
 		 */
-		_isFormControls: function(element) {
-			var $formControls = $(this._getElements());
-			return $formControls.index(element) !== -1;
+		_isUnderControl: function(element) {
+			if (!this._isFormInputElement(element)) {
+				//入力要素でない場合はfalse
+				return false;
+			}
+
+			var id = element.getAttribute('form');
+			//ここでは、id属性がセットされていない(null)場合と空文字の場合('')で同じ分岐に入りたいのでこの判定式で良い
+			if (!id) {
+				//form属性がセットされていない場合はこのコントローラのバインド要素の子孫ならtrue
+				var isContained = containsNode(this.rootElement, element);
+				return isContained;
+			}
+
+			//以下は、引数の要素にform属性がセットされていた場合
+
+			//このコントローラのバインド要素がformでない場合はfalse
+			if (!this._bindedForm) {
+				return false;
+			}
+
+			//form属性がセットされている場合はその値がバインドしているformのidと同じならtrue
+			var formId = this._bindedForm.getAttribute('id');
+			if (id === formId) {
+				return true;
+			}
+			return false;
 		},
 
 		/**
@@ -3754,7 +3921,8 @@
 				violationCount: 0,
 				validPropertyToRulesMap: {},
 				nameToRuleSetMap: {},
-				disabledProperties: []
+				disabledProperties: [],
+				asyncWaitingProperties: []
 			});
 			return ret;
 		}

@@ -1,0 +1,26 @@
+@charset 'utf-8';
+
+.spacer {
+	width: 30px;
+	height:30px;
+}
+
+.container-1 {
+	padding: 10px;
+}
+
+table {
+	border: 2px black solid;
+}
+
+table th,td {
+	padding: 5px;
+}
+
+.background-color-f7 {
+	background-color:#f7f7f7;
+}
+
+.font-weight-bold {
+	font-weight: bold;
+}

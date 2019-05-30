@@ -171,8 +171,8 @@ $(function() {
 	test('max 先頭が数字で以降に数字以外の文字列を含むとバリデーションエラーとなること', function() {
 		var validator = this.validator;
 		validator.addRule({
-			p1 : {
-				max : 5
+			p1: {
+				max: 5
 			}
 		});
 		strictEqual(validator.validate({
@@ -232,8 +232,8 @@ $(function() {
 	test('min 先頭が数字で以降に数字以外の文字列を含むとバリデーションエラーとなること', function() {
 		var validator = this.validator;
 		validator.addRule({
-			p1 : {
-				min : 5
+			p1: {
+				min: 5
 			}
 		});
 		strictEqual(validator.validate({
@@ -338,7 +338,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: current.getTime() // unixtimeな時間(number)
+				future: current.getTime()
+			// unixtimeな時間(number)
 			}
 		});
 		strictEqual(validator.validate({
@@ -347,7 +348,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: current.getTime().toString() // unixtimeな時間(string)
+				future: current.getTime().toString()
+			// unixtimeな時間(string)
 			}
 		});
 		strictEqual(validator.validate({
@@ -356,7 +358,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: current // Dateインスタンス
+				future: current
+			// Dateインスタンス
 			}
 		});
 		strictEqual(validator.validate({
@@ -365,7 +368,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: true // バリデーションを行った瞬間の時刻
+				future: true
+			// バリデーションを行った瞬間の時刻
 			}
 		});
 		strictEqual(validator.validate({
@@ -374,7 +378,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: null // バリデーションを行った瞬間の時刻
+				future: null
+			// バリデーションを行った瞬間の時刻
 			}
 		});
 		strictEqual(validator.validate({
@@ -383,7 +388,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: undefined // バリデーションを行った瞬間の時刻
+				future: undefined
+			// バリデーションを行った瞬間の時刻
 			}
 		});
 		strictEqual(validator.validate({
@@ -400,7 +406,7 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: 'hoge'  // バリデーションを行った瞬間の時刻
+				future: 'hoge' // バリデーションを行った瞬間の時刻
 			}
 		});
 		strictEqual(validator.validate({
@@ -412,7 +418,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: current.getTime() // unixtimeな時間(number)
+				future: current.getTime()
+			// unixtimeな時間(number)
 			}
 		});
 		strictEqual(validator.validate({
@@ -427,7 +434,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: current.getTime().toString() // unixtimeな時間(string)
+				future: current.getTime().toString()
+			// unixtimeな時間(string)
 			}
 		});
 		strictEqual(validator.validate({
@@ -442,7 +450,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				future: current // Dateインスタンス
+				future: current
+			// Dateインスタンス
 			}
 		});
 		strictEqual(validator.validate({
@@ -498,7 +507,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: current.getTime() // unixtimeな時間(number)
+				past: current.getTime()
+			// unixtimeな時間(number)
 			}
 		});
 		strictEqual(validator.validate({
@@ -507,7 +517,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: current.getTime().toString(10) // unixtimeな時間(string)
+				past: current.getTime().toString(10)
+			// unixtimeな時間(string)
 			}
 		});
 		strictEqual(validator.validate({
@@ -516,7 +527,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: current // Dateインスタンス
+				past: current
+			// Dateインスタンス
 			}
 		});
 		strictEqual(validator.validate({
@@ -525,7 +537,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: true // バリデーションを行った瞬間の時刻
+				past: true
+			// バリデーションを行った瞬間の時刻
 			}
 		});
 		strictEqual(validator.validate({
@@ -534,7 +547,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: null // バリデーションを行った瞬間の時刻
+				past: null
+			// バリデーションを行った瞬間の時刻
 			}
 		});
 		strictEqual(validator.validate({
@@ -543,7 +557,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: undefined // バリデーションを行った瞬間の時刻
+				past: undefined
+			// バリデーションを行った瞬間の時刻
 			}
 		});
 		strictEqual(validator.validate({
@@ -572,7 +587,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: current.getTime() // unixtimeな時間(number)
+				past: current.getTime()
+			// unixtimeな時間(number)
 			}
 		});
 		strictEqual(validator.validate({
@@ -587,7 +603,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: current.getTime().toString() // unixtimeな時間(string)
+				past: current.getTime().toString()
+			// unixtimeな時間(string)
 			}
 		});
 		strictEqual(validator.validate({
@@ -602,7 +619,8 @@ $(function() {
 
 		validator.addRule({
 			p1: {
-				past: current // Dateインスタンス
+				past: current
+			// Dateインスタンス
 			}
 		});
 		strictEqual(validator.validate({
@@ -905,7 +923,7 @@ $(function() {
 			p3: 1
 		});
 		strictEqual(result.validCount, 2, 'validCountにはvalidなプロパティの数が入っている');
-		deepEqual(result.validProperties.splice(0).sort(), ['p1', 'p3'],
+		deepEqual(result.validProperties.slice(0).sort(), ['p1', 'p3'],
 				'validPropertiesはvalidなプロパティの配列である');
 	});
 
@@ -923,9 +941,12 @@ $(function() {
 			p3: 1
 		});
 		strictEqual(result.invalidCount, 3, 'invalidCountにはinvalidなプロパティの数が入っている');
-		deepEqual(result.invalidProperties.splice(0).sort(), ['p2', 'p4', 'p5'],
+		deepEqual(result.invalidProperties.slice(0).sort(), ['p2', 'p4', 'p5'],
 				'invalidPropertiesはinvalidなプロパティの配列');
 	});
+
+
+
 
 	test('validatingProperties', function() {
 		var validator = this.validator;
@@ -959,20 +980,6 @@ $(function() {
 
 		var result = validator.validate({});
 		strictEqual(result.isAsync, false, '同期バリデートの場合はisAsyncはfalse');
-
-		validator.addRule({
-			p1: requiredRule,
-			p2: {
-				customFunc: customAsyncRule.customFunc,
-				max: 1
-			}
-		});
-		var dfd1 = h5.async.deferred();
-		result = validator.validate({
-			p1: 1,
-			p2: dfd1
-		});
-		strictEqual(result.isAsync, true, '非同期でバリデートするルールが１つでもあればisAsyncはtrue');
 
 		var dfd2 = h5.async.deferred();
 		dfd2.resolve();
@@ -1054,6 +1061,168 @@ $(function() {
 		dfd4.resolve();
 		strictEqual(result.isValid, true, '全ての非同期バリデートがvalidで終了した時、isValidはtrue');
 		strictEqual(result.isAllValid, true, '全ての非同期バリデートがvalidで終了した時、isAllValidはtrue');
+	});
+
+
+	//=============================
+	// Definition
+	//=============================
+	module('ValidationResult(同一プロパティに同期バリデートと非同期バリデートが混在している場合)', {
+		setup: function() {
+			this.validator = h5.core.logic(h5.validation.FormValidationLogic);
+		}
+	});
+
+	//=============================
+	// Body
+	//=============================
+
+	test('同期バリデートと非同期バリデートの両方に成功する場合', function() {
+		var validator = this.validator;
+		var dfd = h5.async.deferred();
+		validator.addRule({
+			p1: {
+				assertFalse: true,
+				customFunc: function(value) {
+					return dfd.promise();
+				},
+			}
+		});
+
+		var result = validator.validate({
+			p1: false
+		//assertFalseでバリデーションを成功させる
+		});
+		strictEqual(result.isValid, true, '非同期バリデートの結果が出ていないため、isValidはtrue');
+		strictEqual(result.isAllValid, null, '非同期バリデートの結果が出ていないため、isAllValidはnull');
+		strictEqual(result.validCount, 0, '非同期バリデートが行われていないためvalidCountには0が入っている');
+		strictEqual(result.invalidCount, 0, '非同期バリデートが行われていないためinvalidCountには0が入っている');
+		deepEqual(result.validProperties, [],
+				'同期バリデートに成功しているが非同期バリデートが行われていないためvalidPropertiesにプロパティが入らない');
+		deepEqual(result.invalidProperties, [],
+				'同期バリデートに成功しているが非同期バリデートが行われていないためinvalidPropertiesにプロパティが入らない');
+		deepEqual(result.validatingProperties, ['p1'],
+				'同期バリデートに成功したが、非同期バリデートが完了していないためプロパティが格納されている');
+
+		dfd.resolve();
+
+		strictEqual(result.isValid, true, '非同期バリデートに成功したため、isValidはtrue');
+		strictEqual(result.isAllValid, true, '同期と非同期バリデートに成功したためisAllValidはtrue');
+		strictEqual(result.validCount, 1, '同期と非同期バリデートに成功したためvalidCountには1が入っている');
+		strictEqual(result.invalidCount, 0, '同期と非同期バリデートに成功したためinvalidCountには0が入っている');
+		deepEqual(result.validProperties, ['p1'], '非同期バリデートに成功したためvalidPropertiesにプロパティが入る');
+		deepEqual(result.invalidProperties, [], '非同期バリデートに成功したためinvalidPropertiesにプロパティが入らない');
+		deepEqual(result.validatingProperties, [], '全てのバリデートが完了したためプロパティが格納されていない');
+	});
+
+	test('同期バリデートに成功し非同期バリデートに失敗する場合', function() {
+		var validator = this.validator;
+		var dfd = h5.async.deferred();
+		validator.addRule({
+			p1: {
+				assertFalse: true,
+				customFunc: function(value) {
+					return dfd.promise();
+				},
+			}
+		});
+
+		var result = validator.validate({
+			p1: false
+		//assertFalseでバリデーションを成功させる
+		});
+
+		strictEqual(result.isValid, true, '非同期バリデートの結果が出ていないため、isValidはtrue');
+		strictEqual(result.isAllValid, null, '非同期バリデートの結果が出ていないため、isAllValidはnull');
+		strictEqual(result.validCount, 0, '非同期バリデートが行われていないためvalidCountには0が入っている');
+		strictEqual(result.invalidCount, 0, '非同期バリデートが行われていないためinvalidCountには0が入っている');
+		deepEqual(result.validProperties, [],
+				'同期バリデートに成功しているが非同期バリデートが行われていないためvalidPropertiesにプロパティが入らない');
+		deepEqual(result.invalidProperties, [],
+				'同期バリデートに成功しているが非同期バリデートが行われていないためinvalidPropertiesにプロパティが入らない');
+		deepEqual(result.validatingProperties, ['p1'],
+				'同期バリデートに成功したが、非同期バリデートが完了していないためプロパティが格納されている');
+
+		dfd.reject();
+
+		strictEqual(result.isValid, false, '非同期バリデートに失敗したため、isValidはfalse');
+		strictEqual(result.isAllValid, false, '非同期バリデートに失敗したため、isAllValidはfalse');
+		strictEqual(result.validCount, 0, '非同期バリデートに失敗したため、validCountには0が入っている');
+		strictEqual(result.invalidCount, 1, '非同期バリデートに失敗したため、invalidCountには1が入っている');
+		deepEqual(result.validProperties, [], '非同期バリデートに失敗したため、validPropertiesにプロパティが入らない');
+		deepEqual(result.invalidProperties, ['p1'], '非同期バリデートに失敗したため、invalidPropertiesにプロパティが入る');
+		deepEqual(result.validatingProperties, [], '全てのバリデートが完了したためプロパティが格納されていない');
+	});
+
+	test('同期バリデートに失敗し非同期バリデートに成功する場合', function() {
+		var dfd = h5.async.deferred();
+		var validator = this.validator;
+		validator.addRule({
+			p1: {
+				assertFalse: true,
+				customFunc: function(value) {
+					return dfd.promise();
+				}
+			}
+		});
+
+		var result = validator.validate({
+			p1: true
+		//assertFalseでバリデーションを失敗させる
+		});
+		strictEqual(result.isValid, false, '同期バリデートに失敗したため、isValidはfalse');
+		strictEqual(result.isAllValid, false, '同期バリデートに失敗したため、isAllValidはfalse');
+		strictEqual(result.validCount, 0, '同期バリデートに失敗したため、validCountには0が入っている');
+		strictEqual(result.invalidCount, 1, '非同期バリデートに失敗したため、invalidCountには1が入っている');
+		deepEqual(result.validProperties, [], '同期バリデートに失敗したためvalidPropertiesにプロパティが入らない');
+		deepEqual(result.invalidProperties, ['p1'], '同期バリデートに失敗したためinvalidPropertiesにプロパティが入る');
+		deepEqual(result.validatingProperties, [], '同期バリデートに失敗したためプロパティが格納されていない');
+
+		dfd.resolve();
+
+		strictEqual(result.isValid, false, '非同期バリデートに成功したが同期バリデートに失敗したため、isValidはfalse');
+		strictEqual(result.isAllValid, false, '非同期バリデートに成功したが同期バリデートに失敗したため、isAllValidはfalse');
+		strictEqual(result.validCount, 0, '非同期バリデートに成功したが同期バリデートに失敗したため、validCountには0が入っている');
+		strictEqual(result.invalidCount, 1, '非同期バリデートに成功したが同期バリデートに失敗したため、invalidCountには1が入っている');
+		deepEqual(result.validProperties, [],
+				'非同期バリデートに成功したが同期バリデートに失敗したため、validPropertiesにプロパティが入らない');
+		deepEqual(result.invalidProperties, ['p1'],
+				'非同期バリデートに成功したが同期バリデートに失敗したため、invalidPropertiesにプロパティが入る');
+		deepEqual(result.validatingProperties, [], '同期バリデートに失敗したためプロパティが格納されていない');
+	});
+
+	test('同期バリデートと非同期バリデートの両方に失敗する場合', function() {
+		var validator = this.validator;
+		var dfd = h5.async.deferred();
+		validator.addRule({
+			p1: {
+				assertFalse: true,
+				customFunc: function(value) {
+					return dfd.promise();
+				}
+			}
+		});
+		var result = validator.validate({
+			p1: true
+		//assertFalseでバリデーションを失敗させる
+		});
+		strictEqual(result.isValid, false, '同期バリデートに失敗したため、isValidはfalse');
+		strictEqual(result.isAllValid, false, '同期バリデートに失敗したため、isAllValidはfalse');
+		strictEqual(result.validCount, 0, '同期バリデートに失敗したため、validCountには0が入っている');
+		strictEqual(result.invalidCount, 1, '非同期バリデートに失敗したため、invalidCountには1が入っている');
+		deepEqual(result.validProperties, [], '同期バリデートに失敗したためvalidPropertiesにプロパティが入らない');
+		deepEqual(result.invalidProperties, ['p1'], '同期バリデートに失敗したためinvalidPropertiesにプロパティが入る');
+		deepEqual(result.validatingProperties, [], '同期バリデートに失敗したためプロパティが格納されていない');
+
+		dfd.reject();
+
+		strictEqual(result.isValid, false, '同期バリデートに失敗したため、isValidはfalse');
+		strictEqual(result.isAllValid, false, '同期バリデートに失敗したため、isAllValidはfalse');
+		strictEqual(result.validCount, 0, '同期バリデートに失敗したため、validCountには0が入っている');
+		strictEqual(result.invalidCount, 1, '同期バリデートに失敗したため、invalidCountには1が入っている');
+		deepEqual(result.validProperties, [], '同期バリデートに失敗したため、validPropertiesにプロパティが入らない');
+		deepEqual(result.invalidProperties, ['p1'], '同期バリデートに失敗したため、invalidPropertiesにプロパティが入る');
+		deepEqual(result.validatingProperties, [], '同期バリデートに失敗したため、プロパティが格納されていない');
 	});
 
 	//=============================

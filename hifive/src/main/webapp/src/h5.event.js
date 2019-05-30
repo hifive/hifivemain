@@ -18,7 +18,9 @@
 (function() {
 	'use strict';
 
-	var ERR_CODE_PROPERTY_NAME_IS_REQUIRED = 90001; //TODO 要エラーコード採番
+	//h5.eventモジュールのエラーコードは19000番台
+	var ERR_CODE_PROPERTY_NAME_IS_REQUIRED = 19001;
+	var ERR_CODE_INVALID_ARGS_ADDEVENTLISTENER = 19002;
 
 	var RootClass = h5.cls.RootClass;
 
@@ -292,6 +294,9 @@
 				}
 			},
 			method: {
+				/**
+				 * @memberOf h5.event.PropertyChangeEvent
+				 */
 				constructor: function PropertyChangeEvent(propertyName, oldValue, newValue) {
 					super_.constructor.call(this, EVENT_NAME_PROPERTY_CHANGE);
 

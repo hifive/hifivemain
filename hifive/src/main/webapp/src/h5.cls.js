@@ -46,8 +46,8 @@
 	var FW_LOG_ISDYNAMIC_IS_OBSOLETE = '{0}: クラス定義のisDynamic指定はver.1.3.3で廃止されました。ver.1.3.3以降、全てのクラスについて、インスタンス生成時にフレームワークによるObject.seal()は行われず、動的なプロパティ追加が可能です。';
 
 	var errMsgMap = {};
-	errMsgMap[ERR_CODE_NO_CLASS_DESC] = 'クラス定義がありません。';
-	errMsgMap[ERR_CODE_NO_CLASS_NAME] = 'クラス定義にnameがありません。クラス名は必須です。';
+	errMsgMap[ERR_CODE_NO_CLASS_DESC] = 'クラス定義がありません。extend()の引数の関数で、クラス定義を返していることを確認してください。';
+	errMsgMap[ERR_CODE_NO_CLASS_NAME] = 'クラス定義にnameがないか、空文字です。クラス名は必須です。';
 	errMsgMap[ERR_CODE_NO_CLASS_CONSTRUCTOR] = '{0}: クラスのメソッド定義にconstructorがありません。constructorは必須です。';
 	errMsgMap[ERR_CODE_CTOR_NOT_CHAINED] = '{0}: 親クラスのコンストラクタ呼び出しが途中で行われていません。継承関係のあるすべてのクラスのコンストラクタの先頭で親コンストラクタの呼び出しが行われていることを確認してください。';
 	errMsgMap[ERR_CODE_METHOD_MUST_BE_FUNCTION] = '{0}: クラス定義のmethodには関数以外は記述できません。違反しているプロパティ={1}';
@@ -98,13 +98,15 @@
 			throwFwError(ERR_CODE_NO_CLASS_DESC);
 		}
 		if (!classDescriptor.name) {
+			//クラス名は必須なので、nullやundefinedの場合に加えて空文字の場合もエラーにするのでこのif文でよい
 			throwFwError(ERR_CODE_NO_CLASS_NAME);
 		}
-		if (!classDescriptor.method || !classDescriptor.method.constructor) {
+		if (classDescriptor.method == null || !classDescriptor.method.hasOwnProperty('constructor')) {
 			throwFwError(ERR_CODE_NO_CLASS_CONSTRUCTOR, classDescriptor.name);
 		}
 
 		if (typeof classDescriptor.isDynamic !== 'undefined') {
+			//ver.1.3.3以降、isDynamicの指定は廃止され機能しなくなったので、もし使用している場合は警告を出す
 			fwLogger.warn(FW_LOG_ISDYNAMIC_IS_OBSOLETE, classDescriptor.name);
 		}
 
@@ -591,26 +593,48 @@
 
 		/**
 		 * 指定された名前空間に属するクラスをそのクラス名をキーとして保持するオブジェクトを返します。
+		 * 引数を省略したり、nullを渡すことはできません。デフォルト空間を取得したい場合は空文字（""）を渡してください。
+		 * （"MyClass"のように特定の名前空間を指定しないクラスを定義した場合、h5.cls.manager.getNamespaceObject('').MyClass
+		 * で参照可能。）<br>
+		 * このメソッドが返すオブジェクトは階層的「ではありません」。例えば、"ns1.MyClass1"と"ns1.ns2.MyClass2"の2つのクラスを定義したとき、
+		 * getNamespaceObject("ns1")の戻り値のオブジェクトに含まれるのは「{ MyClass1:
+		 * (クラス)}」のようにMyClass1だけであり、ns2名前空間への参照は含まれません。
 		 *
-		 * @param {String} namespace 名前空間
+		 * @param {String} namespace
+		 *            名前空間。クラス名直前のドットは含めないでください。（例：「ns1.ns2.MyClass」というクラスを定義した場合、getNamespaceObject("ns1.ns2")のように指定する）
 		 * @returns 名前空間オブジェクト
 		 */
 		getNamespaceObject: function(namespace) {
-			if (!namespace) {
+			if (namespace == null) {
 				throwFwError(ERR_CODE_INVALID_NAMESPACE);
 			}
 
-			var ns = namespace + '.';
-
-			var ret = {};
+			//引数が空文字の場合、デフォルト名前空間を指定されたとみなす
+			var isDefaultSpace = namespace == '';
 
 			var classMap = this._classMap;
-			var namespaceLen = ns.length;
+			var ret = {};
 
-			for ( var fqcn in classMap) {
-				if (fqcn.lastIndexOf(ns, 0) === 0 && fqcn.indexOf('.', namespaceLen) === -1) {
-					var simpleName = fqcn.substr(namespaceLen);
-					ret[simpleName] = classMap[fqcn];
+			//for-inループ内で分岐するとパフォーマンス上無駄なので、先にif分岐を行う
+			if (isDefaultSpace) {
+				//デフォルト名前空間が指定された場合
+				for ( var fqcn in classMap) {
+					//FQCNにドットが含まれていない＝デフォルト名前空間に属するクラス
+					if (fqcn.indexOf('.') === -1) {
+						ret[fqcn] = classMap[fqcn];
+					}
+				}
+			} else {
+				var ns = namespace + '.';
+				var namespaceLen = ns.length;
+
+				for ( var fqcn in classMap) {
+					if (fqcn.lastIndexOf(ns, 0) === 0 && fqcn.indexOf('.', namespaceLen) === -1) {
+						//特定の名前空間が指定された場合、「FQCNが指定された名前空間文字列から開始していて」
+						//かつ「FQCNに、その名前空間文字列以降にドットが含まれていない」ければそのクラスが含むべきクラス
+						var simpleName = fqcn.substr(namespaceLen);
+						ret[simpleName] = classMap[fqcn];
+					}
 				}
 			}
 

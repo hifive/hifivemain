@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
+
+<!-- bootstrap -->
+<link href="/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<script src="/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+<!-- hifive -->
+<link href="../../srcCss/h5.ui.indicator.css" rel="stylesheet">
+<link href="../../srcCss/h5.ui.validation.css" rel="stylesheet">
+<script src="../../src/ejs/ejs-1.0.js"></script>
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+</script>
+<script src="loadScript.js"></script>
+<script type="text/javascript" src="input-form.js"></script>
+
+<link href="index.css" rel="stylesheet">
+
+<title>form要素にどのinputが入っているか</title>
+</head>
+<body>
+	<div class="container-1">
+		<div class="spacer"></div>
+		<div>form要素にどのinputが入っているか(コンソールに表示)</div>
+
+		<form id="f1">
+			<input id="n1">
+			<input type="submit" id="n2-submit">
+			<input type="button" id="n3-button">
+			<input type="reset" id="n4-reset">
+			<textarea id="t1"></textarea>
+			<select id="s1"></select>
+		</form>
+
+		<form id="f2">
+			<input form="f1" id="n5">
+			<input form="f1" type="submit" id="n6-submit">
+			<input form="f1" type="button" id="n7-button">
+			<input form="f1" type="reset" id="n8-reset">
+			<textarea form="f1" id="t2"></textarea>
+			<select form="f1" id="s2"></select>
+
+			<input id="n9">
+			<input type="submit" id="n10-submit">
+			<input type="button" id="n11-button">
+			<input type="reset" id="n12-reset">
+			<textarea id="t3"></textarea>
+			<select id="s3"></select>
+		</form>
+
+		<input form="f1" id="n13">
+		<input form="f1" type="submit" id="n14-submit">
+		<input form="f1" type="button" id="n15-button">
+		<input form="f1" type="reset" id="n16-reset">
+		<textarea form="f1" id="t4"></textarea>
+		<select form="f1" id="s4"></select>
+	</div>
+</body>
+</html>

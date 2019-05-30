@@ -1,0 +1,19 @@
+@charset 'utf-8';
+
+.spacer {
+	width: 30px;
+	height:30px;
+}
+
+.font-weight-bold {
+	font-weight: bold;
+}
+
+.plenty-input {
+	display: inline-block;
+	width: 50px;
+}
+
+.container-1 {
+	padding: 10px;
+}

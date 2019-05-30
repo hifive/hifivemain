@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
+
+<!-- bootstrap -->
+<link href="/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<script src="/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+<!-- hifive -->
+<link href="../../srcCss/h5.ui.indicator.css" rel="stylesheet">
+<link href="../../srcCss/h5.ui.validation.css" rel="stylesheet">
+<script src="../../src/ejs/ejs-1.0.js"></script>
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+</script>
+
+<!-- hifiveの読み込み -->
+<!-- <script src="loadScript.js"></script> -->
+<script src="../../archives/current/h5.dev.js"></script>
+<!-- <script src="/hifive-res/fw/current/h5.dev.js"></script> -->
+
+
+<script type="text/javascript" src="index.js"></script>
+
+<link href="index.css" rel="stylesheet">
+
+<title>大量にあるinput要素のvalidateサンプル</title>
+</head>
+<body>
+	<div class="container-1">
+		<div class="spacer"></div>
+		<label for="num">入力された数値分のinput要素を生成します。</label> <input id="num" type="number" name="num" step="100" value="2000"
+			required><input id="btn1" type="button" value="inputを生成" />
+
+		<div class="spacer"></div>
+		<label for="rule">入力された数値分のinput要素にバリデートルールを指定し、バリデートを行います。</label> <input id="rule" type="number" name="rule"
+			step="100" value="2000" required><input id="btn2" type="button" value="バリデート" />
+		<div class="spacer"></div>
+		<div class="font-weight-bold">以下にバリデートにかかった時間が表示されます。</div>
+		<div id="output"></div>
+		<div class="spacer"></div>
+		<div class="spacer"></div>
+		<div class="font-weight-bold">１つ目のinput要素にキー入力すると、以下に入力にかかった時間が表示されます。</div>
+		<div id="output-keyup"></div>
+
+		<form class="form" id="form1">
+			<div class="form-group" id="form"></div>
+		</form>
+	</div>
+</body>
+</html>

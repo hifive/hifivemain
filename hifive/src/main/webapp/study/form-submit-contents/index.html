@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- jquery -->
+<!--[if lt IE 9]>
+		<script src="/hifive-res/ext/jquery/jquery-1.js"></script>
+		<![endif]-->
+<!--[if gte IE 9]><!-->
+<script src="/hifive-res/ext/jquery/jquery-2.js"></script>
+<!--<![endif]-->
+
+<!-- bootstrap -->
+<link href="/hifive-res/ext/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<script src="/hifive-res/ext/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+<!-- hifive -->
+<link href="../../srcCss/h5.ui.indicator.css" rel="stylesheet">
+<link href="../../srcCss/h5.ui.validation.css" rel="stylesheet">
+<script src="../../src/ejs/ejs-1.0.js"></script>
+<!-- h5ソースファイルの読み込み -->
+<script>
+	H5_TEST_ENV = window.H5_TEST_ENV || {};
+	H5_TEST_ENV.srcBaseUrl = '../../';
+</script>
+<script src="loadScript.js"></script>
+<script type="text/javascript" src="index.js"></script>
+
+<link href="index.css" rel="stylesheet">
+
+<title>form要素にどのような情報が入っているか</title>
+</head>
+<body>
+	<div class="container-1">
+		<div class="spacer"></div>
+		<h3>submitを行った場合にformにどのような情報が入っているか</h3>
+		<div class="spacer"></div>
+
+		<form action="index.html"  method="post">
+		   <input type="text" name="text1" value="text1value">
+		   <input type="button" id="btn1" name="btn1" value="btn1value">
+		   <input type="button" id="btn2" name="btn2" value="btn2value">
+		   <input type="submit" name="submit1" value="submit1value">
+		   <input type="submit" name="submit2" value="submit2value">
+		   <input type="reset" name="reset1" value="reset1value">
+		   <input type="image" name="image1" value="image1value">
+		   <input type="button" id="btn-test" name="btn-test" value="form.submit()を行うボタン">
+		</form>
+
+		<div class="spacer"></div>
+		<div class="spacer"></div>
+		<h4>調査結果 (調査日: 2019/04/05)</h4>
+		<div class="spacer"></div>
+		<div>Formに含まれるパラメータ</div>
+		<table  border="1">
+			<tr class="background-color-f7">
+				<th></th><th>Win10-Chrome73.0.3683.86</th><th>Win10-Edge</th>
+				<th>Win10-IE11</th><th>Win10-Firefox66.0</th>
+			</tr>
+			<tr>
+				<td  class="background-color-f7 font-weight-bold">submit1を押したとき</td>
+				<td>text1: text1value<br>submit1: submit1value</td>
+				<td>text1: text1value<br>submit1: submit1value</td>
+				<td>text1: text1value<br>submit1: submit1value</td>
+				<td>text1: text1value<br>submit1: submit1value</td>
+			</tr>
+			<tr>
+				<td  class="background-color-f7 font-weight-bold">submit2を押したとき</td>
+				<td>text1: text1value<br>submit2: submit2value</td>
+				<td>text1: text1value<br>submit2: submit2value</td>
+				<td>text1: text1value<br>submit2: submit2value</td>
+				<td>text1: text1value<br>submit2: submit2value</td>
+			</tr>
+			<tr>
+				<td  class="background-color-f7 font-weight-bold">form.submit(); による送信のとき</td>
+				<td>text1: text1value</td>
+				<td>text1: text1value</td>
+				<td>text1: text1value</td>
+				<td>text1: text1value</td>
+			</tr>
+
+		</table>
+		<div class="spacer"></div>
+		<div class="spacer"></div>
+		<h4>調査方法(Chromeの場合)</h4>
+		<ul>
+			<li>開発者ツールを開く</li>
+			<li>Networkタブを選択する</li>
+			<li>左上にある丸いボタンが赤くなっていなければクリックし、ネットワークの記録を開始する</li>
+			<li>formにどのような情報が入ってるのか確認したいsubmitボタンをクリックする</li>
+			<li>Nameにあるファイル名一覧の一番上にあるindex.htmlをクリックする</li>
+			<li>ファイル名一覧の隣にあるHeadersタブを選択する(デフォルトで選択されている)</li>
+			<li>Headersの中の一番下にある「Form Data」の中身を確認する</li>
+		</ul>
+	</div>
+</body>
+</html>
