@@ -216,10 +216,22 @@
 		// 非同期validateの結果をValidationResultに反映させる
 		var name = ev.name;
 
+		//あるプロパティに対する全ての非同期バリデーションが成功したか、または
+		//1つ以上の非同期バリデーションが失敗したので、validating状態から取り除く（validatingPropertiesから削除する）
+		var validatingPropIdx = this.validatingProperties.indexOf(name);
+		if (validatingPropIdx !== -1) {
+			this.validatingProperties.splice(validatingPropIdx, 1);
+		}
+
 		if (ev.isValid) {
 			//validの場合、このnameのプロパティに対するすべての非同期処理が成功したタイミングで1回だけ呼ばれる
-			this.validProperties.push(name);
-			this.validCount++;
+			if (validatingPropIdx !== -1) {
+				//validatingに入っていた＝同期バリデータでエラーがなかった場合のみ、validに含める
+				//同期バリデータでエラーがあった場合、validate()のタイミングでこのプロパティは既に
+				//invalidPropertiesに入っている
+				this.validProperties.push(name);
+				this.validCount++;
+			}
 		} else {
 			//1つでもバリデーションに失敗したら、そのタイミングでisValidはfalseとなる
 			this.isValid = false;
@@ -242,13 +254,6 @@
 			}
 			this.invalidReason[name].violation.push(ev.violation);
 			this.violationCount++;
-		}
-
-		//あるプロパティに対する非同期バリデーションの状態をvalidating状態からinvalid状態になる
-		//（validatingPropertiesから削除する）
-		var validatingPropIdx = this.validatingProperties.indexOf(name);
-		if (validatingPropIdx !== -1) {
-			this.validatingProperties.splice(validatingPropIdx, 1);
 		}
 
 		if (!this.isValid || !this.validatingProperties.length) {
