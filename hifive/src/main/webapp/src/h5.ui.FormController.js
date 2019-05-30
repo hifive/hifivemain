@@ -2581,7 +2581,7 @@
 					var ruleDefaultSetting = setting.ruleDefault[ruleName];
 					if ('isForceEnabledWhenEmpty' in ruleDefaultSetting) {
 						this._validationLogic.setRuleForceEnabledWhenEmpty(ruleName,
-								ruleDefaultSetting.isForceEnabledWhenEmpty === true);
+								ruleDefaultSetting.isForceEnabledWhenEmpty);
 					}
 					if ('message' in ruleDefaultSetting) {
 						//既存ルールのデフォルトメッセージを上書き
@@ -2867,6 +2867,10 @@
 				var plugin = this._plugins[pluginName];
 
 				var updateOn = plugin._updateOn;
+				if (!updateOn) {
+					updateOn = ['focus', 'blur', 'change', 'keyup', 'validate'];
+				}
+
 				for (var i = 0, len = updateOn.length; i < len; i++) {
 					var timing = updateOn[i];
 					aggrTimingMapObj[timing] = true;
