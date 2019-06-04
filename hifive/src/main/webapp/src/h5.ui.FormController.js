@@ -3322,7 +3322,7 @@
 		 * @returns {Boolean}
 		 */
 		_isFormInputElement: function(element) {
-			if (element) {
+			if (element && element.tagName) {
 				var tagName = element.tagName.toLowerCase();
 				if (tagName == 'input' || tagName == 'select' || tagName == 'textarea') {
 					return true;
